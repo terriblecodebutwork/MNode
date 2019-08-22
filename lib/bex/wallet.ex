@@ -135,15 +135,37 @@ defmodule Bex.Wallet do
     case Api.get_utxos_from_api(private_key.address, api) do
       {:ok, utxos} ->
         Repo.delete_all(Ecto.assoc(private_key, :utxos))
-        Repo.insert_all(Utxo, Enum.map(utxos, fn u ->
-          u
-          |> Utxo.set_utxo_type()
-          |> Map.put(:private_key_id, private_key.id)
-        end))
+
+        Repo.insert_all(
+          Utxo,
+          Enum.map(utxos, fn u ->
+            u
+            |> Utxo.set_utxo_type()
+            |> Map.put(:private_key_id, private_key.id)
+          end)
+        )
 
       {:error, msg} ->
         {:error, msg}
     end
+  end
+
+  @doc """
+  Split a gold utxo into many coin utxo.
+    1. send tx
+    2. update db
+  """
+  def mint(gold = %Utxo{type: :gold}) do
+    {:ok, coins} =
+      gold
+      |> Utxo.mint()
+
+    # TODO add lock
+
+    Repo.transaction(fn ->
+      Repo.insert_all(Utxo, coins)
+      Repo.delete(gold)
+    end)
   end
 
   @doc """

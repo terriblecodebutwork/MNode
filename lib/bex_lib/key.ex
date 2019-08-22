@@ -19,12 +19,12 @@ defmodule BexLib.Key do
     compress(publickey)
   end
 
-  # def private_key_to_public_key_hash(priv) do
-  #   priv
-  #   |> private_key_to_public_key()
-  #   |> Crypto.sha256()
-  #   |> Crypto.ripemd160()
-  # end
+  def private_key_to_public_key_hash(priv) do
+    priv
+    |> private_key_to_public_key()
+    |> Crypto.sha256()
+    |> Crypto.ripemd160()
+  end
 
   def compress(<<_prefix::size(8), x_coordinate::size(256), y_coordinate::size(256)>>) do
     prefix =
@@ -75,11 +75,6 @@ defmodule BexLib.Key do
     byte_size(pub) == 33
   end
 
-  # def privkey_to_scriptcode(priv) do
-  #   [:OP_DUP, :OP_HASH160, private_key_to_public_key_hash(priv), :OP_EQUALVERIFY, :OP_CHECKSIG]
-  #   |> Script.to_binary()
-  # end
-
   # def address_to_pkscript(addr) do
   #   [
   #     :OP_DUP,
@@ -99,4 +94,23 @@ defmodule BexLib.Key do
   #   |> Kernel.+(a)
   #   |> :binary.encode_unsigned()
   # end
+
+  def address_to_public_key_hash(addr) do
+    {:ok, <<_prefix::bytes-size(1), pubkeyhash::binary>>} = Base58Check.decode(addr)
+    pubkeyhash
+  end
+
+  def private_key_to_p2pkh_script(p) do
+    pkhash = private_key_to_public_key_hash(p)
+
+    [
+      0x76,
+      0xA9,
+      0x14,
+      pkhash,
+      0x88,
+      0xAC
+    ]
+    |> IO.iodata_to_binary()
+  end
 end

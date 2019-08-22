@@ -1,3 +1,4 @@
+import Ecto.Query
 alias Bex.Wallet
 alias Bex.Repo
 alias Bex.Wallet.PrivateKey

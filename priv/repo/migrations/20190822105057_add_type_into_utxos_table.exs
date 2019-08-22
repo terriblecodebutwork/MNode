@@ -4,6 +4,7 @@ defmodule Bex.Repo.Migrations.AddTypeIntoUtxosTable do
 
   def change do
     UtxoType.create_type()
+
     alter table(:utxos) do
       add :type, UtxoType.type()
     end
