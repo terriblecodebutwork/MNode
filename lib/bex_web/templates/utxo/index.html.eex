@@ -1,0 +1,32 @@
+<h1>Listing Utxos</h1>
+
+<table>
+  <thead>
+    <tr>
+      <th>Value</th>
+      <th>Lock script</th>
+      <th>Txid</th>
+      <th>Index</th>
+
+      <th></th>
+    </tr>
+  </thead>
+  <tbody>
+<%= for utxo <- @utxos do %>
+    <tr>
+      <td><%= utxo.value %></td>
+      <td><%= utxo.lock_script %></td>
+      <td><%= utxo.txid %></td>
+      <td><%= utxo.index %></td>
+
+      <td>
+        <%= link "Show", to: Routes.utxo_path(@conn, :show, utxo) %>
+        <%= link "Edit", to: Routes.utxo_path(@conn, :edit, utxo) %>
+        <%= link "Delete", to: Routes.utxo_path(@conn, :delete, utxo), method: :delete, data: [confirm: "Are you sure?"] %>
+      </td>
+    </tr>
+<% end %>
+  </tbody>
+</table>
+
+<span><%= link "New Utxo", to: Routes.utxo_path(@conn, :new) %></span>

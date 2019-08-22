@@ -1,0 +1,28 @@
+<h1>Show Private key</h1>
+
+<ul>
+
+  <li>
+    <strong>Hex:</strong>
+    <%= @private_key.hex %>
+  </li>
+
+  <li>
+    <strong>Bn:</strong>
+    <%= @private_key.bn %>
+  </li>
+
+  <li>
+    <strong>From:</strong>
+    <%= @private_key.from %>
+  </li>
+
+  <li>
+    <strong>Address:</strong>
+    <%= @private_key.address %>
+  </li>
+
+</ul>
+
+<span><%= link "Edit", to: Routes.private_key_path(@conn, :edit, @private_key) %></span>
+<span><%= link "Back", to: Routes.private_key_path(@conn, :index) %></span>

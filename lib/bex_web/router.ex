@@ -18,6 +18,9 @@ defmodule BexWeb.Router do
     pipe_through :browser
 
     get "/", PageController, :index
+    resources "/private_keys", PrivateKeyController
+    resources "/utxos", UtxoController
+    live "/index", IndexLive
   end
 
   # Other scopes may use custom stacks.

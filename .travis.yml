@@ -1,0 +1,42 @@
+language: elixir
+
+elixir:
+  - '1.8.1'
+otp_release: '21.0'
+
+env:
+  global:
+    # TODO: 设置成你的项目的名字
+    - APP_NAME=crowd
+
+before_deploy:
+  - bash ci/before_deploy.sh
+
+deploy:
+  # TODO update `api_key.secure`
+  # - Create a `public_repo` GitHub token. Go to: https://github.com/settings/tokens/new
+  # - Encrypt it: `travis encrypt 0123456789012345678901234567890123456789
+  # - Paste the output down here
+  api_key:
+    secure: YYmfhphk8rDEjBaBpsB8Zxs0l5DcDLwDDp3BgEcv8+o09qPAEErxcO1yiDNM0qr2W3Sn16/K3GRxNnib+UiXe0FBVl3AWc5C3JOhYGi18X+7h4jR3fpgQ3v+t5hbshzJbJkIw+mLKmomlQPZxy7RMIejR4KABUHXC0bhbKZiHLQ7uO6IKT+9RvcqAA9PNq5qBxSjpZCkw7GN7REeBPUcInT+6kvC8tndvD+Z1/i2RWCazOslx8UQar76LWTm7NbpYaNwED+vz7EymlRWdaE1ZXUbVBBa5Fh62llNPahxb7THOEzLl/MjAWGwrYzqb2vAJdNhCGSK9KytUrrIt1jffUSTkwjevG9+5hSDyYl7Wmeu4lhoK745O5ptAPz7ny+KSdsHn0dvVXNPQfcCROevPgDicLN5Ax+R40yTIISaAwSSVv1KIu8i9wSBa954nn/0ikg5BgVxq5rv043oTsrSUsNSN2PZC7tmU+zP1LVYJIcdPcmznknZjJzYMfZeCXy0Wi0oGVU575q2emSCzpWOkZ3fzyRVO03cqzyEk8f3tebO8S94xZ/L+8m6/nxfHQPj7FG3GmTciDGsrUT9xthiynKhvTzRgqv4QdapjPgQZIPdVFGUreZBuRkpYS6O4TDhOBR3L1jCaDtwFEGrh0pbvq0a/Dk57OHX6tGlFg5WTPQ=
+    file_glob: true
+  file: $APP_NAME-$TRAVIS_TAG.*
+  on:
+    tags: true
+  provider: releases
+  skip_cleanup: true
+
+cache: hex
+before_cache:
+  # Travis can't cache files that are not readable by "others"
+  - chmod -R a+r $HOME/.hex
+
+branches:
+  only:
+    # release tags
+    - /\d+\.\d+\.\d+.*$/
+    - master
+
+notifications:
+  email:
+    on_success: never

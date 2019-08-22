@@ -1,0 +1,32 @@
+<h1>Listing Private keys</h1>
+
+<table>
+  <thead>
+    <tr>
+      <th>Hex</th>
+      <th>Bn</th>
+      <th>From</th>
+      <th>Address</th>
+
+      <th></th>
+    </tr>
+  </thead>
+  <tbody>
+<%= for private_key <- @private_keys do %>
+    <tr>
+      <td><%= private_key.hex %></td>
+      <td><%= private_key.bn %></td>
+      <td><%= private_key.from %></td>
+      <td><%= private_key.address %></td>
+
+      <td>
+        <%= link "Show", to: Routes.private_key_path(@conn, :show, private_key) %>
+        <%= link "Edit", to: Routes.private_key_path(@conn, :edit, private_key) %>
+        <%= link "Delete", to: Routes.private_key_path(@conn, :delete, private_key), method: :delete, data: [confirm: "Are you sure?"] %>
+      </td>
+    </tr>
+<% end %>
+  </tbody>
+</table>
+
+<span><%= link "New Private key", to: Routes.private_key_path(@conn, :new) %></span>

@@ -1,0 +1,28 @@
+<h1>Show Utxo</h1>
+
+<ul>
+
+  <li>
+    <strong>Value:</strong>
+    <%= @utxo.value %>
+  </li>
+
+  <li>
+    <strong>Lock script:</strong>
+    <%= @utxo.lock_script %>
+  </li>
+
+  <li>
+    <strong>Txid:</strong>
+    <%= @utxo.txid %>
+  </li>
+
+  <li>
+    <strong>Index:</strong>
+    <%= @utxo.index %>
+  </li>
+
+</ul>
+
+<span><%= link "Edit", to: Routes.utxo_path(@conn, :edit, @utxo) %></span>
+<span><%= link "Back", to: Routes.utxo_path(@conn, :index) %></span>
