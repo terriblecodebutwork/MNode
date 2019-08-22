@@ -135,7 +135,11 @@ defmodule Bex.Wallet do
     case Api.get_utxos_from_api(private_key.address, api) do
       {:ok, utxos} ->
         Repo.delete_all(Ecto.assoc(private_key, :utxos))
-        Repo.insert_all(Utxo, Enum.map(utxos, &Map.put(&1, :private_key_id, private_key.id)))
+        Repo.insert_all(Utxo, Enum.map(utxos, fn u ->
+          u
+          |> Utxo.set_utxo_type()
+          |> Map.put(:private_key_id, private_key.id)
+        end))
 
       {:error, msg} ->
         {:error, msg}

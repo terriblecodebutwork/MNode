@@ -36,6 +36,7 @@ defmodule Bex.MixProject do
       {:binary, "0.0.4"},
       {:decimal, "~> 1.0"},
       {:ecto_sql, "~> 3.1"},
+      {:ecto_enum, "~> 1.3"},
       {:gettext, "~> 0.11"},
       {:hackney, "~> 1.14.0"},
       {:jason, "~> 1.0"},

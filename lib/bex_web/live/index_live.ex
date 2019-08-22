@@ -4,22 +4,27 @@ defmodule BexWeb.IndexLive do
   alias Bex.Repo
 
   def mount(_session, socket) do
+    reload(socket)
+  end
+
+  defp reload(socket) do
     private_keys = Wallet.list_private_keys() |> Enum.map(&Repo.preload(&1, :utxos))
     {:ok, assign(socket, private_keys: private_keys)}
   end
 
   def render(assigns) do
     ~L"""
-    <h1>Keys</h1>
+    <h1>Wallet</h1>
     <ul>
       <%= for k <- @private_keys || [] do %>
         <div>
-          <h2><%= k.address %></h2>
-          <button phx-click="get_utxo" phx-value="<%= k.address%>" >ReSync UTXOs</button>
+          <h2>Address: <%= k.address %></h2>
+          <button phx-click="resync_utxo" phx-value="<%= k.id %>" >ReSync UTXOs</button>
           <h3>UTXOs</h3>
           <ul>
             <%= for u <- k.utxos || [] do %>
               <ul>
+                  <li>type: <%= u.type %></li>
                   <li>txid: <%= u.txid %></li>
                   <li>value: <%= u.value %></li>
                   <li>index: <%= u.index %></li>
@@ -33,8 +38,10 @@ defmodule BexWeb.IndexLive do
     """
   end
 
-  def handle_event("get_utxo", address, socket) do
-    IO.inspect(address)
+  def handle_event("resync_utxo", id, socket) do
+    p = Repo.get!(Wallet.PrivateKey, id)
+    Wallet.sync_utxos_of_private_key(p)
+    {:ok, socket} = reload(socket)
     {:noreply, socket}
   end
 end
