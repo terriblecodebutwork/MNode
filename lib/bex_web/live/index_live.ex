@@ -39,6 +39,7 @@ defmodule BexWeb.IndexLive do
   end
 
   def handle_event("resync_utxo", id, socket) do
+    id = String.to_integer(id)
     p = Repo.get!(Wallet.PrivateKey, id)
     {_, utxos} = Wallet.sync_utxos_of_private_key(p)
     p = %{p | utxos: utxos}

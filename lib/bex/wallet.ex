@@ -8,6 +8,8 @@ defmodule Bex.Wallet do
 
   alias BexLib.Key
   alias Bex.Wallet.PrivateKey
+  alias Bex.Wallet.Mission
+  import Ecto.Changeset, only: [change: 2]
 
   @doc """
   Returns the list of private_keys.
@@ -131,7 +133,7 @@ defmodule Bex.Wallet do
   @doc """
   Get and save the utoxs of a private key from api.
   """
-  def sync_utxos_of_private_key(private_key, api \\ :bitindex) do
+  def sync_utxos_of_private_key(%PrivateKey{} = private_key, api \\ :bitindex) do
     case Api.get_utxos_from_api(private_key.address, api) do
       {:ok, utxos} ->
         Repo.delete_all(Ecto.assoc(private_key, :utxos))
@@ -186,6 +188,35 @@ defmodule Bex.Wallet do
 
   """
   def get_utxo!(id), do: Repo.get!(Utxo, id)
+
+  @doc """
+  Add a coin type utxo into the inputs of a mission.
+  Return: {:ok, mission} or {:error, any}
+  """
+  def consume_a_coin(%Mission{} = mission) do
+    Repo.transaction(fn ->
+      coin =
+        from(u in Utxo,
+          where: u.type == "coin" and is_nil(u.consumer_id),
+          lock: "FOR UPDATE SKIP LOCKED",
+          limit: 1
+        )
+        |> Repo.one!()
+
+      Repo.update!(change(coin, consumer_id: mission.id))
+    end)
+  end
+
+  # def test_lock do
+  #   1..2
+  #   |> Enum.map(fn _ ->
+  #       spawn(fn ->
+  #         get_and_lock_one_coin()
+  #         |> Map.get(:id)
+  #         |> IO.inspect()
+  #       end)
+  #     end)
+  # end
 
   @doc """
   Creates a utxo.

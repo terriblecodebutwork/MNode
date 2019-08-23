@@ -62,7 +62,7 @@ config :bex, BexWeb.Endpoint,
       ~r"priv/gettext/.*(po)$",
       ~r"lib/bex_web/{live,views}/.*(ex)$",
       ~r"lib/bex_web/templates/.*(eex)$",
-      ~r{lib/my_app_web/live/.*(ex)$}
+      ~r{lib/bex_web/live/.*(ex)$}
     ]
   ]
 
