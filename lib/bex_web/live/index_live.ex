@@ -40,8 +40,20 @@ defmodule BexWeb.IndexLive do
 
   def handle_event("resync_utxo", id, socket) do
     p = Repo.get!(Wallet.PrivateKey, id)
-    Wallet.sync_utxos_of_private_key(p)
-    {:ok, socket} = reload(socket)
-    {:noreply, socket}
+    {_, utxos} = Wallet.sync_utxos_of_private_key(p)
+    p = %{p | utxos: utxos}
+
+    pks =
+      Enum.map(socket.assigns.private_keys, fn pk ->
+        cond do
+          pk.id == id ->
+            p
+
+          true ->
+            pk
+        end
+      end)
+
+    {:noreply, assign(socket, private_keys: pks)}
   end
 end

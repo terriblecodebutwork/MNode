@@ -5,6 +5,7 @@ defmodule Bex.Wallet.Utxo do
   alias Bex.Wallet
   alias Bex.UtxoType
   alias BexLib.Txmaker
+  alias Bex.Wallet.Mission
 
   schema "utxos" do
     field :index, :integer
@@ -14,6 +15,8 @@ defmodule Bex.Wallet.Utxo do
     field :block_height, :integer
     field :type, UtxoType
     belongs_to :private_key, PrivateKey
+    belongs_to :consumer, Mission, foreign_key: :consumer_id
+    belongs_to :producer, Mission, foreign_key: :producer_id
   end
 
   @doc false

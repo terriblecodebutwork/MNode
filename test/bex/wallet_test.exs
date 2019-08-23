@@ -145,4 +145,63 @@ defmodule Bex.WalletTest do
       assert %Ecto.Changeset{} = Wallet.change_utxo(utxo)
     end
   end
+
+  describe "missions" do
+    alias Bex.Wallet.Mission
+
+    @valid_attrs %{txid: "some txid"}
+    @update_attrs %{txid: "some updated txid"}
+    @invalid_attrs %{txid: nil}
+
+    def mission_fixture(attrs \\ %{}) do
+      {:ok, mission} =
+        attrs
+        |> Enum.into(@valid_attrs)
+        |> Wallet.create_mission()
+
+      mission
+    end
+
+    test "list_missions/0 returns all missions" do
+      mission = mission_fixture()
+      assert Wallet.list_missions() == [mission]
+    end
+
+    test "get_mission!/1 returns the mission with given id" do
+      mission = mission_fixture()
+      assert Wallet.get_mission!(mission.id) == mission
+    end
+
+    test "create_mission/1 with valid data creates a mission" do
+      assert {:ok, %Mission{} = mission} = Wallet.create_mission(@valid_attrs)
+      assert mission.txid == "some txid"
+    end
+
+    test "create_mission/1 with invalid data returns error changeset" do
+      assert {:error, %Ecto.Changeset{}} = Wallet.create_mission(@invalid_attrs)
+    end
+
+    test "update_mission/2 with valid data updates the mission" do
+      mission = mission_fixture()
+      assert {:ok, %Mission{} = mission} = Wallet.update_mission(mission, @update_attrs)
+      assert mission.txid == "some updated txid"
+    end
+
+    test "update_mission/2 with invalid data returns error changeset" do
+      mission = mission_fixture()
+      assert {:error, %Ecto.Changeset{}} = Wallet.update_mission(mission, @invalid_attrs)
+      assert mission == Wallet.get_mission!(mission.id)
+    end
+
+    test "delete_mission/1 deletes the mission" do
+      mission = mission_fixture()
+      assert {:ok, %Mission{}} = Wallet.delete_mission(mission)
+      assert_raise Ecto.NoResultsError, fn -> Wallet.get_mission!(mission.id) end
+    end
+
+    test "change_mission/1 returns a mission changeset" do
+      mission = mission_fixture()
+      assert %Ecto.Changeset{} = Wallet.change_mission(mission)
+    end
+  end
 end
