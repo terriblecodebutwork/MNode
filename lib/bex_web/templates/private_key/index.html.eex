@@ -4,7 +4,7 @@
   <thead>
     <tr>
       <th>Hex</th>
-      <th>Bn</th>
+      <th>APP_KEY</th>
       <th>From</th>
       <th>Address</th>
 
@@ -15,7 +15,7 @@
 <%= for private_key <- @private_keys do %>
     <tr>
       <td><%= private_key.hex %></td>
-      <td><%= private_key.bn %></td>
+      <td><%= private_key.app_key %></td>
       <td><%= private_key.from %></td>
       <td><%= private_key.address %></td>
 

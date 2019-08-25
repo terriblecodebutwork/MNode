@@ -25,7 +25,9 @@ defmodule BexWeb.Router do
   end
 
   # Other scopes may use custom stacks.
-  # scope "/api", BexWeb do
-  #   pipe_through :api
-  # end
+  scope "/api", BexWeb do
+    pipe_through :api
+
+    post "/meta", ApiController, :create
+  end
 end

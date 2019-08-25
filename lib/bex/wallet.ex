@@ -24,6 +24,11 @@ defmodule Bex.Wallet do
     Repo.all(PrivateKey)
   end
 
+  def find_private_key_by_app_key(app_key) do
+    query = from p in PrivateKey, where: p.app_key == ^app_key
+    Repo.one(query)
+  end
+
   @doc """
   Gets a single private_key.
 
@@ -59,6 +64,7 @@ defmodule Bex.Wallet do
       hex: hex,
       bn: bn,
       address: Key.private_key_to_address(bn),
+      app_key: :crypto.strong_rand_bytes(32) |> Base.encode64(),
       from: -1
     }
 

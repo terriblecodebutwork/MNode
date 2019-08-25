@@ -1,4 +1,7 @@
 defmodule BexWeb.IndexLive do
+  @moduledoc """
+  Support multi privatekey manage in different processes.
+  """
   use Phoenix.LiveView
   alias Bex.Wallet
   alias Bex.Repo
@@ -27,11 +30,14 @@ defmodule BexWeb.IndexLive do
                   <li>type: <%= u.type %></li>
                   <li>txid: <%= u.txid %></li>
                   <li>value: <%= u.value %></li>
-                  <li>index: <%= u.index %></li>
-                  <li>block height: <%= u.block_height %></li>
+                  <!-- <li>index: <%= u.index %></li> -->
+                  <!-- <li>block height: <%= u.block_height %></li> -->
               </ul>
             <% end %>
           </ul>
+          <form phx-submit="create_dir">
+            <input name="dir">
+          </form>
         </div>
       <% end %>
     </ul>
@@ -56,5 +62,11 @@ defmodule BexWeb.IndexLive do
       end)
 
     {:noreply, assign(socket, private_keys: pks)}
+  end
+
+  ## TODO
+  def handle_event("create_dir", %{"dir" => dir}, socket) do
+    IO.inspect dir
+    {:noreply, socket}
   end
 end
