@@ -21,6 +21,7 @@ defmodule BexWeb.Router do
     resources "/private_keys", PrivateKeyController
     resources "/utxos", UtxoController
     resources "/missions", MissionController
+    resources "/documents", DocumentController
     live "/index", IndexLive
   end
 

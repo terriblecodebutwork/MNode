@@ -66,7 +66,7 @@ defmodule BexWeb.IndexLive do
 
   ## TODO
   def handle_event("create_dir", %{"dir" => dir}, socket) do
-    IO.inspect dir
+    IO.inspect(dir)
     {:noreply, socket}
   end
 end

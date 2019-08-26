@@ -204,4 +204,79 @@ defmodule Bex.WalletTest do
       assert %Ecto.Changeset{} = Wallet.change_mission(mission)
     end
   end
+
+  describe "documents" do
+    alias Bex.Wallet.Document
+
+    @valid_attrs %{
+      dir: "some dir",
+      filename: "some filename",
+      path: "some path",
+      type: "some type"
+    }
+    @update_attrs %{
+      dir: "some updated dir",
+      filename: "some updated filename",
+      path: "some updated path",
+      type: "some updated type"
+    }
+    @invalid_attrs %{dir: nil, filename: nil, path: nil, type: nil}
+
+    def document_fixture(attrs \\ %{}) do
+      {:ok, document} =
+        attrs
+        |> Enum.into(@valid_attrs)
+        |> Wallet.create_document()
+
+      document
+    end
+
+    test "list_documents/0 returns all documents" do
+      document = document_fixture()
+      assert Wallet.list_documents() == [document]
+    end
+
+    test "get_document!/1 returns the document with given id" do
+      document = document_fixture()
+      assert Wallet.get_document!(document.id) == document
+    end
+
+    test "create_document/1 with valid data creates a document" do
+      assert {:ok, %Document{} = document} = Wallet.create_document(@valid_attrs)
+      assert document.dir == "some dir"
+      assert document.filename == "some filename"
+      assert document.path == "some path"
+      assert document.type == "some type"
+    end
+
+    test "create_document/1 with invalid data returns error changeset" do
+      assert {:error, %Ecto.Changeset{}} = Wallet.create_document(@invalid_attrs)
+    end
+
+    test "update_document/2 with valid data updates the document" do
+      document = document_fixture()
+      assert {:ok, %Document{} = document} = Wallet.update_document(document, @update_attrs)
+      assert document.dir == "some updated dir"
+      assert document.filename == "some updated filename"
+      assert document.path == "some updated path"
+      assert document.type == "some updated type"
+    end
+
+    test "update_document/2 with invalid data returns error changeset" do
+      document = document_fixture()
+      assert {:error, %Ecto.Changeset{}} = Wallet.update_document(document, @invalid_attrs)
+      assert document == Wallet.get_document!(document.id)
+    end
+
+    test "delete_document/1 deletes the document" do
+      document = document_fixture()
+      assert {:ok, %Document{}} = Wallet.delete_document(document)
+      assert_raise Ecto.NoResultsError, fn -> Wallet.get_document!(document.id) end
+    end
+
+    test "change_document/1 returns a document changeset" do
+      document = document_fixture()
+      assert %Ecto.Changeset{} = Wallet.change_document(document)
+    end
+  end
 end

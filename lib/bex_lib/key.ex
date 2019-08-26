@@ -86,14 +86,14 @@ defmodule BexLib.Key do
   #   |> Script.to_binary()
   # end
 
-  # def drive_key(privkey, data) do
-  #   a = Crypto.double_sha256(data) |> :binary.decode_unsigned()
+  def drive_key(privkey, data) do
+    a = Crypto.double_sha256(data) |> :binary.decode_unsigned()
 
-  #   privkey
-  #   |> :binary.decode_unsigned()
-  #   |> Kernel.+(a)
-  #   |> :binary.encode_unsigned()
-  # end
+    privkey
+    |> :binary.decode_unsigned()
+    |> Kernel.+(a)
+    |> :binary.encode_unsigned()
+  end
 
   def address_to_public_key_hash(addr) do
     {:ok, <<_prefix::bytes-size(1), pubkeyhash::binary>>} = Base58Check.decode(addr)

@@ -37,6 +37,7 @@ defmodule Bex.MixProject do
       {:decimal, "~> 1.0"},
       {:ecto_sql, "~> 3.1"},
       {:ecto_enum, "~> 1.3"},
+      {:elixir_uuid, "~> 1.2"},
       {:gettext, "~> 0.11"},
       {:hackney, "~> 1.14.0"},
       {:jason, "~> 1.0"},
@@ -47,7 +48,7 @@ defmodule Bex.MixProject do
       {:phoenix_html, "~> 2.11"},
       {:phoenix_live_reload, "~> 1.2", only: :dev},
       {:plug_cowboy, "~> 2.0"},
-      {:phoenix_live_view, github: "phoenixframework/phoenix_live_view"},
+      {:phoenix_live_view, "~> 0.1.0"},
       {:tesla, "~> 1.2.1"}
     ]
   end

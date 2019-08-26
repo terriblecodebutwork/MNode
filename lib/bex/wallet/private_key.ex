@@ -2,6 +2,7 @@ defmodule Bex.Wallet.PrivateKey do
   use Ecto.Schema
   import Ecto.Changeset
   alias Bex.Wallet.Utxo
+  alias Bex.Wallet.Document
 
   schema "private_keys" do
     field :address, :string
@@ -10,6 +11,7 @@ defmodule Bex.Wallet.PrivateKey do
     field :hex, :string
     field :app_key, :string
     has_many :utxos, Utxo
+    has_many :documents, Document
 
     timestamps()
   end
