@@ -4,6 +4,8 @@ defmodule Bex.Wallet.PrivateKey do
   alias Bex.Wallet.Utxo
   alias Bex.Wallet.Document
   alias BexLib.Key
+  alias Bex.Repo
+  import Ecto.Query
   alias __MODULE__
 
   schema "private_keys" do
@@ -47,5 +49,11 @@ defmodule Bex.Wallet.PrivateKey do
 
     %PrivateKey{}
     |> hex_changeset(%{hex: Binary.to_hex(new_bn), dir: dir, base_key: private_key})
+  end
+
+  def get_derive_keys_by_id(id) do
+    query = from p in PrivateKey,
+      where: p.base_key_id == ^id and not is_nil(p.dir)
+    Repo.all(query)
   end
 end

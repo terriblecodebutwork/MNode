@@ -23,6 +23,8 @@ defmodule BexWeb.Router do
     resources "/missions", MissionController
     resources "/documents", DocumentController
     live "/index", IndexLive
+    live "/meta", MetaLive
+    live "/meta/:id", MetaLive
   end
 
   # Other scopes may use custom stacks.

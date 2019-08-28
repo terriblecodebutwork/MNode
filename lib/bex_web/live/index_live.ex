@@ -7,9 +7,14 @@ defmodule BexWeb.IndexLive do
   alias Bex.Repo
   alias Bex.Wallet.Utxo
   alias Bex.Wallet.PrivateKey
+  alias BexWeb.Router.Helpers, as: Routes
 
   def mount(_session, socket) do
     {:ok, reload(socket)}
+  end
+
+  def handle_params(_params, _url, socket) do
+    {:noreply, reload(socket)}
   end
 
   defp reload(socket) do
@@ -19,13 +24,13 @@ defmodule BexWeb.IndexLive do
 
   def render(assigns) do
     ~L"""
-    <h1>Wallet</h1>
     <ul>
       <%= for k <- @private_keys || [] do %>
         <div>
           <h2>Address: <%= k.address %></h2>
-          <button phx-click="resync_utxo" phx-value="<%= k.id %>" >ReSync UTXOs</button>
+          <button phx-click="meta" phx-value="<%= k.id %>" >Metanet</button>
           <h3>UTXOs</h3>
+          <button phx-click="resync_utxo" phx-value="<%= k.id %>" >ReSync UTXOs</button>
           <ul>
             <%= for t <- [:dust, :permission, :gold, :coin] do %>
             <p><%= "#{t}: #{Enum.count(k.utxos, fn x -> x.type == t end)}" %></p>
@@ -44,9 +49,6 @@ defmodule BexWeb.IndexLive do
               </ul>
             <% end %>
           </ul>
-          <form phx-submit="create_dir">
-            <input name="dir">
-          </form>
         </div>
       <% end %>
     </ul>
@@ -67,15 +69,18 @@ defmodule BexWeb.IndexLive do
     {:noreply, reload(socket)}
   end
 
-  def handle_event("recast", id, socket) do
-    id = String.to_integer(id)
-    {:ok, _} = Utxo.recast(Repo.get!(PrivateKey, id))
-    {:noreply, reload(socket)}
+  def handle_event("meta", id, socket) do
+    {:noreply, redirect(socket, to: Routes.live_path(socket, BexWeb.MetaLive, id))}
   end
 
-  ## TODO
-  def handle_event("create_dir", %{"dir" => dir}, socket) do
-    IO.inspect(dir)
-    {:noreply, socket}
+  def handle_event("recast", id, socket) do
+    id = String.to_integer(id)
+    case Utxo.recast(Repo.get!(PrivateKey, id)) do
+      {:ok, _} ->
+        {:noreply, reload(socket)}
+      {:error, msg} ->
+        {:noreply, put_flash(socket, :error, msg) |> redirect(to: Routes.live_path(socket, __MODULE__))}
+    end
   end
+
 end

@@ -59,12 +59,16 @@ defmodule Bex.Wallet.Utxo do
     coin_num = Decimal.div_int(v, @coin_sat) |> Decimal.to_integer()
     coin_utxo = %__MODULE__{value: @coin_sat, private_key_id: pkid, lock_script: s}
     outputs = List.duplicate(coin_utxo, coin_num)
-    change = get_change_amount(inputs, outputs)
-    outputs = add_change(outputs, change, s, pkid)
+    case get_change_amount(inputs, outputs) do
+      {:error, msg} ->
+        {:error, msg}
+      other ->
+        outputs = add_change(outputs, other, s, pkid)
 
-    pk = Wallet.get_private_key!(pkid)
+        pk = Wallet.get_private_key!(pkid)
 
-    make_tx(pk, inputs, outputs)
+        make_tx(pk, inputs, outputs)
+    end
   end
 
   @doc """
