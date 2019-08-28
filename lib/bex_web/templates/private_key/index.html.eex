@@ -5,7 +5,7 @@
     <tr>
       <th>Hex</th>
       <th>APP_KEY</th>
-      <th>From</th>
+      <th>Dir</th>
       <th>Address</th>
 
       <th></th>
@@ -16,7 +16,7 @@
     <tr>
       <td><%= private_key.hex %></td>
       <td><%= private_key.app_key %></td>
-      <td><%= private_key.from %></td>
+      <td><%= private_key.dir %></td>
       <td><%= private_key.address %></td>
 
       <td>

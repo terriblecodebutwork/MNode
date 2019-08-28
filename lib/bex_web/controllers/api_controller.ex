@@ -41,12 +41,14 @@ defmodule BexWeb.ApiController do
   end
 
   def create(conn, %{"dir" => dir}) do
+    IO.inspect conn.assigns.private_key
     case Wallet.create_document(%{
            type: "directory",
            dir: dir,
            private_key_id: conn.assigns.private_key.id
          }) do
-      {:ok, _} ->
+      {:ok, doc} ->
+        Wallet.upload_document(doc)
         text(conn, "ok")
 
       {:error, _} ->

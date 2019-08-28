@@ -9,6 +9,7 @@ defmodule Bex.Wallet do
   alias BexLib.Key
   alias Bex.Wallet.PrivateKey
   alias Bex.Wallet.Mission
+  alias BexLib.Script
   import Ecto.Changeset, only: [change: 2]
 
   @doc """
@@ -204,13 +205,45 @@ defmodule Bex.Wallet do
       coin =
         from(u in Utxo,
           where: u.type == "coin" and is_nil(u.consumer_id),
-          lock: "FOR UPDATE SKIP LOCKED",
-          limit: 1
+          lock: "FOR UPDATE SKIP LOCKED"
         )
+        |> first(:block_height)
         |> Repo.one!()
 
       Repo.update!(change(coin, consumer_id: mission.id))
+      mission
     end)
+  end
+
+  @doc """
+  Add permission to the inputs of and outputs mission, by set consumer_id
+  as the mission.
+  Return: {:ok, mission} or {:error, any}
+  """
+  def consume_permission(%Mission{}=m, dir) do
+    case Repo.transaction(fn ->
+        p =
+          from(u in Utxo,
+            where: u.type == "permission" and is_nil(u.consumer_id),
+            lock: "FOR UPDATE SKIP LOCKED"
+          )
+          |> first(:block_height)
+          |> Repo.one!()
+
+        Repo.update!(change(p, consumer_id: m.id))
+        {m, p}
+      end) do
+      {:ok, {mission, p}} ->
+        reuse_p =
+        %Utxo{
+          value: p.value,
+          lock_script: p.lock_script,
+          private_key_id: p.private_key_id,
+        }
+        {:ok, Mission.add_v_output(mission, reuse_p)}
+      any ->
+        any
+    end
   end
 
   # def test_lock do
@@ -429,7 +462,9 @@ defmodule Bex.Wallet do
 
   """
   def create_document(attrs \\ %{}) do
-    %Document{}
+    %Document{
+
+    }
     |> Document.changeset(attrs)
     |> Repo.insert()
   end
@@ -480,4 +515,57 @@ defmodule Bex.Wallet do
   def change_document(%Document{} = document) do
     Document.changeset(document, %{})
   end
+
+  # @spec get_a_permission_of_dir(String.t()) :: Utxo.t()
+  def get_a_permission_of_dir(dir) do
+
+  end
+
+  @doc """
+  build tx and broadcast and change the mission status.
+  """
+  def start_mission(%Mission{}=m, :one_coin) do
+    # add one coin into inputs
+    # add change if have any
+
+
+  end
+
+  ####### Documents ##############
+
+
+  # @spec to_mission(document()) :: {:ok, mission() | [mission()]} | {:error, any()}
+  @doc """
+  upload the document into the blockchain.
+  """
+  def upload_document(%Document{type: "directory"} = d) do
+    dirs = Document.get_children_dirs(d.dir)
+    case dirs do
+      [] ->
+        {:error, "found no dir"}
+      [root] ->
+        # root dir
+        create_root_dir(d, root)
+      other ->
+        [father_dir, self_dir] = Enum.take(other, -2)
+        create_noroot_dir(d, father_dir, self_dir)
+    end
+  end
+
+  def create_root_dir(d, root) do
+    {:ok, m} = create_mission(%{document_id: d.id})
+    {:ok, m} = consume_a_coin(m)
+    m = Repo.preload(m, :inputs)
+    inputs = m.inputs
+    opreturn_script = Script.metanet("1NudAQfwpm2jmbiKjUpBjYo42ZXMgQFRsU", "Hello photonet. This is my photo album.") |> Binary.to_hex() |> IO.inspect()
+
+  end
+
+  def create_noroot_dir(d, father_dir, self_dir) do
+    {:ok, mission} = create_mission()
+    {:ok, mission} = consume_permission(mission, father_dir)
+    start_mission(mission, :one_coin)
+  end
+
+
 end

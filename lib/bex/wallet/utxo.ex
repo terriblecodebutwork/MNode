@@ -22,8 +22,8 @@ defmodule Bex.Wallet.Utxo do
   @doc false
   def changeset(utxo, attrs) do
     utxo
-    |> cast(attrs, [:value, :lock_script, :txid, :index, :type])
-    |> validate_required([:value, :lock_script, :txid, :index, :type])
+    |> cast(attrs, [:value, :lock_script, :txid, :index, :type, :consumer_id, :producer_id, :private_key_id])
+    |> validate_required([:value, :lock_script,  :type])
   end
 
   @coin_sat Decimal.cast(100_000)
