@@ -13,8 +13,8 @@
   </li>
 
   <li>
-    <strong>From:</strong>
-    <%= @private_key.from %>
+    <strong>Dir:</strong>
+    <%= @private_key.dir %>
   </li>
 
   <li>

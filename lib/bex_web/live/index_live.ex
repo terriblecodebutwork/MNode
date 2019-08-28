@@ -5,14 +5,16 @@ defmodule BexWeb.IndexLive do
   use Phoenix.LiveView
   alias Bex.Wallet
   alias Bex.Repo
+  alias Bex.Wallet.Utxo
+  alias Bex.Wallet.PrivateKey
 
   def mount(_session, socket) do
-    reload(socket)
+    {:ok, reload(socket)}
   end
 
   defp reload(socket) do
     private_keys = Wallet.list_private_keys() |> Enum.map(&Repo.preload(&1, :utxos))
-    {:ok, assign(socket, private_keys: private_keys)}
+    assign(socket, private_keys: private_keys)
   end
 
   def render(assigns) do
@@ -25,6 +27,10 @@ defmodule BexWeb.IndexLive do
           <button phx-click="resync_utxo" phx-value="<%= k.id %>" >ReSync UTXOs</button>
           <h3>UTXOs</h3>
           <ul>
+            <%= for t <- [:dust, :permission, :gold, :coin] do %>
+            <p><%= "#{t}: #{Enum.count(k.utxos, fn x -> x.type == t end)}" %></p>
+            <% end %>
+            <button phx-click="recast" phx-value="<%= k.id %>">Recast</button>
             <%= for u <- k.utxos || [] do %>
               <ul>
                   <li>type: <%= u.type %></li>
@@ -32,6 +38,9 @@ defmodule BexWeb.IndexLive do
                   <li>value: <%= u.value %></li>
                   <!-- <li>index: <%= u.index %></li> -->
                   <!-- <li>block height: <%= u.block_height %></li> -->
+                  <%= if u.type == :gold do %>
+                  <button phx-click="mint" phx-value="<%= u.id %>">Mint</button>
+                  <% end %>
               </ul>
             <% end %>
           </ul>
@@ -48,20 +57,20 @@ defmodule BexWeb.IndexLive do
     id = String.to_integer(id)
     p = Repo.get!(Wallet.PrivateKey, id)
     {_, utxos} = Wallet.sync_utxos_of_private_key(p)
-    p = %{p | utxos: utxos}
 
-    pks =
-      Enum.map(socket.assigns.private_keys, fn pk ->
-        cond do
-          pk.id == id ->
-            p
+    {:noreply, reload(socket)}
+  end
 
-          true ->
-            pk
-        end
-      end)
+  def handle_event("mint", id, socket) do
+    id = String.to_integer(id)
+    {:ok, _} = Utxo.mint(Repo.get!(Utxo, id))
+    {:noreply, reload(socket)}
+  end
 
-    {:noreply, assign(socket, private_keys: pks)}
+  def handle_event("recast", id, socket) do
+    id = String.to_integer(id)
+    {:ok, _} = Utxo.recast(Repo.get!(PrivateKey, id))
+    {:noreply, reload(socket)}
   end
 
   ## TODO

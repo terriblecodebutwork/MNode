@@ -312,4 +312,8 @@ defmodule BexLib.Txmaker do
   #   create_p2pkh_transaction(priv, utxos, outputs)
   #   |> broadcast()
   # end
+  def get_txid_from_binary_tx(bn) do
+    Crypto.double_sha256(bn) |> Binary.reverse() |> Binary.to_hex()
+  end
+
 end

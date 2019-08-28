@@ -15,15 +15,15 @@ defmodule BexWeb.DocumentController do
   end
 
   def create(conn, %{"document" => document_params}) do
-    case Wallet.create_document(document_params) do
-      {:ok, document} ->
-        conn
-        |> put_flash(:info, "Document created successfully.")
-        |> redirect(to: Routes.document_path(conn, :show, document))
+    # case Wallet.create_document(document_params) do
+    #   {:ok, document} ->
+    #     conn
+    #     |> put_flash(:info, "Document created successfully.")
+    #     |> redirect(to: Routes.document_path(conn, :show, document))
 
-      {:error, %Ecto.Changeset{} = changeset} ->
-        render(conn, "new.html", changeset: changeset)
-    end
+    #   {:error, %Ecto.Changeset{} = changeset} ->
+    #     render(conn, "new.html", changeset: changeset)
+    # end
   end
 
   def show(conn, %{"id" => id}) do

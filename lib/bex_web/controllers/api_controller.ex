@@ -29,8 +29,8 @@ defmodule BexWeb.ApiController do
            type: type,
            filename: filename,
            dir: dir,
-           private_key_id: conn.assigns.private_key.id
-         }) do
+           base_key_id: conn.assigns.private_key.id
+         }, conn.assigns.private_key) do
       {:ok, doc} ->
         # start_other_process_to_build_and_send_this_document(doc)
         text(conn, "ok")
@@ -45,8 +45,8 @@ defmodule BexWeb.ApiController do
     case Wallet.create_document(%{
            type: "directory",
            dir: dir,
-           private_key_id: conn.assigns.private_key.id
-         }) do
+           base_key_id: conn.assigns.private_key.id
+         }, conn.assigns.private_key) do
       {:ok, doc} ->
         Wallet.upload_document(doc)
         text(conn, "ok")

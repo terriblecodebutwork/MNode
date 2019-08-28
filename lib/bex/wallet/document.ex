@@ -21,7 +21,7 @@ defmodule Bex.Wallet.Document do
   use Ecto.Schema
   import Ecto.Changeset
   alias Bex.Wallet.PrivateKey
-  alias Bex.Wallet.Mission
+  # alias Bex.Wallet.Mission
   alias BexLib.Key
   alias Bex.Wallet
 
@@ -33,7 +33,7 @@ defmodule Bex.Wallet.Document do
     field :type, :string
     belongs_to :private_key, PrivateKey
     belongs_to :base_key, PrivateKey, foreign_key: :base_key_id
-    has_many :missions, Mission
+    # has_many :missions, Mission
 
     timestamps()
   end

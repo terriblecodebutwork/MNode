@@ -86,7 +86,7 @@ defmodule BexLib.Key do
   #   |> Script.to_binary()
   # end
 
-  def drive_key(privkey, data) do
+  def derive_key(privkey, data) do
     a = Crypto.double_sha256(data) |> :binary.decode_unsigned()
 
     privkey

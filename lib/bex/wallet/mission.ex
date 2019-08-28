@@ -1,4 +1,14 @@
 defmodule Bex.Wallet.Mission do
+  @moduledoc """
+  The Mission table is too complicate now,
+  so I decided not to use this.
+
+  We just build the tx and save the latest
+  utxos into db. And broadcast the tx.
+
+  We not save the tx.
+  """
+
   use Ecto.Schema
   import Ecto.Changeset
   alias Bex.MissionStatus
@@ -8,7 +18,6 @@ defmodule Bex.Wallet.Mission do
   schema "missions" do
     field :txid, :string
     field :status, MissionStatus, default: :offchain
-    field :v_outputs, :string, virtual: true
     has_many :inputs, Utxo, foreign_key: :consumer_id
     has_many :outputs, Utxo, foreign_key: :producer_id
     belongs_to :document, Document
@@ -25,8 +34,5 @@ defmodule Bex.Wallet.Mission do
     |> validate_required([:status, :inputs, :outputs])
   end
 
-  def add_v_output(%__MODULE__{v_outputs: v}=m, output) do
-    %{m | v_outputs: v ++ [output]}
-  end
 
 end

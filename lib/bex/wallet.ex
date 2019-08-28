@@ -59,18 +59,8 @@ defmodule Bex.Wallet do
 
   """
   def create_private_key(%{"hex" => hex}) do
-    bn = Base.decode16!(hex, case: :mixed)
-
-    attrs = %{
-      hex: hex,
-      bn: bn,
-      address: Key.private_key_to_address(bn),
-      app_key: :crypto.strong_rand_bytes(32) |> Base.encode64(),
-      from: -1
-    }
-
     %PrivateKey{}
-    |> PrivateKey.changeset(attrs)
+    |> PrivateKey.hex_changeset(%{hex: hex})
     |> Repo.insert()
   end
 
@@ -240,7 +230,7 @@ defmodule Bex.Wallet do
           lock_script: p.lock_script,
           private_key_id: p.private_key_id,
         }
-        {:ok, Mission.add_v_output(mission, reuse_p)}
+        {:ok, %Mission{mission | outputs: [reuse_p | mission.outputs]}}
       any ->
         any
     end
@@ -451,22 +441,20 @@ defmodule Bex.Wallet do
 
   @doc """
   Creates a document.
-
-  ## Examples
-
-      iex> create_document(%{field: value})
-      {:ok, %Document{}}
-
-      iex> create_document(%{field: bad_value})
-      {:error, %Ecto.Changeset{}}
-
   """
-  def create_document(attrs \\ %{}) do
-    %Document{
+  def create_document(attrs, base=%PrivateKey{}) do
+    ## drive and set private key
+    {:ok, p} = derive_and_insert_key(base, attrs.dir)
 
-    }
-    |> Document.changeset(attrs)
+    %Document{}
+    |> Document.changeset(Map.put(attrs, :private_key_id, p.id))
     |> Repo.insert()
+  end
+
+  def derive_and_insert_key(base=%PrivateKey{}, dir) do
+    %PrivateKey{}
+    |> PrivateKey.derive_changeset(base, dir)
+    |> Repo.insert(on_conflict: :nothing, returning: true)
   end
 
   @doc """
@@ -557,6 +545,7 @@ defmodule Bex.Wallet do
     {:ok, m} = consume_a_coin(m)
     m = Repo.preload(m, :inputs)
     inputs = m.inputs
+
     opreturn_script = Script.metanet("1NudAQfwpm2jmbiKjUpBjYo42ZXMgQFRsU", "Hello photonet. This is my photo album.") |> Binary.to_hex() |> IO.inspect()
 
   end
