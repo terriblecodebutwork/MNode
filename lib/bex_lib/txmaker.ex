@@ -4,6 +4,7 @@ defmodule BexLib.Txmaker do
   alias BexLib.Key
   alias BexLib.Crypto
   alias Bex.Wallet.Utxo
+  alias Bex.Repo
   require Logger
 
   @sat_per_byte Decimal.cast(1)
@@ -41,12 +42,6 @@ defmodule BexLib.Txmaker do
   defp hex_to_bytes(hex) do
     Binary.from_hex(hex)
   end
-
-  defp scriptcode(p) do
-    Key.private_key_to_p2pkh_script(p)
-  end
-
-  # defp bytes_to_hex(b), do: Binary.to_hex(b)
 
   defp double_sha256(x) do
     x |> sha256() |> sha256()
@@ -139,13 +134,14 @@ defmodule BexLib.Txmaker do
     end
   end
 
-  defp newTxIn(script, script_len, txid, txindex, amount) do
+  defp newTxIn(script, script_len, txid, txindex, amount, pkbn) do
     %{
       script: script,
       script_len: script_len,
       txid: txid,
       txindex: txindex,
-      amount: amount
+      amount: amount,
+      private_key: pkbn
     }
   end
 
@@ -195,21 +191,14 @@ defmodule BexLib.Txmaker do
 
   @doc """
   params:
-    - binary private key
     - list of utxos
     - list of outputs:
       - {address, amount(Decimal satoshis)}
       - %{type: "safe", data: binary or list of binary}
       - %{type: "script", script: binary script}
   """
-  def create_p2pkh_transaction(private_key, inputs, outputs)
-      when is_binary(private_key) and is_list(inputs) and is_list(outputs) do
-    public_key = Key.private_key_to_public_key(private_key)
-    public_key_len = len(public_key) |> to_bytes(1, :little)
-
-    scriptCode = scriptcode(private_key)
-    scriptCode_len = int_to_varint(len(scriptCode))
-
+  def create_p2pkh_transaction(inputs, outputs)
+      when is_list(inputs) and is_list(outputs) do
     version = 0x01 |> to_bytes(4, :little)
     sequence = sequence()
     lock_time = 0x00 |> to_bytes(4, :little)
@@ -222,13 +211,14 @@ defmodule BexLib.Txmaker do
 
     inputs =
       for %Utxo{} = input <- inputs do
+        private_key_bn = Repo.preload(input, :private_key).private_key.bn
         script = input.lock_script
         script_len = int_to_varint(len(script))
         txid = hex_to_bytes(input.txid) |> Binary.reverse()
         txindex = input.index |> to_bytes(4, :little)
         amount = input.value |> Decimal.to_integer() |> to_bytes(8, :little)
 
-        newTxIn(script, script_len, txid, txindex, amount)
+        newTxIn(script, script_len, txid, txindex, amount, private_key_bn)
       end
 
     hashPrevouts = double_sha256(join(for i <- inputs, do: [i.txid, i.txindex]))
@@ -237,6 +227,10 @@ defmodule BexLib.Txmaker do
 
     inputs =
       for txin <- inputs do
+        private_key = txin.private_key
+        public_key = Key.private_key_to_public_key(private_key)
+        public_key_len = len(public_key) |> to_bytes(1, :little)
+
         to_be_hashed =
           join([
             version,
@@ -244,8 +238,8 @@ defmodule BexLib.Txmaker do
             hashSequence,
             txin.txid,
             txin.txindex,
-            scriptCode_len,
-            scriptCode,
+            txin.script_len,
+            txin.script,
             txin.amount,
             sequence,
             hashOutputs,

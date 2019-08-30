@@ -73,12 +73,12 @@ defmodule Bex.Wallet.Utxo do
     outputs = List.duplicate(coin_utxo, coin_num)
     change_script = s
     change_pkid = pkid
-    p = Wallet.get_private_key!(pkid)
+
     case handle_change(inputs, outputs, change_script, change_pkid) do
       {:error, msg} ->
         {:error, msg}
       {:ok, inputs, outputs} ->
-        make_tx(p, inputs, outputs)
+        make_tx(inputs, outputs)
     end
   end
 
@@ -104,7 +104,7 @@ defmodule Bex.Wallet.Utxo do
         {:error, msg} ->
           {:error, msg}
         {:ok, inputs, outputs} ->
-          make_tx(p, inputs, outputs)
+          make_tx(inputs, outputs)
       end
     end
   end
@@ -149,18 +149,16 @@ defmodule Bex.Wallet.Utxo do
     base_s = Key.private_key_to_p2pkh_script(base_key.bn)
     change_script = base_s
     change_pkid = base_key.id
-    p = base_key
     case handle_change(inputs, outputs, change_script, change_pkid) do
       {:error, msg} ->
         {:error, msg}
       {:ok, inputs, outputs} ->
-        make_tx(p, inputs, outputs)
+        make_tx(inputs, outputs)
     end
   end
 
-  def make_tx(pk, inputs, outputs) do
-    bn = pk.bn
-    binary_tx = Txmaker.create_p2pkh_transaction(bn, inputs, outputs)
+  def make_tx(inputs, outputs) do
+    binary_tx = Txmaker.create_p2pkh_transaction(inputs, outputs)
 
     Logger.debug Binary.to_hex(binary_tx)
 
