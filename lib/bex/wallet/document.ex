@@ -41,7 +41,7 @@ defmodule Bex.Wallet.Document do
   @doc false
   def changeset(document, attrs) do
     document
-    |> cast(attrs, [:path, :type, :filename, :dir, :private_key_id])
+    |> cast(attrs, [:path, :type, :filename, :dir, :private_key_id, :base_key_id])
     |> validate_required([:dir, :type])
   end
 

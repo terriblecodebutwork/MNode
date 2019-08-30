@@ -8,6 +8,7 @@ defmodule BexWeb.IndexLive do
   alias Bex.Wallet.Utxo
   alias Bex.Wallet.PrivateKey
   alias BexWeb.Router.Helpers, as: Routes
+  require Logger
 
   def mount(_session, socket) do
     {:ok, reload(socket)}
@@ -56,6 +57,7 @@ defmodule BexWeb.IndexLive do
   end
 
   def handle_event("resync_utxo", id, socket) do
+    Logger.info "resync_utxo"
     id = String.to_integer(id)
     p = Repo.get!(Wallet.PrivateKey, id)
     {_, utxos} = Wallet.sync_utxos_of_private_key(p)

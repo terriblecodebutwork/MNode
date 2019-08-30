@@ -14,7 +14,9 @@ defmodule Bex.Wallet.Utxo do
   alias BexLib.Txmaker
   alias Bex.Repo
   alias BexLib.Key
+  alias BexLib.Script
   alias __MODULE__
+  require Logger
   # alias Bex.Wallet.Mission
 
   schema "utxos" do
@@ -35,6 +37,16 @@ defmodule Bex.Wallet.Utxo do
     |> cast(attrs, [:value, :lock_script, :txid, :index, :type])
     |> cast_assoc(:private_key)
     |> validate_required([:value, :lock_script,  :type])
+  end
+
+
+  def meta_utxo(pk, root) do
+    lock_script = Script.metanet(pk.address, ["dir", root])
+    %Utxo{
+      value: Decimal.cast(0),
+      lock_script: lock_script,
+      type: :data
+    }
   end
 
   @coin_sat Decimal.cast(10_000)
@@ -59,15 +71,14 @@ defmodule Bex.Wallet.Utxo do
     coin_num = Decimal.div_int(v, @coin_sat) |> Decimal.to_integer()
     coin_utxo = %__MODULE__{value: @coin_sat, private_key_id: pkid, lock_script: s}
     outputs = List.duplicate(coin_utxo, coin_num)
-    case get_change_amount(inputs, outputs) do
+    change_script = s
+    change_pkid = pkid
+    p = Wallet.get_private_key!(pkid)
+    case handle_change(inputs, outputs, change_script, change_pkid) do
       {:error, msg} ->
         {:error, msg}
-      other ->
-        outputs = add_change(outputs, other, s, pkid)
-
-        pk = Wallet.get_private_key!(pkid)
-
-        make_tx(pk, inputs, outputs)
+      {:ok, inputs, outputs} ->
+        make_tx(p, inputs, outputs)
     end
   end
 
@@ -85,22 +96,74 @@ defmodule Bex.Wallet.Utxo do
     if coin_num == 0 do
       {:error, "not enough dusts"}
     else
-      s = Key.private_key_to_p2pkh_script(p.bn)
-      coin_utxo = %__MODULE__{value: @coin_sat, private_key_id: p.id, lock_script: s}
+      change_script = Key.private_key_to_p2pkh_script(p.bn)
+      change_pkid = p.id
+      coin_utxo = %__MODULE__{value: @coin_sat, private_key_id: p.id, lock_script: change_script}
       outputs = List.duplicate(coin_utxo, coin_num)
-      case get_change_amount(inputs, outputs) do
+      case handle_change(inputs, outputs, change_script, change_pkid) do
         {:error, msg} ->
           {:error, msg}
-        other ->
-          outputs = add_change(outputs, other, s, p.id)
+        {:ok, inputs, outputs} ->
           make_tx(p, inputs, outputs)
       end
+    end
+  end
+
+  # FIXME as one privateKey can only has
+  # one unique lock_script
+  # So we can drop one param,
+  # search the db with change_script
+  # or serche that with change_pkid
+  def handle_change(inputs, outputs, change_script, change_pkid) do
+    case get_change_amount(inputs, outputs) do
+      {:error, msg} ->
+        {:error, msg}
+      {change, outputs} ->
+        outputs = add_change(outputs, change, change_script, change_pkid)
+        {:ok, inputs, outputs}
+    end
+  end
+
+  @permission_sat Decimal.cast(546)
+
+  @doc """
+  Root directory creation tx.
+  params: base_pk, private_key, dir_string
+
+  inputs: a coin
+  outputs: [
+    metanet opreturn,
+    permissions...
+  ]
+  """
+  def create_root_dir(base_key, pk, root) do
+    inputs = [Wallet.get_a_coin(base_key)]
+    # just generate 10 permission utxos
+    permission_num = 10
+    s = Key.private_key_to_p2pkh_script(pk.bn)
+    permission_utxo = %__MODULE__{value: @permission_sat, private_key_id: pk.id, lock_script: s}
+
+    meta = meta_utxo(base_key, root)
+    outputs = [meta | List.duplicate(permission_utxo, permission_num)]
+    # send change to base key
+    base_s = Key.private_key_to_p2pkh_script(base_key.bn)
+    change_script = base_s
+    change_pkid = base_key.id
+    p = base_key
+    case handle_change(inputs, outputs, change_script, change_pkid) do
+      {:error, msg} ->
+        {:error, msg}
+      {:ok, inputs, outputs} ->
+        make_tx(p, inputs, outputs)
     end
   end
 
   def make_tx(pk, inputs, outputs) do
     bn = pk.bn
     binary_tx = Txmaker.create_p2pkh_transaction(bn, inputs, outputs)
+
+    Logger.debug Binary.to_hex(binary_tx)
+
     txid = Txmaker.get_txid_from_binary_tx(binary_tx)
     ## TODO save the tx for broadcasting
     Repo.transaction(fn ->
@@ -130,13 +193,15 @@ defmodule Bex.Wallet.Utxo do
   defp get_change_amount(inputs, outputs) do
     case Txmaker.get_change(inputs, outputs) do
       :insufficient ->
+        Logger.debug "get_change_amount: insufficient"
         get_change_amount(inputs, tl(outputs))
 
-      {:change, change, _} ->
-        change
+      {:change, change, _inputs, outputs} ->
+        Logger.debug "get_change_amount: #{inspect(change)}"
+        {change, outputs}
 
-      {:nochange, _} ->
-        nil
+      {:nochange, _inputs, outputs} ->
+        {nil, outputs}
     end
   end
 

@@ -11,6 +11,7 @@ defmodule Bex.Wallet do
   alias Bex.Wallet.Mission
   alias BexLib.Script
   import Ecto.Changeset, only: [change: 2]
+  require Logger
 
   @doc """
   Returns the list of private_keys.
@@ -59,8 +60,7 @@ defmodule Bex.Wallet do
 
   """
   def create_private_key(%{"hex" => hex}) do
-    %PrivateKey{}
-    |> PrivateKey.hex_changeset(%{hex: hex})
+    PrivateKey.hex_changeset(%{hex: hex})
     |> Repo.insert()
   end
 
@@ -148,6 +148,7 @@ defmodule Bex.Wallet do
       # return {integer, [utxos]}
 
       {:error, msg} ->
+        Logger.error "sync failed"
         {:error, msg}
     end
   end
@@ -186,66 +187,15 @@ defmodule Bex.Wallet do
   """
   def get_utxo!(id), do: Repo.get!(Utxo, id)
 
-  @doc """
-  Add a coin type utxo into the inputs of a mission.
-  Return: {:ok, mission} or {:error, any}
-  """
-  def consume_a_coin(%Mission{} = mission) do
-    Repo.transaction(fn ->
-      coin =
-        from(u in Utxo,
-          where: u.type == "coin" and is_nil(u.consumer_id),
-          lock: "FOR UPDATE SKIP LOCKED"
-        )
-        |> first(:block_height)
-        |> Repo.one!()
 
-      Repo.update!(change(coin, consumer_id: mission.id))
-      mission
-    end)
+  def get_a_coin(%PrivateKey{} = p) do
+      from(u in Utxo,
+        where: u.type == "coin",
+        lock: "FOR UPDATE SKIP LOCKED",
+        limit: 1
+      ) |> Repo.one!()
   end
 
-  @doc """
-  Add permission to the inputs of and outputs mission, by set consumer_id
-  as the mission.
-  Return: {:ok, mission} or {:error, any}
-  """
-  def consume_permission(%Mission{}=m, dir) do
-    case Repo.transaction(fn ->
-        p =
-          from(u in Utxo,
-            where: u.type == "permission" and is_nil(u.consumer_id),
-            lock: "FOR UPDATE SKIP LOCKED"
-          )
-          |> first(:block_height)
-          |> Repo.one!()
-
-        Repo.update!(change(p, consumer_id: m.id))
-        {m, p}
-      end) do
-      {:ok, {mission, p}} ->
-        reuse_p =
-        %Utxo{
-          value: p.value,
-          lock_script: p.lock_script,
-          private_key_id: p.private_key_id,
-        }
-        {:ok, %Mission{mission | outputs: [reuse_p | mission.outputs]}}
-      any ->
-        any
-    end
-  end
-
-  # def test_lock do
-  #   1..2
-  #   |> Enum.map(fn _ ->
-  #       spawn(fn ->
-  #         get_and_lock_one_coin()
-  #         |> Map.get(:id)
-  #         |> IO.inspect()
-  #       end)
-  #     end)
-  # end
 
   @doc """
   Creates a utxo.
@@ -312,101 +262,6 @@ defmodule Bex.Wallet do
     Utxo.changeset(utxo, %{})
   end
 
-  alias Bex.Wallet.Mission
-
-  @doc """
-  Returns the list of missions.
-
-  ## Examples
-
-      iex> list_missions()
-      [%Mission{}, ...]
-
-  """
-  def list_missions do
-    Repo.all(Mission)
-  end
-
-  @doc """
-  Gets a single mission.
-
-  Raises `Ecto.NoResultsError` if the Mission does not exist.
-
-  ## Examples
-
-      iex> get_mission!(123)
-      %Mission{}
-
-      iex> get_mission!(456)
-      ** (Ecto.NoResultsError)
-
-  """
-  def get_mission!(id), do: Repo.get!(Mission, id)
-
-  @doc """
-  Creates a mission.
-
-  ## Examples
-
-      iex> create_mission(%{field: value})
-      {:ok, %Mission{}}
-
-      iex> create_mission(%{field: bad_value})
-      {:error, %Ecto.Changeset{}}
-
-  """
-  def create_mission(attrs \\ %{}) do
-    %Mission{}
-    |> Mission.changeset(attrs)
-    |> Repo.insert()
-  end
-
-  @doc """
-  Updates a mission.
-
-  ## Examples
-
-      iex> update_mission(mission, %{field: new_value})
-      {:ok, %Mission{}}
-
-      iex> update_mission(mission, %{field: bad_value})
-      {:error, %Ecto.Changeset{}}
-
-  """
-  def update_mission(%Mission{} = mission, attrs) do
-    mission
-    |> Mission.changeset(attrs)
-    |> Repo.update()
-  end
-
-  @doc """
-  Deletes a Mission.
-
-  ## Examples
-
-      iex> delete_mission(mission)
-      {:ok, %Mission{}}
-
-      iex> delete_mission(mission)
-      {:error, %Ecto.Changeset{}}
-
-  """
-  def delete_mission(%Mission{} = mission) do
-    Repo.delete(mission)
-  end
-
-  @doc """
-  Returns an `%Ecto.Changeset{}` for tracking mission changes.
-
-  ## Examples
-
-      iex> change_mission(mission)
-      %Ecto.Changeset{source: %Mission{}}
-
-  """
-  def change_mission(%Mission{} = mission) do
-    Mission.changeset(mission, %{})
-  end
 
   alias Bex.Wallet.Document
 
@@ -452,8 +307,7 @@ defmodule Bex.Wallet do
   end
 
   def derive_and_insert_key(base=%PrivateKey{}, dir) do
-    %PrivateKey{}
-    |> PrivateKey.derive_changeset(base, dir)
+    PrivateKey.derive_changeset(base, dir)
     |> Repo.insert(on_conflict: :nothing, returning: true)
   end
 
@@ -509,15 +363,6 @@ defmodule Bex.Wallet do
 
   end
 
-  @doc """
-  build tx and broadcast and change the mission status.
-  """
-  def start_mission(%Mission{}=m, :one_coin) do
-    # add one coin into inputs
-    # add change if have any
-
-
-  end
 
   ####### Documents ##############
 
@@ -527,34 +372,20 @@ defmodule Bex.Wallet do
   upload the document into the blockchain.
   """
   def upload_document(%Document{type: "directory"} = d) do
+    d = Repo.preload(d, :private_key) |> Repo.preload(:base_key)
     dirs = Document.get_children_dirs(d.dir)
     case dirs do
       [] ->
         {:error, "found no dir"}
       [root] ->
         # root dir
-        create_root_dir(d, root)
+        Utxo.create_root_dir(d.base_key, d.private_key, root)
       other ->
         [father_dir, self_dir] = Enum.take(other, -2)
-        create_noroot_dir(d, father_dir, self_dir)
+        # create_noroot_dir(d, father_dir, self_dir)
     end
   end
 
-  def create_root_dir(d, root) do
-    {:ok, m} = create_mission(%{document_id: d.id})
-    {:ok, m} = consume_a_coin(m)
-    m = Repo.preload(m, :inputs)
-    inputs = m.inputs
-
-    opreturn_script = Script.metanet("1NudAQfwpm2jmbiKjUpBjYo42ZXMgQFRsU", "Hello photonet. This is my photo album.") |> Binary.to_hex() |> IO.inspect()
-
-  end
-
-  def create_noroot_dir(d, father_dir, self_dir) do
-    {:ok, mission} = create_mission()
-    {:ok, mission} = consume_permission(mission, father_dir)
-    start_mission(mission, :one_coin)
-  end
 
 
 end

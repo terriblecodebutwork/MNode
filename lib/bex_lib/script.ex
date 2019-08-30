@@ -106,13 +106,13 @@ defmodule BexLib.Script do
   ]
   return: binary script
   """
-  def metanet(dir_addr, content, parent_tx \\ "NULL") do
-    [
+  def metanet(dir_addr, contents, parent_tx \\ "NULL") do
+    ([
       :OP_RETURN,
       "meta",
       dir_addr,
-      parent_tx,
-      content
-    ] |> to_binary()
+      parent_tx
+    ] ++ contents
+    ) |> to_binary()
   end
 end

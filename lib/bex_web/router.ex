@@ -20,7 +20,6 @@ defmodule BexWeb.Router do
     get "/", PageController, :index
     resources "/private_keys", PrivateKeyController
     resources "/utxos", UtxoController
-    resources "/missions", MissionController
     resources "/documents", DocumentController
     live "/index", IndexLive
     live "/meta", MetaLive

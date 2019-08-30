@@ -30,7 +30,7 @@ defmodule Bex.Wallet.PrivateKey do
     |> validate_required([:hex, :bn,  :address])
   end
 
-  def hex_changeset(private_key, %{hex: hex}=attrs) do
+  def hex_changeset(%{hex: hex}=attrs) do
     bn = Base.decode16!(hex, case: :mixed)
 
     attrs = Map.merge(%{
@@ -44,11 +44,10 @@ defmodule Bex.Wallet.PrivateKey do
     |> changeset(attrs)
   end
 
-  def derive_changeset(private_key, base_key, dir) do
-    new_bn = Key.derive_key(private_key.bn, dir)
+  def derive_changeset(base_key, dir) do
+    new_bn = Key.derive_key(base_key.bn, dir)
 
-    %PrivateKey{}
-    |> hex_changeset(%{hex: Binary.to_hex(new_bn), dir: dir, base_key: private_key})
+    hex_changeset(%{hex: Binary.to_hex(new_bn), dir: dir, base_key_id: base_key.id})
   end
 
   def get_derive_keys_by_id(id) do

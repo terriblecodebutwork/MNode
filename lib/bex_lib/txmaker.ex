@@ -155,10 +155,18 @@ defmodule BexLib.Txmaker do
   Params: utxos of input and output
   Return: 3 types of change.
   """
-  def get_change(inputs, outputs, reserve_utxos \\ [], opreturn_size \\ 0) do
+  def get_change(inputs, outputs, reserve_utxos \\ []) do
+    opreturn_size =
+      case Enum.find(outputs, fn x -> x.type == :data end) do
+        nil -> 0
+        u -> u.lock_script |> byte_size()
+      end
+
     input_count = length(inputs)
     output_count = length(outputs)
     fee_with_change = get_fee(input_count, output_count + 1, opreturn_size)
+
+    Logger.debug "fee: #{fee_with_change}"
     sum_of_inputs = Utxo.sum_of_value(inputs)
     sum_of_outputs = Utxo.sum_of_value(outputs)
 
@@ -178,9 +186,9 @@ defmodule BexLib.Txmaker do
         change = Decimal.sub(sum_of_inputs, Decimal.add(fee_with_change, sum_of_outputs))
 
         if Decimal.cmp(change, 546) == :gt do
-          {:change, change, inputs}
+          {:change, change, inputs, outputs}
         else
-          {:no_change, inputs}
+          {:no_change, inputs, outputs}
         end
     end
   end
