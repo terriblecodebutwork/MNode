@@ -36,7 +36,11 @@ defmodule BexWeb.MetaLive do
   def render(assigns) do
     ~L"""
     <%= if @loaded do %>
-    <h1>Files</h1>
+    <h1>MetaNet FileSystem</h1>
+    <form phx-submit="create_root_dir">
+      <input name="dir">
+      <button type="submit">mkdir(root)</button>
+    </form>
     <ul>
       <%= for k <- @derive_keys || [] do %>
         <div>
@@ -45,6 +49,7 @@ defmodule BexWeb.MetaLive do
 
           <form phx-submit="create_dir">
             <input name="dir">
+            <button type="submit">mkdir</button>
           </form>
         </div>
       <% end %>
@@ -59,6 +64,11 @@ defmodule BexWeb.MetaLive do
   ## TODO
   def handle_event("create_dir", %{"dir" => dir}, socket) do
     IO.inspect(dir)
+    {:noreply, socket}
+  end
+
+  def handle_event("create_root_dir", %{"dir" => dir}, socket) do
+    Logger.info "create_root_dir: #{inspect dir}"
     {:noreply, socket}
   end
 
