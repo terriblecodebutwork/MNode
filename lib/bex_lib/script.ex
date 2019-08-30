@@ -48,7 +48,6 @@ defmodule BexLib.Script do
     [data, :OP_PUSHDATA1 | script] |> parse(bin)
   end
 
-
   def parse(script, <<@op_pushdata2, size::unsigned-little-integer-size(16), bin::binary>>) do
     <<data::binary-size(size), bin::binary>> = bin
     [data, :OP_PUSHDATA2 | script] |> parse(bin)
@@ -93,7 +92,6 @@ defmodule BexLib.Script do
 
   def to_binary_word(word) when word in @op_names, do: <<@op[word]>>
 
-
   @doc """
   Metanet protocol.
   example:
@@ -108,11 +106,11 @@ defmodule BexLib.Script do
   """
   def metanet(dir_addr, contents, parent_tx \\ "NULL") do
     ([
-      :OP_RETURN,
-      "meta",
-      dir_addr,
-      parent_tx
-    ] ++ contents
-    ) |> to_binary()
+       :OP_RETURN,
+       "meta",
+       dir_addr,
+       parent_tx
+     ] ++ contents)
+    |> to_binary()
   end
 end

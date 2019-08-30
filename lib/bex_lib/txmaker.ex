@@ -162,7 +162,7 @@ defmodule BexLib.Txmaker do
     output_count = length(outputs)
     fee_with_change = get_fee(input_count, output_count + 1, opreturn_size)
 
-    Logger.debug "fee: #{fee_with_change}"
+    Logger.debug("fee: #{fee_with_change}")
     sum_of_inputs = Utxo.sum_of_value(inputs)
     sum_of_outputs = Utxo.sum_of_value(outputs)
 
@@ -317,5 +317,4 @@ defmodule BexLib.Txmaker do
   def get_txid_from_binary_tx(bn) do
     Crypto.double_sha256(bn) |> Binary.reverse() |> Binary.to_hex()
   end
-
 end

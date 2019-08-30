@@ -11,7 +11,8 @@ defmodule Bex.Wallet.PrivateKey do
   schema "private_keys" do
     field :address, :string
     field :bn, :binary
-    field :dir, :string # the dir which derived this key
+    # the dir which derived this key
+    field :dir, :string
     field :hex, :string
     field :app_key, :string
     belongs_to :base_key, PrivateKey, foreign_key: :base_key_id
@@ -25,20 +26,24 @@ defmodule Bex.Wallet.PrivateKey do
   @doc false
   def changeset(private_key, attrs) do
     private_key
-    |> cast(attrs, [:hex, :bn, :dir, :address, :app_key])
+    |> cast(attrs, [:hex, :bn, :dir, :address, :app_key, :base_key_id])
     |> cast_assoc(:base_key)
-    |> validate_required([:hex, :bn,  :address])
+    |> validate_required([:hex, :bn, :address])
   end
 
-  def hex_changeset(%{hex: hex}=attrs) do
+  def hex_changeset(%{hex: hex} = attrs) do
     bn = Base.decode16!(hex, case: :mixed)
 
-    attrs = Map.merge(%{
-      hex: hex,
-      bn: bn,
-      address: Key.private_key_to_address(bn),
-      app_key: :crypto.strong_rand_bytes(32) |> Base.encode64()
-    }, attrs)
+    attrs =
+      Map.merge(
+        %{
+          hex: hex,
+          bn: bn,
+          address: Key.private_key_to_address(bn),
+          app_key: :crypto.strong_rand_bytes(32) |> Base.encode64()
+        },
+        attrs
+      )
 
     %PrivateKey{}
     |> changeset(attrs)
@@ -51,8 +56,10 @@ defmodule Bex.Wallet.PrivateKey do
   end
 
   def get_derive_keys_by_id(id) do
-    query = from p in PrivateKey,
-      where: p.base_key_id == ^id and not is_nil(p.dir)
+    query =
+      from p in PrivateKey,
+        where: p.base_key_id == ^id and not is_nil(p.dir)
+
     Repo.all(query)
   end
 end

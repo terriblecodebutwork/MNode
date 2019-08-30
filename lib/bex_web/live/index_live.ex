@@ -57,10 +57,10 @@ defmodule BexWeb.IndexLive do
   end
 
   def handle_event("resync_utxo", id, socket) do
-    Logger.info "resync_utxo"
+    Logger.info("resync_utxo")
     id = String.to_integer(id)
     p = Repo.get!(Wallet.PrivateKey, id)
-    {_, utxos} = Wallet.sync_utxos_of_private_key(p)
+    {_, _utxos} = Wallet.sync_utxos_of_private_key(p)
 
     {:noreply, reload(socket)}
   end
@@ -77,12 +77,14 @@ defmodule BexWeb.IndexLive do
 
   def handle_event("recast", id, socket) do
     id = String.to_integer(id)
+
     case Utxo.recast(Repo.get!(PrivateKey, id)) do
       {:ok, _} ->
         {:noreply, reload(socket)}
+
       {:error, msg} ->
-        {:noreply, put_flash(socket, :error, msg) |> redirect(to: Routes.live_path(socket, __MODULE__))}
+        {:noreply,
+         put_flash(socket, :error, msg) |> redirect(to: Routes.live_path(socket, __MODULE__))}
     end
   end
-
 end

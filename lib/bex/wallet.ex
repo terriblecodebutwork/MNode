@@ -148,7 +148,7 @@ defmodule Bex.Wallet do
       # return {integer, [utxos]}
 
       {:error, msg} ->
-        Logger.error "sync failed"
+        Logger.error("sync failed")
         {:error, msg}
     end
   end
@@ -187,15 +187,14 @@ defmodule Bex.Wallet do
   """
   def get_utxo!(id), do: Repo.get!(Utxo, id)
 
-
   def get_a_coin(%PrivateKey{} = p) do
-      from(u in Utxo,
-        where: u.type == "coin",
-        lock: "FOR UPDATE SKIP LOCKED",
-        limit: 1
-      ) |> Repo.one!()
+    from(u in Utxo,
+      where: u.type == "coin",
+      lock: "FOR UPDATE SKIP LOCKED",
+      limit: 1
+    )
+    |> Repo.one!()
   end
-
 
   @doc """
   Creates a utxo.
@@ -262,7 +261,6 @@ defmodule Bex.Wallet do
     Utxo.changeset(utxo, %{})
   end
 
-
   alias Bex.Wallet.Document
 
   @doc """
@@ -296,8 +294,10 @@ defmodule Bex.Wallet do
 
   @doc """
   Creates a document.
+
+  #TODO Deperate Document
   """
-  def create_document(attrs, base=%PrivateKey{}) do
+  def create_document(attrs, base = %PrivateKey{}) do
     ## drive and set private key
     {:ok, p} = derive_and_insert_key(base, attrs.dir)
 
@@ -306,7 +306,7 @@ defmodule Bex.Wallet do
     |> Repo.insert()
   end
 
-  def derive_and_insert_key(base=%PrivateKey{}, dir) do
+  def derive_and_insert_key(base = %PrivateKey{}, dir) do
     PrivateKey.derive_changeset(base, dir)
     |> Repo.insert(on_conflict: :nothing, returning: true)
   end
@@ -360,12 +360,9 @@ defmodule Bex.Wallet do
 
   # @spec get_a_permission_of_dir(String.t()) :: Utxo.t()
   def get_a_permission_of_dir(dir) do
-
   end
 
-
   ####### Documents ##############
-
 
   # @spec to_mission(document()) :: {:ok, mission() | [mission()]} | {:error, any()}
   @doc """
@@ -374,18 +371,18 @@ defmodule Bex.Wallet do
   def upload_document(%Document{type: "directory"} = d) do
     d = Repo.preload(d, :private_key) |> Repo.preload(:base_key)
     dirs = Document.get_children_dirs(d.dir)
+
     case dirs do
       [] ->
         {:error, "found no dir"}
+
       [root] ->
         # root dir
-        Utxo.create_root_dir(d.base_key, d.private_key, root)
+        Utxo.create_root_dir(d.base_key,  root)
+
       other ->
         [father_dir, self_dir] = Enum.take(other, -2)
         # create_noroot_dir(d, father_dir, self_dir)
     end
   end
-
-
-
 end

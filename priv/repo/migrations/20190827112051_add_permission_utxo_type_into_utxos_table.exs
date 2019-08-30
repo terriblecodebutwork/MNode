@@ -3,7 +3,7 @@ defmodule Bex.Repo.Migrations.AddPermissionUtxoTypeIntoUtxosTable do
   @disable_ddl_transaction true
 
   def up do
-    Ecto.Migration.execute "ALTER TYPE utxo_type ADD VALUE IF NOT EXISTS'permission'"
+    Ecto.Migration.execute("ALTER TYPE utxo_type ADD VALUE IF NOT EXISTS'permission'")
   end
 
   def down do

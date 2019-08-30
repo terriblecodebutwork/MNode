@@ -7,30 +7,32 @@ defmodule BexWeb.MetaLive do
   alias Bex.Repo
   alias Bex.Wallet.Utxo
   alias Bex.Wallet.PrivateKey
-  alias BexWeb.Router.Helpers, as: Routes
+  # alias BexWeb.Router.Helpers, as: Routes
   require Logger
 
   def mount(_session, socket) do
     state = %{
       loaded: false
     }
+
     {:ok, assign(socket, state)}
   end
 
   def handle_params(%{"id" => id}, _url, socket) do
     id = String.to_integer(id)
+
     state = %{
       loaded: true,
+      key: Wallet.get_private_key!(id),
       id: id,
       derive_keys: PrivateKey.get_derive_keys_by_id(id)
     }
+
     {:noreply, assign(socket, state)}
   end
 
   defp reload(socket) do
-    # private_keys = Wallet.list_private_keys() |> Enum.map(&Repo.preload(&1, :utxos))
-    # assign(socket, private_keys: private_keys)
-    socket
+    socket |> assign(:derive_keys, PrivateKey.get_derive_keys_by_id(socket.assigns.id))
   end
 
   def render(assigns) do
@@ -60,16 +62,16 @@ defmodule BexWeb.MetaLive do
     """
   end
 
+  def handle_event("create_root_dir", %{"dir" => dir}, socket) do
+    %{key: key} = socket.assigns
+    Logger.info("create_root_dir: #{inspect(dir)}")
+    Utxo.create_root_dir(key, dir)
+    {:noreply, reload(socket)}
+  end
 
   ## TODO
   def handle_event("create_dir", %{"dir" => dir}, socket) do
     IO.inspect(dir)
     {:noreply, socket}
   end
-
-  def handle_event("create_root_dir", %{"dir" => dir}, socket) do
-    Logger.info "create_root_dir: #{inspect dir}"
-    {:noreply, socket}
-  end
-
 end

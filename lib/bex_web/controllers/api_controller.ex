@@ -24,14 +24,17 @@ defmodule BexWeb.ApiController do
     new_path = @storage <> "/" <> new_filename
     File.cp!(path, new_path)
 
-    case Wallet.create_document(%{
-           path: new_path,
-           type: type,
-           filename: filename,
-           dir: dir,
-           base_key_id: conn.assigns.private_key.id
-         }, conn.assigns.private_key) do
-      {:ok, doc} ->
+    case Wallet.create_document(
+           %{
+             path: new_path,
+             type: type,
+             filename: filename,
+             dir: dir,
+             base_key_id: conn.assigns.private_key.id
+           },
+           conn.assigns.private_key
+         ) do
+      {:ok, _doc} ->
         # start_other_process_to_build_and_send_this_document(doc)
         text(conn, "ok")
 
@@ -41,12 +44,16 @@ defmodule BexWeb.ApiController do
   end
 
   def create(conn, %{"dir" => dir}) do
-    IO.inspect conn.assigns.private_key
-    case Wallet.create_document(%{
-           type: "directory",
-           dir: dir,
-           base_key_id: conn.assigns.private_key.id
-         }, conn.assigns.private_key) do
+    IO.inspect(conn.assigns.private_key)
+
+    case Wallet.create_document(
+           %{
+             type: "directory",
+             dir: dir,
+             base_key_id: conn.assigns.private_key.id
+           },
+           conn.assigns.private_key
+         ) do
       {:ok, doc} ->
         Wallet.upload_document(doc)
         text(conn, "ok")
