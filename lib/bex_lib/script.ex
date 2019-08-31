@@ -104,7 +104,7 @@ defmodule BexLib.Script do
   ]
   return: binary script
   """
-  def metanet(dir_addr, contents, parent_tx \\ "NULL") do
+  def metanet(dir_addr, contents, parent_tx) do
     ([
        :OP_RETURN,
        "meta",

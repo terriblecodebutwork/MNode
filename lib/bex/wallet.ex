@@ -189,7 +189,7 @@ defmodule Bex.Wallet do
 
   def get_a_coin(%PrivateKey{} = p) do
     from(u in Utxo,
-      where: u.type == "coin",
+      where: u.type == "coin" and u.private_key_id == ^p.id,
       lock: "FOR UPDATE SKIP LOCKED",
       limit: 1
     )
@@ -359,7 +359,14 @@ defmodule Bex.Wallet do
   end
 
   # @spec get_a_permission_of_dir(String.t()) :: Utxo.t()
-  def get_a_permission_of_dir(dir) do
+  def get_a_permission(%PrivateKey{} = key) do
+    query =
+      from u in Utxo,
+        where: u.private_key_id == ^key.id and u.type == "permission",
+        lock: "FOR UPDATE SKIP LOCKED",
+        limit: 1
+
+    Repo.one!(query)
   end
 
   ####### Documents ##############
@@ -378,7 +385,7 @@ defmodule Bex.Wallet do
 
       [root] ->
         # root dir
-        Utxo.create_root_dir(d.base_key,  root)
+        Utxo.create_root_dir(d.base_key, root)
 
       other ->
         [father_dir, self_dir] = Enum.take(other, -2)

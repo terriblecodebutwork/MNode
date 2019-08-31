@@ -49,8 +49,8 @@ defmodule BexWeb.MetaLive do
           <h2>Address: <%= k.address %></h2>
           <h2>Dir: <%= k.dir %></h2>
 
-          <form phx-submit="create_dir">
-            <input name="dir">
+          <form phx-submit="create_sub_dir">
+            <input name="dir:<%= k.id %>">
             <button type="submit">mkdir</button>
           </form>
         </div>
@@ -69,9 +69,17 @@ defmodule BexWeb.MetaLive do
     {:noreply, reload(socket)}
   end
 
-  ## TODO
-  def handle_event("create_dir", %{"dir" => dir}, socket) do
-    IO.inspect(dir)
-    {:noreply, socket}
+  # dir is the sub-folder name
+  # need connact with hold dirs
+  #
+  def handle_event("create_sub_dir", map, socket) do
+    [{vk, dir}] = Map.to_list(map)
+    "dir:" <> id = vk
+    id = String.to_integer(id)
+    key = socket.assigns.derive_keys |> Enum.find(fn x -> x.id == id end)
+    Logger.info("create_sub_dir: #{inspect({key.dir, dir})}")
+    dir = key.dir <> "/" <> dir
+    Utxo.create_sub_dir(key, dir)
+    {:noreply, reload(socket)}
   end
 end

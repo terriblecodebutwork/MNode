@@ -13,6 +13,8 @@ defmodule Bex.Wallet.PrivateKey do
     field :bn, :binary
     # the dir which derived this key
     field :dir, :string
+    field :dir_txid, :string
+    field :lock_script, :binary
     field :hex, :string
     field :app_key, :string
     belongs_to :base_key, PrivateKey, foreign_key: :base_key_id
@@ -26,7 +28,7 @@ defmodule Bex.Wallet.PrivateKey do
   @doc false
   def changeset(private_key, attrs) do
     private_key
-    |> cast(attrs, [:hex, :bn, :dir, :address, :app_key, :base_key_id])
+    |> cast(attrs, [:hex, :bn, :dir, :dir_txid, :lock_script, :address, :app_key, :base_key_id])
     |> cast_assoc(:base_key)
     |> validate_required([:hex, :bn, :address])
   end
@@ -40,7 +42,8 @@ defmodule Bex.Wallet.PrivateKey do
           hex: hex,
           bn: bn,
           address: Key.private_key_to_address(bn),
-          app_key: :crypto.strong_rand_bytes(32) |> Base.encode64()
+          app_key: :crypto.strong_rand_bytes(32) |> Base.encode64(),
+          lock_script: Key.private_key_to_p2pkh_script(bn)
         },
         attrs
       )

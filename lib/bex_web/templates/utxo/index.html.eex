@@ -4,7 +4,7 @@
   <thead>
     <tr>
       <th>Value</th>
-      <th>Lock script</th>
+      <th>Type</th>
       <th>Txid</th>
       <th>Index</th>
 
@@ -15,7 +15,7 @@
 <%= for utxo <- @utxos do %>
     <tr>
       <td><%= utxo.value %></td>
-      <td><%= utxo.lock_script %></td>
+      <td><%= utxo.type %></td>
       <td><%= utxo.txid %></td>
       <td><%= utxo.index %></td>
 

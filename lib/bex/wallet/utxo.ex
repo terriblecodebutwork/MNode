@@ -39,8 +39,8 @@ defmodule Bex.Wallet.Utxo do
     |> validate_required([:value, :lock_script, :type])
   end
 
-  def meta_utxo(pk, root) do
-    lock_script = Script.metanet(pk.address, ["dir", root])
+  def meta_utxo(addr, root, p_txid \\ "NULL") do
+    lock_script = Script.metanet(addr, ["dir", root], p_txid)
 
     %Utxo{
       value: Decimal.cast(0),
@@ -136,6 +136,7 @@ defmodule Bex.Wallet.Utxo do
   end
 
   @permission_sat Decimal.cast(546)
+  @permission_num 10
 
   @doc """
   Root directory creation tx.
@@ -146,26 +147,24 @@ defmodule Bex.Wallet.Utxo do
     metanet opreturn,
     permissions...
   ]
+
+  save dir_txid to c_key
   """
   def create_root_dir(base_key, root) do
-    {:ok, pk} = Wallet.derive_and_insert_key(base_key, root)
     inputs = [Wallet.get_a_coin(base_key)]
-    # just generate 10 permission utxos
-    permission_num = 10
-    s = Key.private_key_to_p2pkh_script(pk.bn)
+    {:ok, c_key} = Wallet.derive_and_insert_key(base_key, root)
 
-    permission_utxo = %__MODULE__{
+    c_permission_utxo = %__MODULE__{
       value: @permission_sat,
-      private_key_id: pk.id,
+      private_key_id: c_key.id,
       type: :permission,
-      lock_script: s
+      lock_script: c_key.lock_script
     }
 
-    meta = meta_utxo(base_key, root)
-    outputs = [meta | List.duplicate(permission_utxo, permission_num)]
+    meta = meta_utxo(c_key.address, root)
+    outputs = [meta | List.duplicate(c_permission_utxo, @permission_num)]
     # send change to base key
-    base_s = Key.private_key_to_p2pkh_script(base_key.bn)
-    change_script = base_s
+    change_script = base_key.lock_script
     change_pkid = base_key.id
 
     case handle_change(inputs, outputs, change_script, change_pkid) do
@@ -173,7 +172,48 @@ defmodule Bex.Wallet.Utxo do
         {:error, msg}
 
       {:ok, inputs, outputs} ->
-        make_tx(inputs, outputs)
+        {:ok, txid} = make_tx(inputs, outputs)
+        Wallet.update_private_key(c_key, %{dir_txid: txid})
+    end
+  end
+
+  # dir is full dir
+  # c_ child
+  # s_ self
+  # p_ parent
+  def create_sub_dir(s_key, c_dir) do
+    base_key = Repo.preload(s_key, :base_key).base_key
+    s_permission = Wallet.get_a_permission(s_key)
+    inputs = [s_permission, Wallet.get_a_coin(base_key)]
+    {:ok, c_key} = Wallet.derive_and_insert_key(base_key, c_dir)
+
+    c_permission_utxo = %__MODULE__{
+      value: @permission_sat,
+      private_key_id: c_key.id,
+      type: :permission,
+      lock_script: c_key.lock_script
+    }
+
+    # is seems first param should be derived key's address
+    meta = meta_utxo(c_key.address, c_dir, s_key.dir_txid)
+
+    outputs = [
+      meta,
+      # reuse self permission
+      s_permission | List.duplicate(c_permission_utxo, @permission_num)
+    ]
+
+    # send change to base key
+    change_script = base_key.lock_script
+    change_pkid = base_key.id
+
+    case handle_change(inputs, outputs, change_script, change_pkid) do
+      {:error, msg} ->
+        {:error, msg}
+
+      {:ok, inputs, outputs} ->
+        {:ok, txid} = make_tx(inputs, outputs)
+        Wallet.update_private_key(c_key, %{dir_txid: txid})
     end
   end
 
@@ -188,11 +228,25 @@ defmodule Bex.Wallet.Utxo do
       # delete inputs
       for u <- inputs, do: Repo.delete!(u)
       # insert outputs
-      outputs
-      |> Stream.map(&set_utxo_type/1)
-      |> Stream.with_index()
-      |> Stream.map(fn {x, i} -> Map.put(x, :index, i) |> Map.put(:txid, txid) end)
-      |> Enum.map(&Repo.insert!/1)
+      outs =
+        outputs
+        |> Stream.map(&set_utxo_type/1)
+        |> Stream.with_index()
+        |> Stream.map(fn {x, i} -> Map.put(x, :index, i) |> Map.put(:txid, txid) end)
+        |> Enum.map(fn x ->
+          %{
+            txid: x.txid,
+            index: x.index,
+            type: x.type,
+            value: x.value,
+            lock_script: x.lock_script,
+            private_key_id: x.private_key_id
+          }
+        end)
+
+      Repo.insert_all(Utxo, outs)
+
+      txid
     end)
   end
 
