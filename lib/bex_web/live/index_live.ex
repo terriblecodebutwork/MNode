@@ -8,6 +8,7 @@ defmodule BexWeb.IndexLive do
   alias Bex.Wallet.Utxo
   alias Bex.Wallet.PrivateKey
   alias BexWeb.Router.Helpers, as: Routes
+  alias BexLib.Bitindex
   require Logger
 
   def mount(_session, socket) do
@@ -19,7 +20,10 @@ defmodule BexWeb.IndexLive do
   end
 
   defp reload(socket) do
-    private_keys = Wallet.list_private_keys() |> Enum.map(&Repo.preload(&1, :utxos))
+    private_keys =
+      Wallet.list_private_keys()
+      |> Enum.filter(fn x -> x.base_key_id == nil end)
+      |> Enum.map(&Repo.preload(&1, :utxos))
     assign(socket, private_keys: private_keys)
   end
 
@@ -28,7 +32,7 @@ defmodule BexWeb.IndexLive do
     <ul>
       <%= for k <- @private_keys || [] do %>
         <div>
-          <h2>Address: <%= k.address %></h2>
+          <h2>Fund Address: <%= k.address %></h2>
           <button phx-click="meta" phx-value="<%= k.id %>" >Metanet</button>
           <h3>UTXOs</h3>
           <button phx-click="resync_utxo" phx-value="<%= k.id %>" >ReSync UTXOs</button>
@@ -37,7 +41,7 @@ defmodule BexWeb.IndexLive do
             <p><%= "#{t}: #{Enum.count(k.utxos, fn x -> x.type == t end)}" %></p>
             <% end %>
             <button phx-click="recast" phx-value="<%= k.id %>">Recast</button>
-            <%= for u <- k.utxos || [] do %>
+            <%= for u <- Enum.sort_by(k.utxos, fn u -> u.value end, &>=/2) || [] do %>
               <ul>
                   <li>type: <%= u.type %></li>
                   <li>txid: <%= u.txid %></li>
@@ -67,7 +71,8 @@ defmodule BexWeb.IndexLive do
 
   def handle_event("mint", id, socket) do
     id = String.to_integer(id)
-    {:ok, _} = Utxo.mint(Repo.get!(Utxo, id))
+    {:ok, _, hex_tx} = Utxo.mint(Repo.get!(Utxo, id))
+    Bitindex.broadcast_hex_tx(hex_tx)
     {:noreply, reload(socket)}
   end
 
@@ -79,7 +84,8 @@ defmodule BexWeb.IndexLive do
     id = String.to_integer(id)
 
     case Utxo.recast(Repo.get!(PrivateKey, id)) do
-      {:ok, _} ->
+      {:ok, _, hex_tx} ->
+        Bitindex.broadcast_hex_tx(hex_tx)
         {:noreply, reload(socket)}
 
       {:error, msg} ->

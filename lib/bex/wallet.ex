@@ -316,11 +316,12 @@ defmodule Bex.Wallet do
       from p in PrivateKey,
         where: p.base_key_id == ^base.id and p.dir == ^dir
 
-    case Repo.all(query) do
-      [one] ->
-        {:ok, one}
-      _ ->
+    case hd(Repo.all(query)) do
+      #FIXME must not have duplicate privateKeys
+      nil ->
         {:error, nil}
+      one ->
+        {:ok, one}
     end
   end
 

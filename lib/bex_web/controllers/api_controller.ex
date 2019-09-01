@@ -3,6 +3,7 @@ defmodule BexWeb.ApiController do
 
   alias Bex.Wallet
   alias Bex.Wallet.Utxo
+  alias BexLib.Bitindex
   require Logger
 
   plug :find_private_key
@@ -47,8 +48,11 @@ defmodule BexWeb.ApiController do
         case Wallet.find_key_with_dir(base_key, Path.dirname(dir)) do
           {:ok, s_key} ->
             IO.inspect content
-            {:ok, _txid, hex_tx} = Utxo.create_sub_dir(s_key, dir, content)
-            json(conn, %{code: 0, raw_tx: "#{hex_tx}"})
+            {:ok, txid, hex_tx} = Utxo.create_sub_dir(s_key, dir, content)
+            if params["broadcast"] == "true" do
+              Bitindex.broadcast_hex_tx(hex_tx)
+            end
+            json(conn, %{code: 0, raw_tx: "#{hex_tx}", txid: "#{txid}"})
           {:error, _} -> json(conn, %{code: 1, error: "mnode: #{dir}: No such file or directory"})
         end
     end
