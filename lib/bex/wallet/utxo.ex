@@ -138,6 +138,15 @@ defmodule Bex.Wallet.Utxo do
   @permission_sat Decimal.cast(546)
   @permission_num 5
 
+  defp c_permission_utxo(c_key) do
+    %__MODULE__{
+      value: @permission_sat,
+      private_key_id: c_key.id,
+      type: :permission,
+      lock_script: c_key.lock_script
+    }
+  end
+
   @doc """
   Root directory creation tx.
   params: base_pk, dir_string
@@ -154,12 +163,7 @@ defmodule Bex.Wallet.Utxo do
     inputs = [Wallet.get_a_coin(base_key)]
     {:ok, c_key} = Wallet.derive_and_insert_key(base_key, root)
 
-    c_permission_utxo = %__MODULE__{
-      value: @permission_sat,
-      private_key_id: c_key.id,
-      type: :permission,
-      lock_script: c_key.lock_script
-    }
+    c_permission_utxo = c_permission_utxo(c_key)
 
     meta = meta_utxo(c_key.address, root, content)
     outputs = [meta | List.duplicate(c_permission_utxo, @permission_num)]
@@ -188,12 +192,7 @@ defmodule Bex.Wallet.Utxo do
     inputs = [s_permission, Wallet.get_a_coin(base_key)]
     {:ok, c_key} = Wallet.derive_and_insert_key(base_key, c_dir)
 
-    c_permission_utxo = %__MODULE__{
-      value: @permission_sat,
-      private_key_id: c_key.id,
-      type: :permission,
-      lock_script: c_key.lock_script
-    }
+    c_permission_utxo = c_permission_utxo(c_key)
 
     # is seems first param should be derived key's address
     meta = meta_utxo(c_key.address, Path.basename(c_dir), content, s_key.dir_txid)

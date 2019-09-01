@@ -316,12 +316,26 @@ defmodule Bex.Wallet do
       from p in PrivateKey,
         where: p.base_key_id == ^base.id and p.dir == ^dir
 
-    case hd(Repo.all(query)) do
+    case Repo.all(query) do
+      [] ->
+        {:error, nil}
       #FIXME must not have duplicate privateKeys
+      one ->
+        {:ok, hd(one)}
+    end
+  end
+
+  # this is a temperery solution for the multi-version nodes
+  def find_txids_with_dir(base = %PrivateKey{}, dir) do
+    query =
+      from p in PrivateKey,
+        where: p.base_key_id == ^base.id and p.dir == ^dir
+
+    case Repo.all(query) do
       nil ->
         {:error, nil}
-      one ->
-        {:ok, one}
+      list ->
+        {:ok, Enum.map(list, fn x -> x.dir_txid end)}
     end
   end
 

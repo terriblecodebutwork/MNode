@@ -42,8 +42,11 @@ defmodule BexWeb.ApiController do
 
     case dir_type(dir) do
       :root ->
-        {:ok, _txid, hex_tx} = Utxo.create_root_dir(base_key, dir, content)
-        json(conn, %{code: 0, raw_tx: "#{hex_tx}"})
+        {:ok, txid, hex_tx} = Utxo.create_root_dir(base_key, dir, content)
+        if params["broadcast"] == "true" do
+          Bitindex.broadcast_hex_tx(hex_tx)
+        end
+        json(conn, %{code: 0, txid: txid, raw_tx: hex_tx})
       :noroot ->
         case Wallet.find_key_with_dir(base_key, Path.dirname(dir)) do
           {:ok, s_key} ->
@@ -64,9 +67,9 @@ defmodule BexWeb.ApiController do
 
   def find(conn, %{"path" => dir}) do
     base_key = conn.assigns.private_key
-    case Wallet.find_key_with_dir(base_key, dir) do
-      {:ok, s_key} ->
-        json(conn, %{code: 0, txid: "#{s_key.dir_txid}"})
+    case Wallet.find_txids_with_dir(base_key, dir) do
+      {:ok, txids} ->
+        json(conn, %{code: 0, txids: txids})
       {:error, _} -> json(conn, %{code: 1, error: "mnode: #{dir}: No such file or directory"})
     end
   end
