@@ -39,8 +39,8 @@ defmodule Bex.Wallet.Utxo do
     |> validate_required([:value, :lock_script, :type])
   end
 
-  def meta_utxo(addr, filename, content, p_txid \\ "NULL") do
-    lock_script = Script.metanet(addr, [filename | content], p_txid)
+  def meta_utxo(addr, _basename, content, p_txid \\ "NULL") do
+    lock_script = Script.metanet(addr, content, p_txid)
 
     %Utxo{
       value: Decimal.cast(0),
