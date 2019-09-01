@@ -1,6 +1,7 @@
 defmodule BexLib.Txmaker do
   # alias BexLib.Base58Check
   alias BexLib.Types.VarInteger
+  alias BexLib.Types.VarString
   alias BexLib.Key
   alias BexLib.Crypto
   alias Bex.Wallet.Utxo
@@ -16,8 +17,8 @@ defmodule BexLib.Txmaker do
     Crypto.double_sha256(Binary.from_hex(hex)) |> Binary.reverse() |> Binary.to_hex()
   end
 
-  defp get_fee(n_in, n_out, opreturn_size) do
-    estimate_tx_fee(n_in, n_out, true, opreturn_size)
+  defp get_fee(n_in, n_out, opreturn) do
+    estimate_tx_fee(n_in, n_out, true, opreturn)
   end
 
   defp len(x) when is_binary(x), do: byte_size(x)
@@ -152,15 +153,16 @@ defmodule BexLib.Txmaker do
   Return: 3 types of change.
   """
   def get_change(inputs, outputs, reserve_utxos \\ []) do
-    opreturn_size =
+    opreturn =
       case Enum.find(outputs, fn x -> x.type == :data end) do
-        nil -> 0
-        u -> u.lock_script |> byte_size()
+        nil -> false
+        u -> u.lock_script
       end
 
     input_count = length(inputs)
     output_count = length(outputs)
-    fee_with_change = get_fee(input_count, output_count + 1, opreturn_size)
+
+    fee_with_change = get_fee(input_count, output_count + 1, opreturn)
 
     Logger.debug("fee: #{fee_with_change}")
     sum_of_inputs = Utxo.sum_of_value(inputs)
@@ -279,7 +281,16 @@ defmodule BexLib.Txmaker do
   @doc """
   n_out will including opreturn output for falut tolerance.
   """
-  def estimate_tx_fee(n_in, n_out, compressed, op_return_size \\ 0) do
+  def estimate_tx_fee(n_in, n_out, compressed, op_return) do
+    outputs_size =
+      if op_return == false do
+        n_out * 34
+      else
+        (n_out - 1) * 34 + # p2pkh outputs
+        8 + # value
+        byte_size(VarString.serialize(op_return))
+      end
+
     # version
     # input count length
     # output count length
@@ -289,9 +300,8 @@ defmodule BexLib.Txmaker do
       4 +
         n_in * if(compressed, do: 148, else: 180) +
         len(int_to_varint(n_in)) +
-        n_out * 34 +
+        outputs_size +
         len(int_to_varint(n_out)) +
-        op_return_size +
         4
 
     # 体积乘以费率得到估计的手续费
