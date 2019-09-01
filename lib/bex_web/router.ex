@@ -30,6 +30,6 @@ defmodule BexWeb.Router do
   scope "/api", BexWeb do
     pipe_through :api
 
-    post "/meta", ApiController, :create
+    post "/mnode", ApiController, :create
   end
 end

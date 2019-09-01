@@ -39,8 +39,8 @@ defmodule Bex.Wallet.Utxo do
     |> validate_required([:value, :lock_script, :type])
   end
 
-  def meta_utxo(addr, root, p_txid \\ "NULL") do
-    lock_script = Script.metanet(addr, ["dir", root], p_txid)
+  def meta_utxo(addr, filename, content, p_txid \\ "NULL") do
+    lock_script = Script.metanet(addr, [filename | content], p_txid)
 
     %Utxo{
       value: Decimal.cast(0),
@@ -136,7 +136,7 @@ defmodule Bex.Wallet.Utxo do
   end
 
   @permission_sat Decimal.cast(546)
-  @permission_num 10
+  @permission_num 5
 
   @doc """
   Root directory creation tx.
@@ -150,7 +150,7 @@ defmodule Bex.Wallet.Utxo do
 
   save dir_txid to c_key
   """
-  def create_root_dir(base_key, root) do
+  def create_root_dir(base_key, root, content \\ nil) do
     inputs = [Wallet.get_a_coin(base_key)]
     {:ok, c_key} = Wallet.derive_and_insert_key(base_key, root)
 
@@ -161,7 +161,7 @@ defmodule Bex.Wallet.Utxo do
       lock_script: c_key.lock_script
     }
 
-    meta = meta_utxo(c_key.address, root)
+    meta = meta_utxo(c_key.address, root, content)
     outputs = [meta | List.duplicate(c_permission_utxo, @permission_num)]
     # send change to base key
     change_script = base_key.lock_script
@@ -172,8 +172,9 @@ defmodule Bex.Wallet.Utxo do
         {:error, msg}
 
       {:ok, inputs, outputs} ->
-        {:ok, txid} = make_tx(inputs, outputs)
+        {:ok, txid, hex_tx} = make_tx(inputs, outputs)
         Wallet.update_private_key(c_key, %{dir_txid: txid})
+        {:ok, txid, hex_tx}
     end
   end
 
@@ -181,7 +182,7 @@ defmodule Bex.Wallet.Utxo do
   # c_ child
   # s_ self
   # p_ parent
-  def create_sub_dir(s_key, c_dir) do
+  def create_sub_dir(s_key, c_dir, content \\ nil) do
     base_key = Repo.preload(s_key, :base_key).base_key
     s_permission = Wallet.get_a_permission(s_key)
     inputs = [s_permission, Wallet.get_a_coin(base_key)]
@@ -195,7 +196,7 @@ defmodule Bex.Wallet.Utxo do
     }
 
     # is seems first param should be derived key's address
-    meta = meta_utxo(c_key.address, c_dir, s_key.dir_txid)
+    meta = meta_utxo(c_key.address, Path.basename(c_dir), content, s_key.dir_txid)
 
     outputs = [
       meta,
@@ -212,19 +213,21 @@ defmodule Bex.Wallet.Utxo do
         {:error, msg}
 
       {:ok, inputs, outputs} ->
-        {:ok, txid} = make_tx(inputs, outputs)
+        {:ok, txid, hex_tx} = make_tx(inputs, outputs)
         Wallet.update_private_key(c_key, %{dir_txid: txid})
+        {:ok, txid, hex_tx}
     end
   end
 
-  def make_tx(inputs, outputs) do
+  defp make_tx(inputs, outputs) do
     binary_tx = Txmaker.create_p2pkh_transaction(inputs, outputs)
 
-    Logger.debug(Binary.to_hex(binary_tx))
+    hex_tx = Binary.to_hex(binary_tx)
+    Logger.debug(hex_tx)
 
     txid = Txmaker.get_txid_from_binary_tx(binary_tx)
     ## TODO save the tx for broadcasting
-    Repo.transaction(fn ->
+    {:ok, _} = Repo.transaction(fn ->
       # delete inputs
       for u <- inputs, do: Repo.delete!(u)
       # insert outputs
@@ -245,9 +248,8 @@ defmodule Bex.Wallet.Utxo do
         end)
 
       Repo.insert_all(Utxo, outs)
-
-      txid
     end)
+    {:ok, txid, hex_tx}
   end
 
   defp add_change(outputs, change, s, p) do

@@ -311,6 +311,19 @@ defmodule Bex.Wallet do
     |> Repo.insert(on_conflict: :nothing, returning: true)
   end
 
+  def find_key_with_dir(base = %PrivateKey{}, dir) do
+    query =
+      from p in PrivateKey,
+        where: p.base_key_id == ^base.id and p.dir == ^dir
+
+    case Repo.all(query) do
+      [one] ->
+        {:ok, one}
+      _ ->
+        {:error, nil}
+    end
+  end
+
   @doc """
   Updates a document.
 

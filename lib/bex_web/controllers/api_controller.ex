@@ -2,8 +2,8 @@ defmodule BexWeb.ApiController do
   use BexWeb, :controller
 
   alias Bex.Wallet
+  alias Bex.Wallet.Utxo
   require Logger
-  @storage "./files"
 
   plug :find_private_key
 
@@ -18,53 +18,51 @@ defmodule BexWeb.ApiController do
   if only dir, create a dir; if path and file, creat the file.
   Can not create dir or file under unexisted dir.
   """
-  def create(conn, %{"dir" => dir, "file" => file}) do
-    %{content_type: type, filename: filename, path: path} = file
-    new_filename = UUID.uuid4()
-    new_path = @storage <> "/" <> new_filename
-    File.cp!(path, new_path)
+  def create(conn, %{"path" => dir} = params) do
+    base_key = conn.assigns.private_key
+    Logger.info("create_root_dir: #{inspect(dir)}")
 
-    case Wallet.create_document(
-           %{
-             path: new_path,
-             type: type,
-             filename: filename,
-             dir: dir,
-             base_key_id: conn.assigns.private_key.id
-           },
-           conn.assigns.private_key
-         ) do
-      {:ok, _doc} ->
-        # start_other_process_to_build_and_send_this_document(doc)
-        text(conn, "ok")
+    content =
+      case params["content"] do
+        b when is_binary(b) ->
+          [b]
+        m when is_map(m) ->
+          IO.inspect m
+          m
+          |> Enum.map(fn {k, v} ->
+            i = String.to_integer(k)
+            {i, v}
+          end)
+          |> Enum.sort()
+          |> Enum.map(fn {_, v} -> v end)
+        _ ->
+          []
+      end
 
-      {:error, _} ->
-        json(conn, %{error: "can not save this file"})
-    end
-  end
-
-  def create(conn, %{"dir" => dir}) do
-    IO.inspect(conn.assigns.private_key)
-
-    case Wallet.create_document(
-           %{
-             type: "directory",
-             dir: dir,
-             base_key_id: conn.assigns.private_key.id
-           },
-           conn.assigns.private_key
-         ) do
-      {:ok, doc} ->
-        Wallet.upload_document(doc)
-        text(conn, "ok")
-
-      {:error, _} ->
-        json(conn, %{error: "can not create this dir"})
+    case dir_type(dir) do
+      :root ->
+        {:ok, _txid, hex_tx} = Utxo.create_root_dir(base_key, dir, content)
+        json(conn, %{code: 0, raw_tx: "#{hex_tx}"})
+      :noroot ->
+        case Wallet.find_key_with_dir(base_key, Path.dirname(dir)) do
+          {:ok, s_key} ->
+            IO.inspect content
+            {:ok, _txid, hex_tx} = Utxo.create_sub_dir(s_key, dir, content)
+            json(conn, %{code: 0, raw_tx: "#{hex_tx}"})
+          {:error, _} -> json(conn, %{code: 1, error: "mnode: #{dir}: No such file or directory"})
+        end
     end
   end
 
   def create(conn, _) do
     json(conn, %{error: "need dir"})
+  end
+
+  def dir_type(dir) do
+    case String.contains?(dir, "/") do
+      true -> :noroot
+      false -> :root
+    end
   end
 
   # {:error, msg} or {:ok, private_key}
