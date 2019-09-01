@@ -58,7 +58,16 @@ defmodule BexWeb.ApiController do
     json(conn, %{error: "need dir"})
   end
 
-  def dir_type(dir) do
+  def find(conn, %{"path" => dir}) do
+    base_key = conn.assigns.private_key
+    case Wallet.find_key_with_dir(base_key, dir) do
+      {:ok, s_key} ->
+        json(conn, %{code: 0, txid: "#{s_key.dir_txid}"})
+      {:error, _} -> json(conn, %{code: 1, error: "mnode: #{dir}: No such file or directory"})
+    end
+  end
+
+  defp dir_type(dir) do
     case String.contains?(dir, "/") do
       true -> :noroot
       false -> :root
