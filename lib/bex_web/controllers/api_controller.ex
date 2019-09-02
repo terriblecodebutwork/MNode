@@ -19,50 +19,82 @@ defmodule BexWeb.ApiController do
   if only dir, create a dir; if path and file, creat the file.
   Can not create dir or file under unexisted dir.
   """
-  def create(conn, %{"path" => dir} = params) do
+  def create(conn, %{"parent" => "NULL", "id" => c_dir} = params) do
+    c_dir = to_string(c_dir)
+    base_key = conn.assigns.private_key
+    content = deal_with_content(params)
+    {:ok, txid, hex_tx} = Utxo.create_root_dir(base_key, c_dir, content)
+    broadcast(conn, params, hex_tx, txid)
+  end
+
+  def create(conn, %{"parent" => s_dir, "id" => c_dir} = params) do
+    s_dir = to_string(s_dir)
+    c_dir = to_string(c_dir)
+    base_key = conn.assigns.private_key
+    content = deal_with_content(params)
+    # use parent id and self id as dir, and need the root dir
+    case Wallet.find_key_with_dir(base_key, s_dir) do
+      {:ok, s_key} ->
+        {:ok, txid, hex_tx} = Utxo.create_sub_dir(s_key, c_dir, content)
+        broadcast(conn, params, hex_tx, txid)
+      {:error, _} -> json(conn, %{code: 1, error: "mnode: #{s_dir}: No such file or directory"})
+    end
+  end
+
+  def create(conn, %{"path" => dir} = params) when is_binary(dir) do
     base_key = conn.assigns.private_key
     Logger.info("create_root_dir: #{inspect(dir)}")
-
-    content =
-      case params["content"] do
-        b when is_binary(b) ->
-          [b]
-        m when is_map(m) ->
-          IO.inspect m
-          m
-          |> Enum.map(fn {k, v} ->
-            i = String.to_integer(k)
-            {i, v}
-          end)
-          |> Enum.sort()
-          |> Enum.map(fn {_, v} -> v end)
-        _ ->
-          []
-      end
+    content = deal_with_content(params)
 
     case dir_type(dir) do
       :root ->
         {:ok, txid, hex_tx} = Utxo.create_root_dir(base_key, dir, content)
-        if params["broadcast"] == "true" do
-          Bitindex.broadcast_hex_tx(hex_tx)
-        end
-        json(conn, %{code: 0, txid: txid, raw_tx: hex_tx})
+        broadcast(conn, params, hex_tx, txid)
       :noroot ->
         case Wallet.find_key_with_dir(base_key, Path.dirname(dir)) do
           {:ok, s_key} ->
-            IO.inspect content
             {:ok, txid, hex_tx} = Utxo.create_sub_dir(s_key, dir, content)
-            if params["broadcast"] == "true" do
-              Bitindex.broadcast_hex_tx(hex_tx)
-            end
-            json(conn, %{code: 0, raw_tx: "#{hex_tx}", txid: "#{txid}"})
+            broadcast(conn, params, hex_tx, txid)
+
           {:error, _} -> json(conn, %{code: 1, error: "mnode: #{dir}: No such file or directory"})
         end
     end
   end
 
+  defp broadcast(conn, params, hex_tx, txid) do
+    if params["broadcast"] == true do
+      case Bitindex.broadcast_hex_tx(hex_tx) do
+        {:ok, msg} ->
+          json(conn, %{code: 0, raw_tx: hex_tx, txid: txid, msg: msg})
+        {:error, msg} ->
+          json(conn, %{code: 1, error: "mnode: #{inspect msg}"})
+      end
+    else
+      json(conn, %{code: 0, raw_tx: hex_tx, txid: txid})
+    end
+  end
+
   def create(conn, _) do
     json(conn, %{error: "need dir"})
+  end
+
+  defp deal_with_content(params) do
+    case params["content"] do
+      b when is_binary(b) ->
+        [b]
+      m when is_map(m) ->
+        m
+        |> Enum.map(fn {k, v} ->
+          i = String.to_integer(k)
+          {i, v}
+        end)
+        |> Enum.sort()
+        |> Enum.map(fn {_, v} -> v end)
+      l when is_list(l) ->
+        l
+      _ ->
+        []
+    end
   end
 
   def find(conn, %{"path" => dir}) do

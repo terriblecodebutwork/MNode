@@ -39,7 +39,7 @@ defmodule Bex.Wallet.Utxo do
     |> validate_required([:value, :lock_script, :type])
   end
 
-  def meta_utxo(addr, _basename, content, p_txid \\ "NULL") do
+  def meta_utxo(addr, content, p_txid \\ "NULL") do
     lock_script = Script.metanet(addr, content, p_txid)
 
     %Utxo{
@@ -165,7 +165,7 @@ defmodule Bex.Wallet.Utxo do
 
     c_permission_utxo = c_permission_utxo(c_key)
 
-    meta = meta_utxo(c_key.address, root, content)
+    meta = meta_utxo(c_key.address, content)
     outputs = [meta | List.duplicate(c_permission_utxo, @permission_num)]
     # send change to base key
     change_script = base_key.lock_script
@@ -195,7 +195,7 @@ defmodule Bex.Wallet.Utxo do
     c_permission_utxo = c_permission_utxo(c_key)
 
     # is seems first param should be derived key's address
-    meta = meta_utxo(c_key.address, Path.basename(c_dir), content, s_key.dir_txid)
+    meta = meta_utxo(c_key.address, content, s_key.dir_txid)
 
     outputs = [
       meta,

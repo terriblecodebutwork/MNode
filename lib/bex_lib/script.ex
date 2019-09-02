@@ -113,4 +113,19 @@ defmodule BexLib.Script do
      ] ++ contents)
     |> to_binary()
   end
+
+  @doc """
+  Print and get the human readable opreturn data
+  form hex.
+  """
+  def view_return(str) do
+    chars =
+    str
+    |> Binary.from_hex()
+    |> Binary.to_list()
+    |> Enum.map(fn x -> [x] end)
+
+    IO.puts chars
+    chars |> IO.iodata_to_binary()
+  end
 end
