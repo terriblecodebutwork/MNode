@@ -19,7 +19,7 @@ defmodule BexWeb.ApiController do
   if only dir, create a dir; if path and file, creat the file.
   Can not create dir or file under unexisted dir.
   """
-  def create(conn, %{"parent" => false, "id" => c_dir} = params) do
+  def create(conn, %{"parent" => false, "name" => c_dir} = params) do
     c_dir = to_string(c_dir)
     base_key = conn.assigns.private_key
     content = deal_with_content(params)
