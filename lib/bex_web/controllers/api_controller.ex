@@ -30,7 +30,7 @@ defmodule BexWeb.ApiController do
   # It's a bit confusing, cause the different view of nodes.
   # In old code, we see the "parent" node as self node, and
   # "id" node as child node.
-  def create(conn, %{"parent" => s_dir, "id" => c_dir} = params) do
+  def create(conn, %{"parent" => s_dir, "name" => c_dir} = params) do
     s_dir = to_string(s_dir)
     c_dir = to_string(c_dir)
     base_key = conn.assigns.private_key
@@ -108,7 +108,7 @@ defmodule BexWeb.ApiController do
     end
   end
 
-  def find(conn, %{"path" => dir}) do
+  def find(conn, %{"name" => dir}) do
     base_key = conn.assigns.private_key
 
     case Wallet.find_txids_with_dir(base_key, dir) do
@@ -119,6 +119,18 @@ defmodule BexWeb.ApiController do
         json(conn, %{code: 1, error: "mnode: #{dir}: No such file or directory"})
     end
   end
+
+  # def find(conn, %{"path" => dir}) do
+  #   base_key = conn.assigns.private_key
+
+  #   case Wallet.find_txids_with_dir(base_key, dir) do
+  #     {:ok, txids} ->
+  #       json(conn, %{code: 0, txids: txids})
+
+  #     {:error, _} ->
+  #       json(conn, %{code: 1, error: "mnode: #{dir}: No such file or directory"})
+  #   end
+  # end
 
   defp dir_type(dir) do
     case String.contains?(dir, "/") do

@@ -130,10 +130,8 @@ defmodule BexWeb.IndexLive do
 
   def handle_info({"mint_all", id}, socket) do
     p = Repo.get!(Wallet.PrivateKey, id) |> Repo.preload(:utxos)
-    Enum.map(p.utxos, fn u -> Utxo.mint(u) end)
-    |> Enum.map(fn {:ok, _, hex_tx} ->
-      Bitindex.broadcast_hex_tx(hex_tx)
-    end)
+    {:ok, _, hex_tx} = Utxo.mint_all(p)
+    Bitindex.broadcast_hex_tx(hex_tx)
     {:noreply, reload(socket)}
   end
 end

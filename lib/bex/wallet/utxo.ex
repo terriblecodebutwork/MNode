@@ -90,6 +90,25 @@ defmodule Bex.Wallet.Utxo do
     end
   end
 
+  def mint_all(p = %PrivateKey{utxos: utxos, lock_script: s, id: pkid}) do
+    coin_sat = CoinManager.get_coin_sat()
+    inputs = Enum.filter(utxos, fn u -> u.type == :gold end)
+    v = sum_of_value(inputs)
+    coin_num = Decimal.div_int(v, coin_sat) |> Decimal.to_integer()
+    coin_utxo = %__MODULE__{value: coin_sat, private_key_id: pkid, lock_script: s}
+    outputs = List.duplicate(coin_utxo, coin_num)
+    change_script = s
+    change_pkid = pkid
+
+    case handle_change(inputs, outputs, change_script, change_pkid) do
+      {:error, msg} ->
+        {:error, msg}
+
+      {:ok, inputs, outputs} ->
+        make_tx(inputs, outputs)
+    end
+  end
+
   @doc """
   Combian all dust of a private key into the coins.
   """

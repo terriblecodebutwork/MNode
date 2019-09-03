@@ -2,6 +2,8 @@
 
 An API based Metanet service.
 
+Online Testing: http://nicedata.space
+
 ## import root private key
 
 Start the server, and open "http://localhost:4000/index".
@@ -25,34 +27,22 @@ The parameters need be JSON.
 - Create a Metanet node
 `POST ../api/mnode`
 
-```json
-{
-  "path": "foo/bar/baz",
-  "broadcast": false,
-  "content": [
-    "1",
-    "2",
-    "3"
-  ]
-}
-```
-
-If ensure every node will have a unique ID, can use another schema:
+Ensure every node will have a unique ID
 
 ```json
 {
-  "parent": 1,
-  "id": 2,
-  "broadcast": false,
+  "parent": "bar",
+  "name": "foo",
+  "broadcast": true,
   "content": []
 }
 ```
 
-All `id` will be converted to string.
+All `id` should be string.
 
 If is root node, set parent to `false`.
 
-We use `path` or `id` and the root private key to generate the private key of this node. Highly recommend to store the `path` or `id` in the content.
+We use `name` and the root private key to generate the private key of this node. Highly recommend to store the `name` in the content.
 
 The content could be a string or an array of string, if that is an array of string, each element will be pushed saparately.
 
@@ -63,15 +53,7 @@ The same as Unix file system, you need create the parent path before create the 
 
 ```json
 {
-  "path": "foo/bar/baz"
-}
-```
-
-or
-
-```json
-{
-  "id": 1
+  "name": "foo"
 }
 ```
 
