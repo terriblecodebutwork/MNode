@@ -8,18 +8,30 @@
     <link rel="stylesheet" href="<%= Routes.static_path(@conn, "/css/app.css") %>"/>
   </head>
   <body>
-    <header>
-      <section class="container">
-        <nav role="navigation">
-          <a href="/">Index</a>
-          <a href="/private_keys">Keys</a>
-        </nav>
-      </section>
-    </header>
-    <main role="main" class="container">
+    <main class="wrapper">
+      <nav role="navigation">
+        <section class="container">
+          <div class="row">
+            <div class="column">
+              <a class="navigation-title" href="/">
+                <h1 class="title">MNode</h1>
+              </a>
+            </div>
+            <div class="column">
+              <ul class="navigation-list float-right">
+                <li class="navigation-item">
+                  <a class="navigation-link" href="/private_keys">Keys</a>
+                </li>
+              </ul>
+            </div>
+          </div>
+        </section>
+      </nav>
       <p class="alert alert-info" role="alert"><%= get_flash(@conn, :info) %></p>
       <p class="alert alert-danger" role="alert"><%= get_flash(@conn, :error) %></p>
+      <section class="container">
       <%= render @view_module, @view_template, assigns %>
+      </section>
     </main>
     <script type="text/javascript" src="<%= Routes.static_path(@conn, "/js/app.js") %>"></script>
   </body>

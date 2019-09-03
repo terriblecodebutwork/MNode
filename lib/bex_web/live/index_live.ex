@@ -47,30 +47,38 @@ defmodule BexWeb.IndexLive do
           <h4>Loading...</h4>
           <% end %>
           <button phx-click="resync_utxo" phx-value="<%= k.id %>" >ReSync UTXOs</button>
-          <ul>
-            <%= for t <- [:dust, :permission, :gold, :coin] do %>
-            <p><%= "#{t}: #{Enum.count(k.utxos, fn x -> x.type == t end)}" %></p>
-            <% end %>
-            <h3>Value of one Coin: <%= @coin_sat %></h3>
-            <form phx-submit="set_coin_sat">
-              <input name="value" type="number">
-              <button type="submit">Set</button>
-            </form>
-            <button phx-click="recast" phx-value="<%= k.id %>">Recast</button>
-            <button phx-click="mint_all" phx-value="<%= k.id %>">Mint</button>
-            <%= for u <- Enum.sort_by(k.utxos, fn u -> u.value end, &>=/2) || [] do %>
-              <ul>
-                  <li>type: <%= u.type %></li>
-                  <li>txid: <%= u.txid %></li>
-                  <li>value: <%= u.value %></li>
-                  <!-- <li>index: <%= u.index %></li> -->
-                  <!-- <li>block height: <%= u.block_height %></li> -->
-                  <!-- <%= if u.type == :gold do %>
-                  <button phx-click="mint" phx-value="<%= u.id %>">Mint</button>
-                  <% end %> -->
-              </ul>
-            <% end %>
-          </ul>
+          <div class="container">
+            <ul>
+              <div class="row">
+                <div class="column">
+                  <%= for t <- [:dust, :permission, :gold, :coin] do %>
+                  <p><%= "#{t}: #{Enum.count(k.utxos, fn x -> x.type == t end)}" %></p>
+                  <% end %>
+                </div>
+                <div class="column">
+                  <h3>Value of one Coin: <%= @coin_sat %></h3>
+                  <form phx-submit="set_coin_sat">
+                    <input name="value" type="number">
+                    <button type="submit">Set</button>
+                  </form>
+                </div>
+              </div>
+              <button phx-click="recast" phx-value="<%= k.id %>">Recast</button>
+              <button phx-click="mint_all" phx-value="<%= k.id %>">Mint</button>
+              <%= for u <- Enum.sort_by(k.utxos, fn u -> u.value end, &>=/2) || [] do %>
+                <ul>
+                    <li>type: <%= u.type %></li>
+                    <li>txid: <%= u.txid %></li>
+                    <li>value: <%= u.value %></li>
+                    <!-- <li>index: <%= u.index %></li> -->
+                    <!-- <li>block height: <%= u.block_height %></li> -->
+                    <!-- <%= if u.type == :gold do %>
+                    <button phx-click="mint" phx-value="<%= u.id %>">Mint</button>
+                    <% end %> -->
+                </ul>
+              <% end %>
+            </ul>
+          </div>
         </div>
       <% end %>
     </ul>
