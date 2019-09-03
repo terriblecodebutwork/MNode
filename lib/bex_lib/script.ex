@@ -120,12 +120,12 @@ defmodule BexLib.Script do
   """
   def view_return(str) do
     chars =
-    str
-    |> Binary.from_hex()
-    |> Binary.to_list()
-    |> Enum.map(fn x -> [x] end)
+      str
+      |> Binary.from_hex()
+      |> Binary.to_list()
+      |> Enum.map(fn x -> [x] end)
 
-    IO.puts chars
+    IO.puts(chars)
     chars |> IO.iodata_to_binary()
   end
 end

@@ -9,6 +9,7 @@ defmodule BexWeb.IndexLive do
   alias Bex.Wallet.PrivateKey
   alias BexWeb.Router.Helpers, as: Routes
   alias BexLib.Bitindex
+  alias Bex.CoinManager
   require Logger
 
   def mount(_session, socket) do
@@ -24,23 +25,39 @@ defmodule BexWeb.IndexLive do
       Wallet.list_private_keys()
       |> Enum.filter(fn x -> x.base_key_id == nil end)
       |> Enum.map(&Repo.preload(&1, :utxos))
-    assign(socket, private_keys: private_keys)
+
+    socket
+    |> assign(coin_sat: CoinManager.get_coin_sat())
+    |> assign(private_keys: private_keys)
+    |> assign(loading: false)
   end
 
   def render(assigns) do
     ~L"""
+    <%= if @private_keys == [] do %>
+    <a href="/private_keys/new" >Import PrivateKey</a>
+    <% else %>
     <ul>
       <%= for k <- @private_keys || [] do %>
         <div>
           <h2>Fund Address: <%= k.address %></h2>
           <button phx-click="meta" phx-value="<%= k.id %>" >Metanet</button>
           <h3>UTXOs</h3>
+          <%= if @loading do %>
+          <h4>Loading...</h4>
+          <% end %>
           <button phx-click="resync_utxo" phx-value="<%= k.id %>" >ReSync UTXOs</button>
           <ul>
             <%= for t <- [:dust, :permission, :gold, :coin] do %>
             <p><%= "#{t}: #{Enum.count(k.utxos, fn x -> x.type == t end)}" %></p>
             <% end %>
+            <h3>Value of one Coin: <%= @coin_sat %></h3>
+            <form phx-submit="set_coin_sat">
+              <input name="value" type="number">
+              <button type="submit">Set</button>
+            </form>
             <button phx-click="recast" phx-value="<%= k.id %>">Recast</button>
+            <button phx-click="mint_all" phx-value="<%= k.id %>">Mint</button>
             <%= for u <- Enum.sort_by(k.utxos, fn u -> u.value end, &>=/2) || [] do %>
               <ul>
                   <li>type: <%= u.type %></li>
@@ -48,41 +65,37 @@ defmodule BexWeb.IndexLive do
                   <li>value: <%= u.value %></li>
                   <!-- <li>index: <%= u.index %></li> -->
                   <!-- <li>block height: <%= u.block_height %></li> -->
-                  <%= if u.type == :gold do %>
+                  <!-- <%= if u.type == :gold do %>
                   <button phx-click="mint" phx-value="<%= u.id %>">Mint</button>
-                  <% end %>
+                  <% end %> -->
               </ul>
             <% end %>
           </ul>
         </div>
       <% end %>
     </ul>
+    <% end %>
     """
-  end
-
-  def handle_event("resync_utxo", id, socket) do
-    Logger.info("resync_utxo")
-    id = String.to_integer(id)
-    p = Repo.get!(Wallet.PrivateKey, id)
-    {_, _utxos} = Wallet.sync_utxos_of_private_key(p)
-
-    {:noreply, reload(socket)}
-  end
-
-  def handle_event("mint", id, socket) do
-    id = String.to_integer(id)
-    {:ok, _, hex_tx} = Utxo.mint(Repo.get!(Utxo, id))
-    Bitindex.broadcast_hex_tx(hex_tx)
-    {:noreply, reload(socket)}
   end
 
   def handle_event("meta", id, socket) do
     {:noreply, redirect(socket, to: Routes.live_path(socket, BexWeb.MetaLive, id))}
   end
 
-  def handle_event("recast", id, socket) do
-    id = String.to_integer(id)
+  def handle_event("set_coin_sat", %{"value" => v}, socket) do
+    v = Decimal.cast(v)
+    CoinManager.set_coin_sat(v)
+    {:noreply, reload(socket)}
+  end
 
+
+  def handle_event(cmd, id, socket) do
+    id = String.to_integer(id)
+    send(self(), {cmd, id})
+    {:noreply, assign(socket, :loading, true)}
+  end
+
+  def handle_info({"recast", id}, socket) do
     case Utxo.recast(Repo.get!(PrivateKey, id)) do
       {:ok, _, hex_tx} ->
         Bitindex.broadcast_hex_tx(hex_tx)
@@ -92,5 +105,27 @@ defmodule BexWeb.IndexLive do
         {:noreply,
          put_flash(socket, :error, msg) |> redirect(to: Routes.live_path(socket, __MODULE__))}
     end
+  end
+
+  def handle_info({"resync_utxo", id}, socket) do
+    p = Repo.get!(Wallet.PrivateKey, id)
+    {_, _utxos} = Wallet.sync_utxos_of_private_key(p)
+
+    {:noreply, reload(socket)}
+  end
+
+  def handle_info({"mint", id}, socket) do
+    {:ok, _, hex_tx} = Utxo.mint(Repo.get!(Utxo, id))
+    Bitindex.broadcast_hex_tx(hex_tx)
+    {:noreply, reload(socket)}
+  end
+
+  def handle_info({"mint_all", id}, socket) do
+    p = Repo.get!(Wallet.PrivateKey, id) |> Repo.preload(:utxos)
+    Enum.map(p.utxos, fn u -> Utxo.mint(u) end)
+    |> Enum.map(fn {:ok, _, hex_tx} ->
+      Bitindex.broadcast_hex_tx(hex_tx)
+    end)
+    {:noreply, reload(socket)}
   end
 end

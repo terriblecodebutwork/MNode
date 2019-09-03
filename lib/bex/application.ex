@@ -10,6 +10,7 @@ defmodule Bex.Application do
     children = [
       # Start the Ecto repository
       Bex.Repo,
+      Bex.CoinManager,
       # Start the endpoint when the application starts
       BexWeb.Endpoint
       # Starts a worker by calling: Bex.Worker.start_link(arg)

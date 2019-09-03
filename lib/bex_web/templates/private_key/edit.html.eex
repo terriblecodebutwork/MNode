@@ -1,5 +1,0 @@
-<h1>Edit Private key</h1>
-
-<%= render "form.html", Map.put(assigns, :action, Routes.private_key_path(@conn, :update, @private_key)) %>
-
-<span><%= link "Back", to: Routes.private_key_path(@conn, :index) %></span>

@@ -11,9 +11,8 @@
     <header>
       <section class="container">
         <nav role="navigation">
-          <ul>
-            <li><a href="/index">Index</a></li>
-          </ul>
+          <a href="/">Index</a>
+          <a href="/private_keys">Keys</a>
         </nav>
       </section>
     </header>

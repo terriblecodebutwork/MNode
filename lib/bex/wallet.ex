@@ -5,12 +5,7 @@ defmodule Bex.Wallet do
 
   import Ecto.Query, warn: false
   alias Bex.Repo
-
-  alias BexLib.Key
   alias Bex.Wallet.PrivateKey
-  alias Bex.Wallet.Mission
-  alias BexLib.Script
-  import Ecto.Changeset, only: [change: 2]
   require Logger
 
   @doc """
@@ -153,23 +148,6 @@ defmodule Bex.Wallet do
     end
   end
 
-  @doc """
-  Split a gold utxo into many coin utxo.
-    1. send tx
-    2. update db
-  """
-  def mint(gold = %Utxo{type: :gold}) do
-    {:ok, coins} =
-      gold
-      |> Utxo.mint()
-
-    # TODO add lock
-
-    Repo.transaction(fn ->
-      Repo.insert_all(Utxo, coins)
-      Repo.delete(gold)
-    end)
-  end
 
   @doc """
   Gets a single utxo.
@@ -191,7 +169,8 @@ defmodule Bex.Wallet do
     from(u in Utxo,
       where: u.type == "coin" and u.private_key_id == ^p.id,
       lock: "FOR UPDATE SKIP LOCKED",
-      limit: 1
+      limit: 1,
+      order_by: [asc: :id]
     )
     |> Repo.one!()
   end
@@ -261,65 +240,24 @@ defmodule Bex.Wallet do
     Utxo.changeset(utxo, %{})
   end
 
-  alias Bex.Wallet.Document
-
-  @doc """
-  Returns the list of documents.
-
-  ## Examples
-
-      iex> list_documents()
-      [%Document{}, ...]
-
-  """
-  def list_documents do
-    Repo.all(Document)
-  end
-
-  @doc """
-  Gets a single document.
-
-  Raises `Ecto.NoResultsError` if the Document does not exist.
-
-  ## Examples
-
-      iex> get_document!(123)
-      %Document{}
-
-      iex> get_document!(456)
-      ** (Ecto.NoResultsError)
-
-  """
-  def get_document!(id), do: Repo.get!(Document, id)
-
-  @doc """
-  Creates a document.
-
-  #TODO Deperate Document
-  """
-  def create_document(attrs, base = %PrivateKey{}) do
-    ## drive and set private key
-    {:ok, p} = derive_and_insert_key(base, attrs.dir)
-
-    %Document{}
-    |> Document.changeset(Map.put(attrs, :private_key_id, p.id))
-    |> Repo.insert()
-  end
-
-  def derive_and_insert_key(base = %PrivateKey{}, dir) do
-    PrivateKey.derive_changeset(base, dir)
+  def derive_and_insert_key(base = %PrivateKey{}, parent = %PrivateKey{}, dir) do
+    PrivateKey.derive_changeset(base, parent, dir)
     |> Repo.insert(on_conflict: :nothing, returning: true)
   end
 
+  # FIXME currently, we just use the latest version
+  # of nodes with the same "dir"
   def find_key_with_dir(base = %PrivateKey{}, dir) do
     query =
       from p in PrivateKey,
-        where: p.base_key_id == ^base.id and p.dir == ^dir
+        where: p.base_key_id == ^base.id and p.dir == ^dir,
+        order_by: [desc: :id]
 
     case Repo.all(query) do
       [] ->
         {:error, nil}
-      #FIXME must not have duplicate privateKeys
+
+      # FIXME must not have duplicate privateKeys
       one ->
         {:ok, hd(one)}
     end
@@ -334,56 +272,10 @@ defmodule Bex.Wallet do
     case Repo.all(query) do
       nil ->
         {:error, nil}
+
       list ->
         {:ok, Enum.map(list, fn x -> x.dir_txid end)}
     end
-  end
-
-  @doc """
-  Updates a document.
-
-  ## Examples
-
-      iex> update_document(document, %{field: new_value})
-      {:ok, %Document{}}
-
-      iex> update_document(document, %{field: bad_value})
-      {:error, %Ecto.Changeset{}}
-
-  """
-  def update_document(%Document{} = document, attrs) do
-    document
-    |> Document.changeset(attrs)
-    |> Repo.update()
-  end
-
-  @doc """
-  Deletes a Document.
-
-  ## Examples
-
-      iex> delete_document(document)
-      {:ok, %Document{}}
-
-      iex> delete_document(document)
-      {:error, %Ecto.Changeset{}}
-
-  """
-  def delete_document(%Document{} = document) do
-    Repo.delete(document)
-  end
-
-  @doc """
-  Returns an `%Ecto.Changeset{}` for tracking document changes.
-
-  ## Examples
-
-      iex> change_document(document)
-      %Ecto.Changeset{source: %Document{}}
-
-  """
-  def change_document(%Document{} = document) do
-    Document.changeset(document, %{})
   end
 
   # @spec get_a_permission_of_dir(String.t()) :: Utxo.t()
@@ -392,32 +284,9 @@ defmodule Bex.Wallet do
       from u in Utxo,
         where: u.private_key_id == ^key.id and u.type == "permission",
         lock: "FOR UPDATE SKIP LOCKED",
-        limit: 1
+        limit: 1,
+        order_by: [asc: :id]
 
     Repo.one!(query)
-  end
-
-  ####### Documents ##############
-
-  # @spec to_mission(document()) :: {:ok, mission() | [mission()]} | {:error, any()}
-  @doc """
-  upload the document into the blockchain.
-  """
-  def upload_document(%Document{type: "directory"} = d) do
-    d = Repo.preload(d, :private_key) |> Repo.preload(:base_key)
-    dirs = Document.get_children_dirs(d.dir)
-
-    case dirs do
-      [] ->
-        {:error, "found no dir"}
-
-      [root] ->
-        # root dir
-        Utxo.create_root_dir(d.base_key, root)
-
-      other ->
-        [father_dir, self_dir] = Enum.take(other, -2)
-        # create_noroot_dir(d, father_dir, self_dir)
-    end
   end
 end

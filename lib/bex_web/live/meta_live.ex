@@ -23,41 +23,48 @@ defmodule BexWeb.MetaLive do
 
     state = %{
       loaded: true,
-      key: Wallet.get_private_key!(id),
+      key: Wallet.get_private_key!(id) |> Repo.preload(:parent_key),
       id: id,
-      derive_keys: PrivateKey.get_derive_keys_by_id(id)
+      derive_keys:
+        PrivateKey.get_derive_keys_by_id(id) |> Enum.map(fn x -> Repo.preload(x, :parent_key) end)
     }
 
     {:noreply, assign(socket, state)}
   end
 
   defp reload(socket) do
-    socket |> assign(:derive_keys, PrivateKey.get_derive_keys_by_id(socket.assigns.id))
+    socket
+    |> assign(
+      :derive_keys,
+      PrivateKey.get_derive_keys_by_id(socket.assigns.id)
+      |> Enum.map(fn x -> Repo.preload(x, :parent_key) end)
+    )
   end
 
   def render(assigns) do
     ~L"""
     <%= if @loaded do %>
-    <h1>MetaNet FileSystem</h1>
+    <h1>MetaNet Nodes</h1>
     <form phx-submit="create_root_dir">
       <input name="dir">
-      <button type="submit">mkdir(root)</button>
+      <button type="submit">Create Root Node</button>
     </form>
     <ul>
       <%= for k <- @derive_keys || [] do %>
-        <div>
-          <h2>Address: <%= k.address %></h2>
-          <h2>Dir: <%= k.dir %></h2>
+        <div style="margin: 10px">
+          <p>Address: <%= k.address %></p>
+          <p>Dir: <%= k.dir %></p>
+          <p>ParentDir: <%= k.parent_key.dir %></p>
 
           <form phx-submit="create_sub_dir">
             <input name="dir:<%= k.id %>">
-            <button type="submit">mkdir</button>
+            <button type="submit">Create Child Node</button>
           </form>
         </div>
       <% end %>
     </ul>
     <% else %>
-    <h1>Please load a key</h1>
+    <h1>Please import a key</h1>
     <% end %>
     """
   end

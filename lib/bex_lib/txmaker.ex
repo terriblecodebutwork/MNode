@@ -286,9 +286,11 @@ defmodule BexLib.Txmaker do
       if op_return == false do
         n_out * 34
       else
-        (n_out - 1) * 34 + # p2pkh outputs
-        8 + # value
-        byte_size(VarString.serialize(op_return))
+        # p2pkh outputs
+        # value
+        (n_out - 1) * 34 +
+          8 +
+          byte_size(VarString.serialize(op_return))
       end
 
     # version

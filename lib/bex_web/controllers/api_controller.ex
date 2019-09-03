@@ -19,7 +19,7 @@ defmodule BexWeb.ApiController do
   if only dir, create a dir; if path and file, creat the file.
   Can not create dir or file under unexisted dir.
   """
-  def create(conn, %{"parent" => "NULL", "id" => c_dir} = params) do
+  def create(conn, %{"parent" => false, "id" => c_dir} = params) do
     c_dir = to_string(c_dir)
     base_key = conn.assigns.private_key
     content = deal_with_content(params)
@@ -27,6 +27,9 @@ defmodule BexWeb.ApiController do
     broadcast(conn, params, hex_tx, txid)
   end
 
+  # It's a bit confusing, cause the different view of nodes.
+  # In old code, we see the "parent" node as self node, and
+  # "id" node as child node.
   def create(conn, %{"parent" => s_dir, "id" => c_dir} = params) do
     s_dir = to_string(s_dir)
     c_dir = to_string(c_dir)
@@ -37,7 +40,9 @@ defmodule BexWeb.ApiController do
       {:ok, s_key} ->
         {:ok, txid, hex_tx} = Utxo.create_sub_dir(s_key, c_dir, content)
         broadcast(conn, params, hex_tx, txid)
-      {:error, _} -> json(conn, %{code: 1, error: "mnode: #{s_dir}: No such file or directory"})
+
+      {:error, _} ->
+        json(conn, %{code: 1, error: "mnode: #{s_dir}: No such file or directory"})
     end
   end
 
@@ -50,27 +55,16 @@ defmodule BexWeb.ApiController do
       :root ->
         {:ok, txid, hex_tx} = Utxo.create_root_dir(base_key, dir, content)
         broadcast(conn, params, hex_tx, txid)
+
       :noroot ->
         case Wallet.find_key_with_dir(base_key, Path.dirname(dir)) do
           {:ok, s_key} ->
             {:ok, txid, hex_tx} = Utxo.create_sub_dir(s_key, dir, content)
             broadcast(conn, params, hex_tx, txid)
 
-          {:error, _} -> json(conn, %{code: 1, error: "mnode: #{dir}: No such file or directory"})
+          {:error, _} ->
+            json(conn, %{code: 1, error: "mnode: #{dir}: No such file or directory"})
         end
-    end
-  end
-
-  defp broadcast(conn, params, hex_tx, txid) do
-    if params["broadcast"] == true do
-      case Bitindex.broadcast_hex_tx(hex_tx) do
-        {:ok, msg} ->
-          json(conn, %{code: 0, raw_tx: hex_tx, txid: txid, msg: msg})
-        {:error, msg} ->
-          json(conn, %{code: 1, error: "mnode: #{inspect msg}"})
-      end
-    else
-      json(conn, %{code: 0, raw_tx: hex_tx, txid: txid})
     end
   end
 
@@ -78,10 +72,25 @@ defmodule BexWeb.ApiController do
     json(conn, %{error: "need dir"})
   end
 
+  defp broadcast(conn, params, hex_tx, txid) do
+    if params["broadcast"] == true do
+      case Bitindex.broadcast_hex_tx(hex_tx) do
+        {:ok, msg} ->
+          json(conn, %{code: 0, raw_tx: hex_tx, txid: txid, msg: msg})
+
+        {:error, msg} ->
+          json(conn, %{code: 1, error: "mnode: #{inspect(msg)}"})
+      end
+    else
+      json(conn, %{code: 0, raw_tx: hex_tx, txid: txid})
+    end
+  end
+
   defp deal_with_content(params) do
     case params["content"] do
       b when is_binary(b) ->
         [b]
+
       m when is_map(m) ->
         m
         |> Enum.map(fn {k, v} ->
@@ -90,8 +99,10 @@ defmodule BexWeb.ApiController do
         end)
         |> Enum.sort()
         |> Enum.map(fn {_, v} -> v end)
+
       l when is_list(l) ->
         l
+
       _ ->
         []
     end
@@ -99,10 +110,13 @@ defmodule BexWeb.ApiController do
 
   def find(conn, %{"path" => dir}) do
     base_key = conn.assigns.private_key
+
     case Wallet.find_txids_with_dir(base_key, dir) do
       {:ok, txids} ->
         json(conn, %{code: 0, txids: txids})
-      {:error, _} -> json(conn, %{code: 1, error: "mnode: #{dir}: No such file or directory"})
+
+      {:error, _} ->
+        json(conn, %{code: 1, error: "mnode: #{dir}: No such file or directory"})
     end
   end
 

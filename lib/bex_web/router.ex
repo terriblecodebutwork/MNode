@@ -17,11 +17,10 @@ defmodule BexWeb.Router do
   scope "/", BexWeb do
     pipe_through :browser
 
-    get "/", PageController, :index
+    # get "/", PageController, :index
     resources "/private_keys", PrivateKeyController
-    resources "/utxos", UtxoController
-    resources "/documents", DocumentController
-    live "/index", IndexLive
+    # resources "/utxos", UtxoController
+    live "/", IndexLive
     live "/meta", MetaLive
     live "/meta/:id", MetaLive
   end

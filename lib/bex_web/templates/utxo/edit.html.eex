@@ -1,5 +1,0 @@
-<h1>Edit Utxo</h1>
-
-<%= render "form.html", Map.put(assigns, :action, Routes.utxo_path(@conn, :update, @utxo)) %>
-
-<span><%= link "Back", to: Routes.utxo_path(@conn, :index) %></span>

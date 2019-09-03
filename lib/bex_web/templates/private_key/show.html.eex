@@ -22,6 +22,15 @@
     <%= @private_key.address %>
   </li>
 
+  <ul>
+    <strong>UTXOs:</strong>
+    <%= for u <- @private_key.utxos do %>
+      <li>txid: <%= u.txid %></li>
+      <li>index: <%= u.index %></li>
+      <li>value: <%= u.value |> Decimal.to_string() %></li>
+    <% end %>
+  </ul>
+
 </ul>
 
 <span><%= link "Edit", to: Routes.private_key_path(@conn, :edit, @private_key) %></span>

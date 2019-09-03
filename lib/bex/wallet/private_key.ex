@@ -2,7 +2,6 @@ defmodule Bex.Wallet.PrivateKey do
   use Ecto.Schema
   import Ecto.Changeset
   alias Bex.Wallet.Utxo
-  alias Bex.Wallet.Document
   alias BexLib.Key
   alias Bex.Repo
   import Ecto.Query
@@ -18,9 +17,11 @@ defmodule Bex.Wallet.PrivateKey do
     field :hex, :string
     field :app_key, :string
     belongs_to :base_key, PrivateKey, foreign_key: :base_key_id
-    has_many :utxos, Utxo
-    has_many :documents, Document, foreign_key: :private_key_id
     has_many :derive_keys, PrivateKey, foreign_key: :base_key_id
+    belongs_to :parent_key, PrivateKey, foreign_key: :parent_key_id
+    has_many :child_keys, PrivateKey, foreign_key: :parent_key_id
+    has_many :utxos, Utxo
+    # has_many :documents, Document, foreign_key: :private_key_id
 
     timestamps()
   end
@@ -28,7 +29,17 @@ defmodule Bex.Wallet.PrivateKey do
   @doc false
   def changeset(private_key, attrs) do
     private_key
-    |> cast(attrs, [:hex, :bn, :dir, :dir_txid, :lock_script, :address, :app_key, :base_key_id])
+    |> cast(attrs, [
+      :hex,
+      :bn,
+      :dir,
+      :dir_txid,
+      :lock_script,
+      :address,
+      :app_key,
+      :base_key_id,
+      :parent_key_id
+    ])
     |> cast_assoc(:base_key)
     |> validate_required([:hex, :bn, :address])
   end
@@ -52,10 +63,15 @@ defmodule Bex.Wallet.PrivateKey do
     |> changeset(attrs)
   end
 
-  def derive_changeset(base_key, dir) do
+  def derive_changeset(base_key, parent_key, dir) do
     new_bn = Key.derive_key(base_key.bn, dir)
 
-    hex_changeset(%{hex: Binary.to_hex(new_bn), dir: dir, base_key_id: base_key.id})
+    hex_changeset(%{
+      hex: Binary.to_hex(new_bn),
+      dir: dir,
+      base_key_id: base_key.id,
+      parent_key_id: parent_key.id
+    })
   end
 
   def get_derive_keys_by_id(id) do

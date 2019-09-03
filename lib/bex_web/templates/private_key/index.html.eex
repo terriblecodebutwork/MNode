@@ -3,9 +3,8 @@
 <table>
   <thead>
     <tr>
-      <th>Hex</th>
-      <th>APP_KEY</th>
       <th>Dir</th>
+      <th>APP_KEY</th>
       <th>Address</th>
 
       <th></th>
@@ -14,14 +13,13 @@
   <tbody>
 <%= for private_key <- @private_keys do %>
     <tr>
-      <td><%= private_key.hex %></td>
-      <td><%= private_key.app_key %></td>
       <td><%= private_key.dir %></td>
+      <td><%= private_key.app_key %></td>
       <td><%= private_key.address %></td>
 
       <td>
         <%= link "Show", to: Routes.private_key_path(@conn, :show, private_key) %>
-        <%= link "Edit", to: Routes.private_key_path(@conn, :edit, private_key) %>
+
         <%= link "Delete", to: Routes.private_key_path(@conn, :delete, private_key), method: :delete, data: [confirm: "Are you sure?"] %>
       </td>
     </tr>
