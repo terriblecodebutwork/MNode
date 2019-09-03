@@ -90,7 +90,7 @@ defmodule Bex.Wallet.Utxo do
     end
   end
 
-  def mint_all(p = %PrivateKey{utxos: utxos, lock_script: s, id: pkid}) do
+  def mint_all(%PrivateKey{utxos: utxos, lock_script: s, id: pkid}) do
     coin_sat = CoinManager.get_coin_sat()
     inputs = Enum.filter(utxos, fn u -> u.type == :gold end)
     v = sum_of_value(inputs)

@@ -8,7 +8,7 @@ Online Testing: http://nicedata.space
 
 Start the server, and open "http://localhost:4000/index".
 
-Input the hex string format of your private key.
+Input the hex string format of your private key. Visit the "keys" page to get your APP_KEY of root private key.
 
 ## UTXOs manager
 
@@ -21,6 +21,8 @@ we defined 3 types of utxos based on value:
 - and "permission", 546 satoshi used for create new metanode.
 
 ## APIs
+
+Set `APP_KEY` in the request header.
 
 The parameters need be JSON.
 
