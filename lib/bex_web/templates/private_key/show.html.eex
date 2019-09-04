@@ -12,6 +12,11 @@
     <%= @private_key.address %>
   </li>
 
+  <li>
+    <strong>Hex:</strong>
+    <%= @private_key.hex %>
+  </li>
+
   <ul>
     <strong>UTXOs:</strong>
     <%= for u <- @private_key.utxos do %>

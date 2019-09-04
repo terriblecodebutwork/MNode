@@ -7,3 +7,4 @@ alias Bex.Wallet.Mission
 alias Bex.Wallet.Document
 alias Bex.CoinManager
 alias Bex.Txrepo
+alias BexLib.Script

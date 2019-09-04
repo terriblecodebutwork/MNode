@@ -78,7 +78,7 @@ or
 ## Install the release
 
 - macOS:
-- Ubuntu16:
+- Ubuntu:
 
 ## Build from source
 
