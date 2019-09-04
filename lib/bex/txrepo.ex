@@ -32,6 +32,7 @@ defmodule Bex.Txrepo do
     if @broadcast do
       :timer.send_after(@interval, :broadcast)
     end
+
     {:ok, state}
   end
 
@@ -46,8 +47,8 @@ defmodule Bex.Txrepo do
 
   def handle_info(:broadcast, state = %{queue: q}) do
     case :queue.out(q) do
-      {{:value, {txid, hex_tx} }, q} ->
-        Logger.debug "broadcasting: " <> txid
+      {{:value, {txid, hex_tx}}, q} ->
+        Logger.debug("broadcasting: " <> txid)
         {:ok, _} = do_broadcast(hex_tx)
         :timer.send_after(@interval, :broadcast)
         {:noreply, %{state | queue: q}}
@@ -59,6 +60,6 @@ defmodule Bex.Txrepo do
   end
 
   defp do_broadcast(tx) do
-    IO.inspect Bitindex.broadcast_hex_tx(tx)
+    IO.inspect(Bitindex.broadcast_hex_tx(tx))
   end
 end

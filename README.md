@@ -2,23 +2,25 @@
 
 An API based Metanet service.
 
-Online Testing: http://nicedata.space
-
 ## import root private key
 
-Start the server, and open "http://localhost:4000/index".
-
-Input the hex string format of your private key. Visit the "keys" page to get your APP_KEY of root private key.
+Start the server, and open "http://localhost:4000/nodes/new" to import the root private key and get APP_KEY.
 
 ## UTXOs manager
 
-we defined 3 types of utxos based on value:
+we defined 3 types of utxos based on value (You can set the X value):
 
-1. gold: > 90k satoshi
-2. coin: = 90k satoshi
-3. dust: < 90k satoshi
+1. gold: > X satoshi
+2. coin: = X satoshi
+3. dust: < X satoshi
 
 - and "permission", 546 satoshi used for create new metanode.
+
+MetaNet node creation will only use the coins as inputs. If run out of coins, MNode will auto recast the dusts into coins.
+
+You also can manually manage utxos in "http://localhost:4000/dashboradx" .
+
+**DEPOSIT**: After deposit, you need "resync utxos" by yourself.
 
 ## APIs
 

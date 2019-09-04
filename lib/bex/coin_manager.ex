@@ -139,7 +139,7 @@ defmodule Bex.CoinManager do
     case do_recast(pkid, coin_sat) do
       {:error, msg} ->
         Logger.error(msg)
-        {:error, msg}
+        try_to_get_coins_again(pkid, n)
 
       {:ok, txid, hex_tx} ->
         Txrepo.add(txid, hex_tx)
@@ -164,6 +164,7 @@ defmodule Bex.CoinManager do
     if length(utxos) == n do
       {:ok, utxos}
     else
+      do_mint(pkid, coin_sat)
       try_to_recast_dusts(pkid, n, coin_sat)
     end
   end

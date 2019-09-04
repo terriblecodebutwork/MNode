@@ -1,10 +1,5 @@
 <pre>
 ## APIs
-
-Set `APP_KEY` in the request header.
-
-key for testing: `6Y23t3uCVaQ5q7nGiWBrSZNtDpl6/FpEn5Wn69k0P/Q=`
-
 The parameters need be JSON.
 
 - Create a Metanet node
