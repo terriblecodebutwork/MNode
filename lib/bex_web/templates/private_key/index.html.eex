@@ -1,10 +1,10 @@
-<h1>Listing Private keys</h1>
+<h1>Listing Metanet Nodes</h1>
 
 <table>
   <thead>
     <tr>
       <th>Dir</th>
-      <th>APP_KEY</th>
+      <th>TXID</th>
       <th>Address</th>
 
       <th></th>
@@ -14,13 +14,11 @@
 <%= for private_key <- @private_keys do %>
     <tr>
       <td><%= private_key.dir %></td>
-      <td><%= private_key.app_key %></td>
+      <td><%= private_key.dir_txid %></td>
       <td><%= private_key.address %></td>
 
       <td>
         <%= link "Show", to: Routes.private_key_path(@conn, :show, private_key) %>
-
-        <%= link "Delete", to: Routes.private_key_path(@conn, :delete, private_key), method: :delete, data: [confirm: "Are you sure?"] %>
       </td>
     </tr>
 <% end %>
