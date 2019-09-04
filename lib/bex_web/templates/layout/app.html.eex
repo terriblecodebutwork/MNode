@@ -22,6 +22,9 @@
                 <li class="navigation-item">
                   <a class="navigation-link" href="/nodes">Nodes</a>
                 </li>
+                <li class="navigation-item">
+                  <a class="navigation-link" href="/dashboardx">DashboradX</a>
+                </li>
               </ul>
             </div>
           </div>
