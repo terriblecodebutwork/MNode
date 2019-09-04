@@ -35,9 +35,8 @@ Ensure every node will have a unique ID
 
 ```json
 {
-  "parent": "bar",
-  "name": "foo",
-  "broadcast": true,
+  "parent": "0",
+  "name": "1",
   "content": []
 }
 ```
@@ -50,6 +49,14 @@ We use `name` and the root private key to generate the private key of this node.
 
 The content could be a string or an array of string, if that is an array of string, each element will be pushed saparately.
 
+Also support `path` version:
+```json
+{
+  "path": "foo/bar",
+  "content": []
+}
+```
+
 The same as Unix file system, you need create the parent path before create the children paths.
 
 - Find the txids of a Metanet node
@@ -57,9 +64,16 @@ The same as Unix file system, you need create the parent path before create the 
 
 ```json
 {
-  "name": "foo"
+  "name": "1"
 }
 ```
+
+or
+
+```json
+{
+  "path": "foo"
+}
 
 ## Install the release
 

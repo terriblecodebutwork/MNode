@@ -128,4 +128,10 @@ defmodule BexLib.Script do
     IO.puts(chars)
     chars |> IO.iodata_to_binary()
   end
+
+  def parse_hex(str) do
+    str
+    |> Binary.from_hex()
+    |> parse()
+  end
 end

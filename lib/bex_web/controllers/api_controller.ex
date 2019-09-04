@@ -46,6 +46,18 @@ defmodule BexWeb.ApiController do
     end
   end
 
+  def create(conn, %{"path" => path} = params) do
+    parent =
+      if String.contains?(path, "/") do
+        Path.dirname(path)
+      else
+        false
+      end
+
+    name = path
+    create(conn, Map.merge(params, %{"parent" => parent, "name" => name}))
+  end
+
   def create(conn, _) do
     json(conn, %{error: "`parent` or `name` didn't set"})
   end
@@ -88,17 +100,9 @@ defmodule BexWeb.ApiController do
     end
   end
 
-  # def find(conn, %{"path" => dir}) do
-  #   base_key = conn.assigns.private_key
-
-  #   case Wallet.find_txids_with_dir(base_key, dir) do
-  #     {:ok, txids} ->
-  #       json(conn, %{code: 0, txids: txids})
-
-  #     {:error, _} ->
-  #       json(conn, %{code: 1, error: "mnode: #{dir}: No such file or directory"})
-  #   end
-  # end
+  def find(conn, %{"path" => dir} = params) do
+    find(conn, Map.put(params, "name", dir))
+  end
 
   defp dir_type(dir) do
     case String.contains?(dir, "/") do
