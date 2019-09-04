@@ -12,6 +12,7 @@ defmodule Bex.CoinManager do
   alias Bex.Wallet.Utxo
   alias Bex.Wallet.PrivateKey
   alias BexLib.Key
+  alias Bex.Txrepo
   import Ecto.Query
   require Logger
 
@@ -141,6 +142,7 @@ defmodule Bex.CoinManager do
         {:error, msg}
 
       {:ok, txid, hex_tx} ->
+        Txrepo.add(txid, hex_tx)
         try_to_get_coins_again(pkid, n)
     end
   end
@@ -199,7 +201,15 @@ defmodule Bex.CoinManager do
 
   defp do_mint(pkid, coin_sat) do
     p = Repo.get!(PrivateKey, pkid) |> Repo.preload(:utxos)
-    Utxo.mint_all(p, coin_sat)
+
+    case Utxo.mint_all(p, coin_sat) do
+      {:ok, txid, hex_tx} ->
+        Txrepo.add(txid, hex_tx)
+        {:ok, txid, hex_tx}
+
+      {:error, msg} ->
+        {:error, msg}
+    end
   end
 
   defp do_create_root_mnode(pkid, iname, content, coin_sat) do
@@ -222,6 +232,7 @@ defmodule Bex.CoinManager do
       {:ok, inputs, outputs} ->
         {:ok, txid, hex_tx} = Utxo.make_tx(inputs, outputs, coin_sat)
         Wallet.update_private_key(c_key, %{dir_txid: txid})
+        Txrepo.add(txid, hex_tx)
         {:ok, txid, hex_tx}
     end
   end
@@ -232,7 +243,14 @@ defmodule Bex.CoinManager do
     case Wallet.find_key_with_dir(p, pname) do
       {:ok, p_key} ->
         # parent key exists
-        Utxo.create_sub_dir(p_key, iname, content, coin_sat)
+        case Utxo.create_sub_dir(p_key, iname, content, coin_sat) do
+          {:ok, txid, hex_tx} ->
+            Txrepo.add(txid, hex_tx)
+            {:ok, txid, hex_tx}
+
+          {:error, msg} ->
+            {:error, msg}
+        end
 
       {:error, msg} ->
         {:error, msg}

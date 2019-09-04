@@ -25,7 +25,7 @@ defmodule BexWeb.ApiController do
     base_key = conn.assigns.private_key
     content = deal_with_content(params)
     {:ok, txid, hex_tx} = CoinManager.create_mnode(base_key.id, false, c_dir, content)
-    broadcast(conn, params, hex_tx, txid)
+    respond(conn, params, hex_tx, txid)
   end
 
   # It's a bit confusing, cause the different view of nodes.
@@ -39,7 +39,7 @@ defmodule BexWeb.ApiController do
     # use parent id and self id as dir, and need the root dir
     case CoinManager.create_mnode(base_key.id, s_dir, c_dir, content) do
       {:ok, txid, hex_tx} ->
-        broadcast(conn, params, hex_tx, txid)
+        respond(conn, params, hex_tx, txid)
 
       {:error, _} ->
         json(conn, %{code: 1, error: "mnode: #{s_dir}: No such file or directory"})
@@ -50,18 +50,8 @@ defmodule BexWeb.ApiController do
     json(conn, %{error: "`parent` or `name` didn't set"})
   end
 
-  defp broadcast(conn, params, hex_tx, txid) do
-    if params["broadcast"] == true do
-      case Bitindex.broadcast_hex_tx(hex_tx) do
-        {:ok, msg} ->
-          json(conn, %{code: 0, raw_tx: hex_tx, txid: txid, msg: msg})
-
-        {:error, msg} ->
-          json(conn, %{code: 1, error: "mnode: #{inspect(msg)}"})
-      end
-    else
-      json(conn, %{code: 0, raw_tx: hex_tx, txid: txid})
-    end
+  defp respond(conn, _params, hex_tx, txid) do
+    json(conn, %{code: 0, raw_tx: hex_tx, txid: txid})
   end
 
   defp deal_with_content(params) do
