@@ -52,12 +52,11 @@ defmodule Bex.Wallet.Utxo do
     }
   end
 
-  def set_utxo_type(u = %{type: type}) when not is_nil(type) do
+  def set_utxo_type(u = %{type: type}, _coin_sat) when not is_nil(type) do
     u
   end
 
-  def set_utxo_type(utxo = %{value: v}) do
-    coin_sat = CoinManager.get_coin_sat()
+  def set_utxo_type(utxo = %{value: v}, coin_sat) do
     type =
       case Decimal.cmp(v, coin_sat) do
         :lt -> :dust
@@ -86,12 +85,11 @@ defmodule Bex.Wallet.Utxo do
         {:error, msg}
 
       {:ok, inputs, outputs} ->
-        make_tx(inputs, outputs)
+        make_tx(inputs, outputs, coin_sat)
     end
   end
 
-  def mint_all(%PrivateKey{utxos: utxos, lock_script: s, id: pkid}) do
-    coin_sat = CoinManager.get_coin_sat()
+  def mint_all(%PrivateKey{utxos: utxos, lock_script: s, id: pkid}, coin_sat) do
     inputs = Enum.filter(utxos, fn u -> u.type == :gold end)
     v = sum_of_value(inputs)
     coin_num = Decimal.div_int(v, coin_sat) |> Decimal.to_integer()
@@ -105,40 +103,7 @@ defmodule Bex.Wallet.Utxo do
         {:error, msg}
 
       {:ok, inputs, outputs} ->
-        make_tx(inputs, outputs)
-    end
-  end
-
-  @doc """
-  Combian all dust of a private key into the coins.
-  """
-  def recast(%PrivateKey{} = p) do
-    coin_sat = CoinManager.get_coin_sat()
-    dusts =
-      from(u in Utxo,
-        where: u.private_key_id == ^p.id and u.type == "dust"
-      )
-      |> Repo.all()
-
-    inputs = dusts
-    inputs_value = sum_of_value(inputs)
-    coin_num = Decimal.div_int(inputs_value, coin_sat) |> Decimal.to_integer()
-
-    if coin_num == 0 do
-      {:error, "not enough dusts"}
-    else
-      change_script = Key.private_key_to_p2pkh_script(p.bn)
-      change_pkid = p.id
-      coin_utxo = %__MODULE__{value: coin_sat, private_key_id: p.id, lock_script: change_script}
-      outputs = List.duplicate(coin_utxo, coin_num)
-
-      case handle_change(inputs, outputs, change_script, change_pkid) do
-        {:error, msg} ->
-          {:error, msg}
-
-        {:ok, inputs, outputs} ->
-          make_tx(inputs, outputs)
-      end
+        make_tx(inputs, outputs, coin_sat)
     end
   end
 
@@ -161,7 +126,7 @@ defmodule Bex.Wallet.Utxo do
   @permission_sat Decimal.cast(546)
   @permission_num 1
 
-  defp c_permission_utxo(c_key) do
+  def c_permission_utxo(c_key) do
     %__MODULE__{
       value: @permission_sat,
       private_key_id: c_key.id,
@@ -170,45 +135,10 @@ defmodule Bex.Wallet.Utxo do
     }
   end
 
-  @doc """
-  Root directory creation tx.
-  params: base_pk, dir_string
-
-  inputs: a coin
-  outputs: [
-    metanet opreturn,
-    permissions...
-  ]
-
-  save dir_txid to c_key
-  """
-  def create_root_dir(base_key, root, content \\ []) do
-    inputs = [Wallet.get_a_coin(base_key)]
-    {:ok, c_key} = Wallet.derive_and_insert_key(base_key, base_key, root)
-
-    c_permission_utxo = c_permission_utxo(c_key)
-
-    meta = meta_utxo(c_key.address, content)
-    outputs = [meta | List.duplicate(c_permission_utxo, @permission_num)]
-    # send change to base key
-    change_script = base_key.lock_script
-    change_pkid = base_key.id
-
-    case handle_change(inputs, outputs, change_script, change_pkid) do
-      {:error, msg} ->
-        {:error, msg}
-
-      {:ok, inputs, outputs} ->
-        {:ok, txid, hex_tx} = make_tx(inputs, outputs)
-        Wallet.update_private_key(c_key, %{dir_txid: txid})
-        {:ok, txid, hex_tx}
-    end
-  end
-
   # dir is full dir
   # c_ child
   # s_ self
-  def create_sub_dir(s_key, c_dir, content \\ nil) do
+  def create_sub_dir(s_key, c_dir, content, coin_sat) do
     base_key = Repo.preload(s_key, :base_key).base_key
     s_permission = Wallet.get_a_permission(s_key)
     inputs = [s_permission, Wallet.get_a_coin(base_key)]
@@ -234,13 +164,13 @@ defmodule Bex.Wallet.Utxo do
         {:error, msg}
 
       {:ok, inputs, outputs} ->
-        {:ok, txid, hex_tx} = make_tx(inputs, outputs)
+        {:ok, txid, hex_tx} = make_tx(inputs, outputs, coin_sat)
         Wallet.update_private_key(c_key, %{dir_txid: txid})
         {:ok, txid, hex_tx}
     end
   end
 
-  defp make_tx(inputs, outputs) do
+  def make_tx(inputs, outputs, coin_sat) do
     binary_tx = Txmaker.create_p2pkh_transaction(inputs, outputs)
 
     hex_tx = Binary.to_hex(binary_tx)
@@ -255,7 +185,7 @@ defmodule Bex.Wallet.Utxo do
         # insert outputs
         outs =
           outputs
-          |> Stream.map(&set_utxo_type/1)
+          |> Stream.map(&set_utxo_type(&1, coin_sat))
           |> Stream.with_index()
           |> Stream.map(fn {x, i} -> Map.put(x, :index, i) |> Map.put(:txid, txid) end)
           |> Enum.map(fn x ->
@@ -298,7 +228,7 @@ defmodule Bex.Wallet.Utxo do
         Logger.debug("get_change_amount: #{inspect(change)}")
         {change, outputs}
 
-      {:nochange, _inputs, outputs} ->
+      {:no_change, _inputs, outputs} ->
         {nil, outputs}
     end
   end

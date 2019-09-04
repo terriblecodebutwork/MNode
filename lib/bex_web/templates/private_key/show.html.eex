@@ -1,16 +1,6 @@
-<h1>Show Private key</h1>
+<h1>Show Metanet Nodes</h1>
 
 <ul>
-
-  <li>
-    <strong>Hex:</strong>
-    <%= @private_key.hex %>
-  </li>
-
-  <li>
-    <strong>Bn:</strong>
-    <%= @private_key.bn %>
-  </li>
 
   <li>
     <strong>Dir:</strong>

@@ -6,6 +6,7 @@ defmodule Bex.Wallet do
   import Ecto.Query, warn: false
   alias Bex.Repo
   alias Bex.Wallet.PrivateKey
+  alias Bex.CoinManager
   require Logger
 
   @doc """
@@ -126,6 +127,8 @@ defmodule Bex.Wallet do
   Get and save the utoxs of a private key from api.
   """
   def sync_utxos_of_private_key(%PrivateKey{} = private_key, api \\ :bitindex) do
+    coin_sat = CoinManager.get_coin_sat()
+
     case Api.get_utxos_from_api(private_key.address, api) do
       {:ok, utxos} ->
         Repo.delete_all(Ecto.assoc(private_key, :utxos))
@@ -134,7 +137,7 @@ defmodule Bex.Wallet do
           Utxo,
           Enum.map(utxos, fn u ->
             u
-            |> Utxo.set_utxo_type()
+            |> Utxo.set_utxo_type(coin_sat)
             |> Map.put(:private_key_id, private_key.id)
           end),
           returning: true
@@ -147,7 +150,6 @@ defmodule Bex.Wallet do
         {:error, msg}
     end
   end
-
 
   @doc """
   Gets a single utxo.

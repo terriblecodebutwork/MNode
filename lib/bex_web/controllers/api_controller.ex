@@ -4,6 +4,7 @@ defmodule BexWeb.ApiController do
   alias Bex.Wallet
   alias Bex.Wallet.Utxo
   alias BexLib.Bitindex
+  alias Bex.CoinManager
   require Logger
 
   plug :find_private_key
@@ -23,7 +24,7 @@ defmodule BexWeb.ApiController do
     c_dir = to_string(c_dir)
     base_key = conn.assigns.private_key
     content = deal_with_content(params)
-    {:ok, txid, hex_tx} = Utxo.create_root_dir(base_key, c_dir, content)
+    {:ok, txid, hex_tx} = CoinManager.create_mnode(base_key.id, false, c_dir, content)
     broadcast(conn, params, hex_tx, txid)
   end
 
@@ -36,9 +37,8 @@ defmodule BexWeb.ApiController do
     base_key = conn.assigns.private_key
     content = deal_with_content(params)
     # use parent id and self id as dir, and need the root dir
-    case Wallet.find_key_with_dir(base_key, s_dir) do
-      {:ok, s_key} ->
-        {:ok, txid, hex_tx} = Utxo.create_sub_dir(s_key, c_dir, content)
+    case CoinManager.create_mnode(base_key.id, s_dir, c_dir, content) do
+      {:ok, txid, hex_tx} ->
         broadcast(conn, params, hex_tx, txid)
 
       {:error, _} ->
@@ -46,30 +46,8 @@ defmodule BexWeb.ApiController do
     end
   end
 
-  def create(conn, %{"path" => dir} = params) when is_binary(dir) do
-    base_key = conn.assigns.private_key
-    Logger.info("create_root_dir: #{inspect(dir)}")
-    content = deal_with_content(params)
-
-    case dir_type(dir) do
-      :root ->
-        {:ok, txid, hex_tx} = Utxo.create_root_dir(base_key, dir, content)
-        broadcast(conn, params, hex_tx, txid)
-
-      :noroot ->
-        case Wallet.find_key_with_dir(base_key, Path.dirname(dir)) do
-          {:ok, s_key} ->
-            {:ok, txid, hex_tx} = Utxo.create_sub_dir(s_key, dir, content)
-            broadcast(conn, params, hex_tx, txid)
-
-          {:error, _} ->
-            json(conn, %{code: 1, error: "mnode: #{dir}: No such file or directory"})
-        end
-    end
-  end
-
   def create(conn, _) do
-    json(conn, %{error: "need dir"})
+    json(conn, %{error: "`parent` or `name` didn't set"})
   end
 
   defp broadcast(conn, params, hex_tx, txid) do

@@ -70,11 +70,6 @@ defmodule BexWeb.IndexLive do
                     <li>type: <%= u.type %></li>
                     <li>txid: <%= u.txid %></li>
                     <li>value: <%= u.value %></li>
-                    <!-- <li>index: <%= u.index %></li> -->
-                    <!-- <li>block height: <%= u.block_height %></li> -->
-                    <!-- <%= if u.type == :gold do %>
-                    <button phx-click="mint" phx-value="<%= u.id %>">Mint</button>
-                    <% end %> -->
                 </ul>
               <% end %>
             </ul>
@@ -96,7 +91,6 @@ defmodule BexWeb.IndexLive do
     {:noreply, reload(socket)}
   end
 
-
   def handle_event(cmd, id, socket) do
     id = String.to_integer(id)
     send(self(), {cmd, id})
@@ -104,7 +98,7 @@ defmodule BexWeb.IndexLive do
   end
 
   def handle_info({"recast", id}, socket) do
-    case Utxo.recast(Repo.get!(PrivateKey, id)) do
+    case CoinManager.recast(id) do
       {:ok, _, hex_tx} ->
         Bitindex.broadcast_hex_tx(hex_tx)
         {:noreply, reload(socket)}
@@ -122,15 +116,9 @@ defmodule BexWeb.IndexLive do
     {:noreply, reload(socket)}
   end
 
-  def handle_info({"mint", id}, socket) do
-    {:ok, _, hex_tx} = Utxo.mint(Repo.get!(Utxo, id))
-    Bitindex.broadcast_hex_tx(hex_tx)
-    {:noreply, reload(socket)}
-  end
-
   def handle_info({"mint_all", id}, socket) do
     p = Repo.get!(Wallet.PrivateKey, id) |> Repo.preload(:utxos)
-    {:ok, _, hex_tx} = Utxo.mint_all(p)
+    {:ok, _, hex_tx} = CoinManager.mint(p)
     Bitindex.broadcast_hex_tx(hex_tx)
     {:noreply, reload(socket)}
   end

@@ -1,35 +1,44 @@
-<section class="phx-hero">
-  <h1><%= gettext "Welcome to %{name}!", name: "Phoenix" %></h1>
-  <p>A productive web framework that<br/>does not compromise speed or maintainability.</p>
-</section>
+<pre>
+## APIs
 
-<section class="row">
-  <article class="column">
-    <h2>Resources</h2>
-    <ul>
-      <li>
-        <a href="https://hexdocs.pm/phoenix/overview.html">Guides &amp; Docs</a>
-      </li>
-      <li>
-        <a href="https://github.com/phoenixframework/phoenix">Source</a>
-      </li>
-      <li>
-        <a href="https://github.com/phoenixframework/phoenix/blob/v1.4/CHANGELOG.md">v1.4 Changelog</a>
-      </li>
-    </ul>
-  </article>
-  <article class="column">
-    <h2>Help</h2>
-    <ul>
-      <li>
-        <a href="https://elixirforum.com/c/phoenix-forum">Forum</a>
-      </li>
-      <li>
-        <a href="https://webchat.freenode.net/?channels=elixir-lang">#elixir-lang on Freenode IRC</a>
-      </li>
-      <li>
-        <a href="https://twitter.com/elixirphoenix">Twitter @elixirphoenix</a>
-      </li>
-    </ul>
-  </article>
-</section>
+Set `APP_KEY` in the request header.
+
+key for testing: `6Y23t3uCVaQ5q7nGiWBrSZNtDpl6/FpEn5Wn69k0P/Q=`
+
+The parameters need be JSON.
+
+- Create a Metanet node
+
+`POST ../api/mnode`
+
+Ensure every node will have a unique ID
+
+```json
+{
+  "parent": "bar",
+  "name": "foo",
+  "broadcast": true,
+  "content": []
+}
+```
+
+All `id` should be string.
+
+If is root node, set parent to `false`.
+
+We use `name` and the root private key to generate the private key of this node. Highly recommend to store the `name` in the content.
+
+The content could be a string or an array of string, if that is an array of string, each element will be pushed saparately.
+
+The same as Unix file system, you need create the parent path before create the children paths.
+
+- Find the txids of a Metanet node
+
+`GET ../api/mnode`
+
+```json
+{
+  "name": "foo"
+}
+```
+</pre>
