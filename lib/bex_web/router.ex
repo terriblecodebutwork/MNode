@@ -20,6 +20,7 @@ defmodule BexWeb.Router do
     get "/", PageController, :index
     resources "/nodes", PrivateKeyController
     # resources "/utxos", UtxoController
+    resources "/posts", PostController
     live "/dashboardx", IndexLive
     # live "/meta", MetaLive
     # live "/meta/:id", MetaLive
@@ -31,5 +32,6 @@ defmodule BexWeb.Router do
 
     post "/mnode", ApiController, :create
     get "/mnode", ApiController, :find
+    post "/webhook/154814876", HookController, :mb_hook
   end
 end
