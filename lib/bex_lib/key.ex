@@ -93,6 +93,7 @@ defmodule BexLib.Key do
     |> :binary.decode_unsigned()
     |> Kernel.+(a)
     |> :binary.encode_unsigned()
+    |> Binary.take(32)
   end
 
   def address_to_public_key_hash(addr) do
