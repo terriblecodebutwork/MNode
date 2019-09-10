@@ -22,7 +22,6 @@ defmodule BexWeb.Router do
     # resources "/utxos", UtxoController
     resources "/posts", PostController
     live "/dashboardx", IndexLive
-    live "/news", NewsLive
     # live "/meta", MetaLive
     # live "/meta/:id", MetaLive
   end
