@@ -4,15 +4,23 @@ defmodule BexWeb.HookController do
 
   @secret "1b49274f7149c9472be2bb3fdc868c32"
 
-
-  def mb_hook(conn, %{"secret" => secret, "payment" => payment}) do
-    IO.inspect secret
+  @doc """
+  Verify the secret.
+  """
+  def mb_hook(conn, %{"secret" => @secret, "payment" => payment}) do
     user_id = payment["userId"]
-    contents =
+    user_name = payment["user"]["name"]
+    content =
       payment["paymentOutputs"]
       |> Enum.find(fn x -> x["type"] == "SCRIPT" end)
       |> Map.get("script")
-      |> parse_parent()
+      |> parse_content()
+    case content do
+      :invalid ->
+        nil
+      other ->
+        BsvNews.new_post(%{user_id: user_id, user_name: user_name, content: content})
+    end
 
     text(conn, "ok")
   end
@@ -21,9 +29,16 @@ defmodule BexWeb.HookController do
     text(conn, "ok")
   end
 
-  defp parse_parent(str) do
+  defp parse_content(str) do
     ["0", "OP_RETURN" | contents] = String.split(str)
-    IO.inspect contents
+    case Enum.map(contents, &Binary.from_hex/1) do
+      ["MetaNetBsvNewsV1", title, txid] ->
+        {:story, title, txid}
+      ["MetaNetBsvNewsCo", parent, data] ->
+        {:comment, parent, data}
+      _ ->
+        :invalid
+    end
   end
 
 end
