@@ -1,25 +1,23 @@
 defmodule BexWeb.HookController do
   use BexWeb, :controller
   alias Bex.CoinManager
+  alias BexLib.Key
 
   @secret "1b49274f7149c9472be2bb3fdc868c32"
+  @address "1Z2c8YiWRXGFj3zUWapfsEEJj1Qi482jZ"
+  @value Decimal.cast(10000)
 
   @doc """
   Verify the secret.
   """
   def mb_hook(conn, %{"secret" => @secret, "payment" => payment}) do
-    user_id = payment["userId"]
-    user_name = payment["user"]["name"]
-    content =
-      payment["paymentOutputs"]
-      |> Enum.find(fn x -> x["type"] == "SCRIPT" end)
-      |> Map.get("script")
-      |> parse_content()
-    case content do
-      :invalid ->
+    {user_id, user_name, content, utxo} = parse_payment(payment)
+
+    case content and utxo do
+      false ->
         nil
-      other ->
-        BsvNews.new_post(%{user_id: user_id, user_name: user_name, content: content})
+      _ ->
+        BsvNews.new_post(%{user_id: user_id, user_name: user_name, content: content, utxo: utxo})
     end
 
     text(conn, "ok")
@@ -27,6 +25,23 @@ defmodule BexWeb.HookController do
   def mb_hook(conn, params) do
     IO.inspect params
     text(conn, "ok")
+  end
+
+  def parse_payment(payment) do
+    user_id = payment["userId"]
+    user_name = payment["user"]["name"]
+    txid = payment["txid"]
+    content =
+      payment["paymentOutputs"]
+      |> Enum.find(fn x -> x["type"] == "SCRIPT" end)
+      |> Map.get("script")
+      |> parse_content()
+    utxo =
+      payment["paymentOutputs"]
+      |> Enum.with_index()
+      |> Enum.find(fn {x, _i} -> x["to"] == @address end)
+      |> parse_utxo(txid)
+    {user_id, user_name, content, utxo}
   end
 
   defp parse_content(str) do
@@ -37,7 +52,17 @@ defmodule BexWeb.HookController do
       ["MetaNetBsvNewsCo", parent, data] ->
         {:comment, parent, data}
       _ ->
-        :invalid
+        false
+    end
+  end
+
+  defp parse_utxo({x, index}, txid) do
+    v = Decimal.cast(x["satoshis"])
+    case v |> Decimal.cmp(@value) do
+      :lt ->
+        false
+      _ ->
+        %{txid: txid, value: v, index: index, lock_script: Key.address_to_pkscript(x["to"])}
     end
   end
 

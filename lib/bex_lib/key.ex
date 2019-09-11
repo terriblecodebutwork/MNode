@@ -2,6 +2,7 @@ defmodule BexLib.Key do
   alias BexLib.Base58Check
   # alias BexLib.Script
   alias BexLib.Crypto
+  alias BexLib.Script
 
   @address_prefix [
     public: 0,
@@ -75,16 +76,16 @@ defmodule BexLib.Key do
     byte_size(pub) == 33
   end
 
-  # def address_to_pkscript(addr) do
-  #   [
-  #     :OP_DUP,
-  #     :OP_HASH160,
-  #     Bitcoin.Tx.TxMaker.address_to_public_key_hash(addr),
-  #     :OP_EQUALVERIFY,
-  #     :OP_CHECKSIG
-  #   ]
-  #   |> Script.to_binary()
-  # end
+  def address_to_pkscript(addr) do
+    [
+      :OP_DUP,
+      :OP_HASH160,
+      address_to_public_key_hash(addr),
+      :OP_EQUALVERIFY,
+      :OP_CHECKSIG
+    ]
+    |> Script.to_binary()
+  end
 
   def derive_key(privkey, data) do
     a = Crypto.double_sha256(data) |> :binary.decode_unsigned()
