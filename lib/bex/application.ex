@@ -12,6 +12,7 @@ defmodule Bex.Application do
       Bex.Repo,
       Bex.Txrepo,
       Bex.CoinManager,
+      BsvNews,
       # Start the endpoint when the application starts
       BexWeb.Endpoint
       # Starts a worker by calling: Bex.Worker.start_link(arg)

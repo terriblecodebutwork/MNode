@@ -1,6 +1,5 @@
 defmodule BexWeb.HookController do
   use BexWeb, :controller
-  alias Bex.CoinManager
   alias BexLib.Key
 
   @secret "1b49274f7149c9472be2bb3fdc868c32"
@@ -11,13 +10,13 @@ defmodule BexWeb.HookController do
   Verify the secret.
   """
   def mb_hook(conn, %{"secret" => @secret, "payment" => payment}) do
-    {user_id, user_name, content, utxo} = parse_payment(payment)
+    {user_id, _user_name, content, utxo} = parse_payment(payment)
 
     case content and utxo do
       false ->
         nil
       _ ->
-        BsvNews.new_post(%{user_id: user_id, user_name: user_name, content: content, utxo: utxo})
+        BsvNews.new_post(%{id: payment["id"], user_id: user_id, utxo: utxo})
     end
 
     text(conn, "ok")

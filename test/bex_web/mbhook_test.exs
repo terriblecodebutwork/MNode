@@ -110,7 +110,119 @@ defmodule BexWeb.MbhookTest do
     "userId" => "390"
   }
 
+  @invalid_payment %{
+    "amount" => "0.009399723331535423",
+    "amountUsd" => "0.0013166907130699999",
+    "browserUserAgent" => "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_14_2) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36",
+    "buttonData" => nil,
+    "buttonId" => nil,
+    "changeAmountSatoshis" => "3652908",
+    "changeAmountUsd" => "4.809750039299107",
+    "clientId" => "20516",
+    "createdAt" => "2019-09-05T01:42:13.583Z",
+    "currency" => "CNY",
+    "deletedAt" => nil,
+    "feeAmountSatoshis" => "255",
+    "feeAmountUsd" => "0.00033575613183285",
+    "id" => "449356",
+    "inputAmountSatoshis" => "3654163",
+    "inputAmountUsd" => "4.811402486144011",
+    "normalizedTxid" => "9992400a32fdf822abef94282d0115136abc399516c5847d36e005f6dce382e7",
+    "paymentOutputs" => [
+      %{
+        "address" => "1Z2c8YiWRXGFj3zUWapfsEEJj1Qi482jZ",
+        "amount" => "0.00001",
+        "amountUsd" => "0.00131669071307",
+        "createdAt" => "2019-09-05T01:42:13.592Z",
+        "currency" => "BSV",
+        "deletedAt" => nil,
+        "id" => "1015822",
+        "paymailDt" => nil,
+        "paymailPubkey" => nil,
+        "paymailPurpose" => nil,
+        "paymailRecipientHandle" => nil,
+        "paymailSenderHandle" => nil,
+        "paymailSenderName" => nil,
+        "paymailSignature" => nil,
+        "paymentId" => "449356",
+        "satoshis" => "1000",
+        "script" => nil,
+        "to" => "1Z2c8YiWRXGFj3zUWapfsEEJj1Qi482jZ",
+        "type" => "ADDRESS",
+        "updatedAt" => "2019-09-05T01:42:13.592Z",
+        "userId" => nil
+      },
+      %{
+        "address" => nil,
+        "amount" => "0",
+        "amountUsd" => "0",
+        "createdAt" => "2019-09-05T01:42:13.587Z",
+        "currency" => "BSV",
+        "deletedAt" => nil,
+        "id" => "1015821",
+        "paymailDt" => nil,
+        "paymailPubkey" => nil,
+        "paymailPurpose" => nil,
+        "paymailRecipientHandle" => nil,
+        "paymailSenderHandle" => nil,
+        "paymailSenderName" => nil,
+        "paymailSignature" => nil,
+        "paymentId" => "449356",
+        "satoshis" => "0",
+        "script" => "0 OP_RETURN 4d6574614e65744273764e6577735631 43726169672057726967687420496e74657276696577 33326434626331666661373466326135626664373535316438326230393437376532633537323361653631303164643933633334343965336133393332363230",
+        "to" => nil,
+        "type" => "SCRIPT",
+        "updatedAt" => "2019-09-05T01:42:13.587Z",
+        "userId" => nil
+      }
+    ],
+    "referrerUrl" => "http://localhost:8080/",
+    "satoshis" => "1000",
+    "spendAmountSatoshis" => "1255",
+    "spendAmountUsd" => "0.00165244684490285",
+    "status" => "RECEIVED",
+    "statusDescription" => nil,
+    "transactionId" => nil,
+    "txid" => "598487911369461474e8e429ecc4e62a239a78d647b849fcbbd1cfcff6fd10ff",
+    "updatedAt" => "2019-09-05T01:42:14.116Z",
+    "user" => %{
+      "activeHandle" => %{
+        "createdAt" => "2019-04-23T00:14:17.294Z",
+        "deletedAt" => nil,
+        "domain" => "moneybutton.com",
+        "id" => "1008",
+        "localPart" => "390",
+        "onSale" => false,
+        "priceAmount" => nil,
+        "priceCurrency" => nil,
+        "updatedAt" => "2019-06-01T05:17:11.498Z",
+        "userId" => "390"
+      },
+      "activeHandleId" => "1008",
+      "activeWalletId" => "2418",
+      "bio" => "I like Money Button.",
+      "createdAt" => "2018-09-17T07:21:49.166Z",
+      "defaultCurrency" => "CNY",
+      "defaultLanguage" => "en",
+      "deletedAt" => nil,
+      "email" => "forbitcoincash@gmail.com",
+      "emailVerified" => true,
+      "gravatarKey" => "6834ec2c29d2e24625be06dae47fac5a",
+      "id" => "390",
+      "mnemonicBackedUpAt" => "2019-03-11T20:51:52.577Z",
+      "name" => "Jay Zhang",
+      "onboardingCompletedAt" => "2019-07-10T03:33:30.399Z",
+      "receiveEmails" => true,
+      "updatedAt" => "2019-07-10T03:33:32.198Z"
+    },
+    "userId" => "390"
+  }
+
   test "parse mbhook payment" do
     assert {"390", "Jay Zhang", {:story, "Craig Wright Interview", "32d4bc1ffa74f2a5bfd7551d82b09477e2c5723ae6101dd93c3449e3a3932620"}, %{txid: "598487911369461474e8e429ecc4e62a239a78d647b849fcbbd1cfcff6fd10ff", value: Decimal.cast(10000), index: 0, lock_script: <<118, 169, 20, 6, 14, 166, 177, 48, 28, 88, 251, 235, 167, 197, 34, 147, 9, 119, 93, 90, 208, 25, 157, 136, 172>>}} == HookController.parse_payment(@payment)
+  end
+
+  test "insufficient utxo" do
+    assert {"390", "Jay Zhang", {:story, "Craig Wright Interview", "32d4bc1ffa74f2a5bfd7551d82b09477e2c5723ae6101dd93c3449e3a3932620"}, false} == HookController.parse_payment(@invalid_payment)
   end
 end
