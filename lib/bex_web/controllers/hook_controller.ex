@@ -12,7 +12,7 @@ defmodule BexWeb.HookController do
   def mb_hook(conn, %{"secret" => @secret, "payment" => payment}) do
     {user_id, _user_name, content, utxo} = parse_payment(payment)
 
-    case content and utxo do
+    case content && utxo do
       false ->
         nil
       _ ->
