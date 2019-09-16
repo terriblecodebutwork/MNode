@@ -37,7 +37,7 @@ defmodule BsvNews do
     else
       Wallet.save_utxo(utxo)
       pool = MapSet.put(state.pool, %{id: id, timestamp: timestamp()})
-      build_mnode(state.base_key, data, utxo)
+      build_mnode(state.base_key.id, data, utxo)
       {:noreply, %{ state | pool: pool}}
     end
   end
