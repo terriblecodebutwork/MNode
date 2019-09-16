@@ -1,8 +1,15 @@
 defmodule BsvNews do
+  import Ecto.Query
+  alias Bex.Repo
+  alias Bex.Wallet.PrivateKey
+  alias Bex.CoinManager
+  alias Bex.Wallet
   use GenServer
+  @address "1Z2c8YiWRXGFj3zUWapfsEEJj1Qi482jZ"
+  @root_node "BsvNews"
 
-  def new_post(post) do
-    GenServer.cast(__MODULE__, {:new_post, post})
+  def hook_msg(post) do
+    GenServer.cast(__MODULE__, {:hook_msg, post})
   end
 
   def start_link(_) do
@@ -15,19 +22,22 @@ defmodule BsvNews do
   ## CALLBACKS
 
   def init(_) do
+    base_key = find_key(@address)
     state = %{
+      base_key: base_key,
       pool: MapSet.new()
     }
     :timer.send_interval(:clear_pool, @clear_interval)
     {:ok, state}
   end
 
-  def handle_cast({:new_post, %{id: id, user_id: uid, utxo: utxo} }, state) do
+  def handle_cast({:hook_msg, %{id: id, utxo: utxo, data: data} }, state) do
     if Enum.any?(state.pool, fn x -> x.id == id end) do
       {:noreply, state}
     else
+      Wallet.save_utxo(utxo)
       pool = MapSet.put(state.pool, %{id: id, timestamp: timestamp()})
-      create_mnode(uid, utxo.txid)
+      build_mnode(state.base_key, data, utxo)
       {:noreply, %{ state | pool: pool}}
     end
   end
@@ -38,11 +48,39 @@ defmodule BsvNews do
     {:noreply, %{ state | pool: pool} }
   end
 
-  defp create_mnode(uid, txid) do
-    IO.puts "TODO save the #{txid} under mb_user_#{uid} directory"
-  end
 
   defp timestamp do
     :os.system_time(:seconds)
   end
+
+  defp find_key(address) do
+    (from p in PrivateKey, where: p.address == ^address)
+    |> Repo.one!()
+  end
+
+  defp build_mnode(key, data, utxo) do
+    case data.content do
+      {:story, _title, _txid} ->
+        contents = [
+          Jason.encode!(%{
+            txid: utxo.txid,
+            mb_uid: data.uid,
+            mb_username: data.user_name
+          })
+        ]
+        CoinManager.create_mnode(key, @root_node, utxo.txid, contents)
+      {:comment, parent, _data} ->
+        contents = [
+          Jason.encode!(%{
+            txid: utxo.txid,
+            mb_uid: data.uid,
+            mb_username: data.user_name
+          })
+        ]
+        CoinManager.create_mnode(key, parent, utxo.txid, contents)
+    end
+
+  end
+
+
 end

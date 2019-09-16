@@ -117,8 +117,7 @@ defmodule BexWeb.IndexLive do
   end
 
   def handle_info({"mint_all", id}, socket) do
-    p = Repo.get!(Wallet.PrivateKey, id) |> Repo.preload(:utxos)
-    {:ok, _, hex_tx} = CoinManager.mint(p)
+    {:ok, _, hex_tx} = CoinManager.mint(id)
     Bitindex.broadcast_hex_tx(hex_tx)
     {:noreply, reload(socket)}
   end

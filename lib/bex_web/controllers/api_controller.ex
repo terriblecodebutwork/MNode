@@ -5,6 +5,7 @@ defmodule BexWeb.ApiController do
   alias Bex.Wallet.Utxo
   alias BexLib.Bitindex
   alias Bex.CoinManager
+  alias Bex.Util
   require Logger
 
   plug :find_private_key
@@ -47,14 +48,7 @@ defmodule BexWeb.ApiController do
   end
 
   def create(conn, %{"path" => path} = params) do
-    parent =
-      if String.contains?(path, "/") do
-        Path.dirname(path)
-      else
-        false
-      end
-
-    name = path
+    {parent, name} = Util.path_to_name(path)
     create(conn, Map.merge(params, %{"parent" => parent, "name" => name}))
   end
 

@@ -10,13 +10,13 @@ defmodule BexWeb.HookController do
   Verify the secret.
   """
   def mb_hook(conn, %{"secret" => @secret, "payment" => payment}) do
-    {user_id, _user_name, content, utxo} = parse_payment(payment)
+    {user_id, user_name, content, utxo} = parse_payment(payment)
 
     case content && utxo do
       false ->
         nil
       _ ->
-        BsvNews.new_post(%{id: payment["id"], user_id: user_id, utxo: utxo})
+        BsvNews.hook_msg(%{id: payment["id"], utxo: utxo, data: %{user_name: user_name, uid: user_id, content: content}})
     end
 
     text(conn, "ok")
@@ -49,6 +49,7 @@ defmodule BexWeb.HookController do
       ["MetaNetBsvNewsV1", title, txid] ->
         {:story, title, txid}
       ["MetaNetBsvNewsCo", parent, data] ->
+        # parent is the txid of the story or comment
         {:comment, parent, data}
       _ ->
         false

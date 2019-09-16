@@ -17,6 +17,11 @@
     <%= @private_key.hex %>
   </li>
 
+  <li>
+    <strong>APP_KEY:</strong>
+    <%= @private_key.app_key %>
+  </li>
+
   <ul>
     <strong>UTXOs:</strong>
     <%= for u <- @private_key.utxos do %>

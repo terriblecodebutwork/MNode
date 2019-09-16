@@ -22,7 +22,7 @@ defmodule BexWeb.Router do
     # resources "/utxos", UtxoController
     live "/dashboardx", IndexLive
     # live "/meta", MetaLive
-    # live "/meta/:id", MetaLive
+    live "/meta/:id", MetaLive
   end
 
   # Other scopes may use custom stacks.
