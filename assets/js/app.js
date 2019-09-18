@@ -23,24 +23,8 @@ import "url-search-params-polyfill"
 import "formdata-polyfill"
 import "classlist-polyfill"
 
-import moneyButton from "./moneybutton"
-
+import {Socket} from "phoenix"
 import LiveSocket from "phoenix_live_view"
 
-let liveSocket = new LiveSocket("/live")
+let liveSocket = new LiveSocket("/live", Socket)
 liveSocket.connect()
-
-
-const div = document.getElementById('my-money-button')
-moneyButton.render(div, {
-to: "390@moneybutton.com",
-amount: "0.1",
-currency: "CNY",
-label: "Wait...",
-clientIdentifier: "some public client identifier",
-buttonId: "234325",
-buttonData: "{}",
-type: "tip",
-onPayment: function (arg) { console.log('onPayment', arg) },
-onError: function (arg) { console.log('onError', arg) }
-})
