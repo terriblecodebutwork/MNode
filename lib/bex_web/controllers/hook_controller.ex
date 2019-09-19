@@ -1,6 +1,7 @@
 defmodule BexWeb.HookController do
   use BexWeb, :controller
   alias BexLib.Key
+  require Logger
 
   @secret "1b49274f7149c9472be2bb3fdc868c32"
   @address "1Z2c8YiWRXGFj3zUWapfsEEJj1Qi482jZ"
@@ -14,6 +15,7 @@ defmodule BexWeb.HookController do
 
     case content && utxo do
       false ->
+        Logger.info("invalid payment: #{inspect(payment)}")
         nil
       _ ->
         BsvNews.hook_msg(%{id: payment["id"], utxo: utxo, data: %{user_name: user_name, uid: user_id, content: content}})
