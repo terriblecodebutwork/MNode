@@ -23,7 +23,7 @@ defmodule BexWeb.IndexLive do
   defp reload(socket) do
     private_keys =
       Wallet.list_private_keys()
-      |> Enum.filter(fn x -> x.base_key_id == nil end)
+      # |> Enum.filter(fn x -> x.base_key_id == nil end)
       |> Enum.map(&Repo.preload(&1, :utxos))
 
     socket
@@ -41,7 +41,9 @@ defmodule BexWeb.IndexLive do
       <%= for k <- @private_keys || [] do %>
         <div>
           <h2>Fund Address: <%= k.address %></h2>
+          <%= if is_nil(k.base_key_id) do %>
           <button phx-click="meta" phx-value="<%= k.id %>" >Metanet</button>
+          <% end %>
           <h3>UTXOs</h3>
           <%= if @loading do %>
           <h4>Loading...</h4>

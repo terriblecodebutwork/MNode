@@ -56,13 +56,15 @@ defmodule BexWeb.HookController do
     end
   end
 
-  defp parse_utxo({x, index}, txid) do
+  # mb webhook not include the index of outputs
+  defp parse_utxo({x, _index}, txid) do
     v = Decimal.cast(x["satoshis"])
     case v |> Decimal.cmp(@value) do
       :lt ->
         false
       _ ->
-        %{txid: txid, value: v, index: index, lock_script: Key.address_to_pkscript(x["to"])}
+        # hard code index
+        %{txid: txid, value: v, index: 1, lock_script: Key.address_to_pkscript(x["to"])}
     end
   end
 

@@ -20,6 +20,9 @@ defmodule Bex.Wallet.Utxo do
   require Logger
   # alias Bex.Wallet.Mission
 
+  @permission_sat Decimal.cast(546)
+  @permission_num 1
+
   schema "utxos" do
     field :index, :integer
     field :lock_script, :binary
@@ -56,6 +59,9 @@ defmodule Bex.Wallet.Utxo do
     u
   end
 
+  def set_utxo_type(utxo = %{value: @permission_sat}, _) do
+    Map.put(utxo, :type, :permission)
+  end
   def set_utxo_type(utxo = %{value: v}, coin_sat) do
     type =
       case Decimal.cmp(v, coin_sat) do
@@ -123,8 +129,7 @@ defmodule Bex.Wallet.Utxo do
     end
   end
 
-  @permission_sat Decimal.cast(546)
-  @permission_num 1
+
 
   def c_permission_utxo(c_key) do
     %__MODULE__{
