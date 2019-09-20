@@ -15,7 +15,7 @@ defmodule BexWeb.HookController do
 
     case content && utxo do
       false ->
-        Logger.info("invalid payment: #{inspect(payment)}")
+        Logger.error("invalid payment: #{inspect(payment)}")
         nil
       _ ->
         BsvNews.hook_msg(%{id: payment["id"], utxo: utxo, data: %{user_name: user_name, uid: user_id, content: content}})
