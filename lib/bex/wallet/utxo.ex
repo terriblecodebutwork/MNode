@@ -62,6 +62,7 @@ defmodule Bex.Wallet.Utxo do
   def set_utxo_type(utxo = %{value: @permission_sat}, _) do
     Map.put(utxo, :type, :permission)
   end
+
   def set_utxo_type(utxo = %{value: v}, coin_sat) do
     type =
       case Decimal.cmp(v, coin_sat) do
@@ -128,8 +129,6 @@ defmodule Bex.Wallet.Utxo do
         {:ok, inputs, outputs}
     end
   end
-
-
 
   def c_permission_utxo(c_key) do
     %__MODULE__{

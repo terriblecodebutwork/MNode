@@ -23,38 +23,39 @@ defmodule BsvNews do
 
   def init(_) do
     base_key = find_key(@address)
+
     state = %{
       base_key: base_key,
       pool: MapSet.new()
     }
+
     :timer.send_interval(:clear_pool, @clear_interval)
     {:ok, state}
   end
 
-  def handle_cast({:hook_msg, %{id: id, utxo: utxo, data: data} }, state) do
+  def handle_cast({:hook_msg, %{id: id, utxo: utxo, data: data}}, state) do
     if Enum.any?(state.pool, fn x -> x.id == id end) do
       {:noreply, state}
     else
       Wallet.save_utxo(utxo)
       pool = MapSet.put(state.pool, %{id: id, timestamp: timestamp()})
       build_mnode(state.base_key.id, data, utxo)
-      {:noreply, %{ state | pool: pool}}
+      {:noreply, %{state | pool: pool}}
     end
   end
 
   def handle_info(:clear_pool, state) do
     now = timestamp()
     pool = Enum.reject(state.pool, fn x -> now - x.timestamp > @live_time end)
-    {:noreply, %{ state | pool: pool} }
+    {:noreply, %{state | pool: pool}}
   end
-
 
   defp timestamp do
     :os.system_time(:seconds)
   end
 
   defp find_key(address) do
-    (from p in PrivateKey, where: p.address == ^address)
+    from(p in PrivateKey, where: p.address == ^address)
     |> Repo.one!()
   end
 
@@ -68,7 +69,9 @@ defmodule BsvNews do
             mb_username: data.user_name
           })
         ]
+
         CoinManager.create_mnode(key, @root_node, utxo.txid, contents)
+
       {:comment, parent, _data} ->
         contents = [
           Jason.encode!(%{
@@ -77,10 +80,8 @@ defmodule BsvNews do
             mb_username: data.user_name
           })
         ]
+
         CoinManager.create_mnode(key, parent, utxo.txid, contents)
     end
-
   end
-
-
 end

@@ -155,18 +155,21 @@ defmodule Bex.Wallet do
   Save new utxo (from mb webhook)
   """
   def save_utxo(utxo) do
-    Logger.debug "saving utxo #{inspect(utxo)}"
+    Logger.debug("saving utxo #{inspect(utxo)}")
     coin_sat = CoinManager.get_coin_sat()
-    key = (from p in PrivateKey, where: p.lock_script == ^utxo.lock_script, limit: 1) |> Repo.one!()
+
+    key =
+      from(p in PrivateKey, where: p.lock_script == ^utxo.lock_script, limit: 1) |> Repo.one!()
+
     Repo.insert_all(
-          Utxo,
-          Enum.map([utxo], fn u ->
-            u
-            |> Utxo.set_utxo_type(coin_sat)
-            |> Map.put(:private_key_id, key.id)
-          end),
-          returning: true
-        )
+      Utxo,
+      Enum.map([utxo], fn u ->
+        u
+        |> Utxo.set_utxo_type(coin_sat)
+        |> Map.put(:private_key_id, key.id)
+      end),
+      returning: true
+    )
   end
 
   @doc """

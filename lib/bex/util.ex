@@ -1,5 +1,4 @@
 defmodule Bex.Util do
-
   def path_to_name(path) do
     parent =
       if String.contains?(path, "/") do
@@ -11,5 +10,4 @@ defmodule Bex.Util do
     name = path
     {parent, name}
   end
-
 end

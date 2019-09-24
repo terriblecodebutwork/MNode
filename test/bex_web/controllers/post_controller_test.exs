@@ -75,6 +75,7 @@ defmodule BexWeb.PostControllerTest do
     test "deletes chosen post", %{conn: conn, post: post} do
       conn = delete(conn, Routes.post_path(conn, :delete, post))
       assert redirected_to(conn) == Routes.post_path(conn, :index)
+
       assert_error_sent 404, fn ->
         get(conn, Routes.post_path(conn, :show, post))
       end

@@ -37,6 +37,13 @@ defmodule BexWeb.IndexLive do
     <%= if @private_keys == [] do %>
     <a href="/private_keys/new" >Import PrivateKey</a>
     <% else %>
+    <div>
+      <h3>Value of one Coin: <%= @coin_sat %></h3>
+      <form phx-submit="set_coin_sat">
+        <input name="value" type="number">
+        <button type="submit">Set</button>
+      </form>
+    </div>
     <ul>
       <%= for k <- @private_keys || [] do %>
         <div>
@@ -56,13 +63,6 @@ defmodule BexWeb.IndexLive do
                   <%= for t <- [:dust, :permission, :gold, :coin] do %>
                   <p><%= "#{t}: #{Enum.count(k.utxos, fn x -> x.type == t end)}" %></p>
                   <% end %>
-                </div>
-                <div class="column">
-                  <h3>Value of one Coin: <%= @coin_sat %></h3>
-                  <form phx-submit="set_coin_sat">
-                    <input name="value" type="number">
-                    <button type="submit">Set</button>
-                  </form>
                 </div>
               </div>
               <button phx-click="recast" phx-value="<%= k.id %>">Recast</button>
