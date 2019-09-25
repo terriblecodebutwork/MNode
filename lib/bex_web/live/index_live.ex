@@ -30,6 +30,7 @@ defmodule BexWeb.IndexLive do
     |> assign(coin_sat: CoinManager.get_coin_sat())
     |> assign(private_keys: private_keys)
     |> assign(loading: false)
+    |> assign(showing: [])
   end
 
   def render(assigns) do
@@ -37,36 +38,69 @@ defmodule BexWeb.IndexLive do
     <%= if @private_keys == [] do %>
     <a href="/private_keys/new" >Import PrivateKey</a>
     <% else %>
-    <div>
-      <h3>Value of one Coin: <%= @coin_sat %></h3>
-      <form phx-submit="set_coin_sat">
-        <input name="value" type="number">
-        <button type="submit">Set</button>
-      </form>
+
+    <div class="row">
+      <div class="column">
+        <h3>Value of one Coin: <%= @coin_sat %></h3>
+      </div>
+      <div class="column">
+        <form phx-submit="set_coin_sat">
+          <div class="row">
+            <div class="column">
+              <input name="value" type="number">
+            </div>
+            <div class="column">
+              <button type="submit">Set</button>
+            </div>
+          </div>
+        </form>
+      </div>
     </div>
+
     <ul>
       <%= for k <- @private_keys || [] do %>
-        <div>
-          <h2>Fund Address: <%= k.address %></h2>
-          <%= if is_nil(k.base_key_id) do %>
-          <button phx-click="meta" phx-value="<%= k.id %>" >Metanet</button>
-          <% end %>
-          <h3>UTXOs</h3>
+        <div style="border: 1px dotted gray; padding: 5px">
+
+          <div class="row">
+            <div class="column">
+              <h2><%= k.address %></h2>
+            </div>
+            <div class="column">
+              <%= if is_nil(k.base_key_id) do %>
+              <button phx-click="meta" phx-value-id="<%= k.id %>" >Metanet</button>
+              <% end %>
+            </div>
+          </div>
+
+          <div class="row">
+            <div class="column">
+                  <%= for t <- [:dust, :permission, :gold, :coin] do
+                        "#{t}: #{Enum.count(k.utxos, fn x -> x.type == t end)}, "
+                      end |> Enum.join() %>
+            </div>
+          </div>
+
           <%= if @loading do %>
           <h4>Loading...</h4>
           <% end %>
-          <button phx-click="resync_utxo" phx-value="<%= k.id %>" >ReSync UTXOs</button>
-          <div class="container">
-            <ul>
-              <div class="row">
-                <div class="column">
-                  <%= for t <- [:dust, :permission, :gold, :coin] do %>
-                  <p><%= "#{t}: #{Enum.count(k.utxos, fn x -> x.type == t end)}" %></p>
-                  <% end %>
-                </div>
-              </div>
-              <button phx-click="recast" phx-value="<%= k.id %>">Recast</button>
-              <button phx-click="mint_all" phx-value="<%= k.id %>">Mint</button>
+
+          <div class="row">
+            <div class="column">
+              <button phx-click="resync_utxo" phx-value-id="<%= k.id %>" >ReSync UTXOs</button>
+            </div>
+            <div class="column">
+              <button phx-click="recast" phx-value-id="<%= k.id %>">Recast</button>
+            </div>
+            <div class="column">
+              <button phx-click="mint_all" phx-value-id="<%= k.id %>">Mint</button>
+            </div>
+            <div class="column">
+              <button phx-click="show_utxos" phx-value-id="<%= k.id %>">show/hide</button>
+            </div>
+          </div>
+
+          <%= if k.id in @showing do %>
+          <div>
               <%= for u <- Enum.sort_by(k.utxos, fn u -> u.value end, &>=/2) || [] do %>
                 <ul>
                     <li>type: <%= u.type %></li>
@@ -74,8 +108,9 @@ defmodule BexWeb.IndexLive do
                     <li>value: <%= u.value %></li>
                 </ul>
               <% end %>
-            </ul>
           </div>
+          <% end %>
+
         </div>
       <% end %>
     </ul>
@@ -83,7 +118,7 @@ defmodule BexWeb.IndexLive do
     """
   end
 
-  def handle_event("meta", id, socket) do
+  def handle_event("meta", %{"id" => id}, socket) do
     {:noreply, redirect(socket, to: Routes.live_path(socket, BexWeb.MetaLive, id))}
   end
 
@@ -93,7 +128,7 @@ defmodule BexWeb.IndexLive do
     {:noreply, reload(socket)}
   end
 
-  def handle_event(cmd, id, socket) do
+  def handle_event(cmd, %{"id" => id}, socket) do
     id = String.to_integer(id)
     send(self(), {cmd, id})
     {:noreply, assign(socket, :loading, true)}
@@ -109,6 +144,17 @@ defmodule BexWeb.IndexLive do
         {:noreply,
          put_flash(socket, :error, msg) |> redirect(to: Routes.live_path(socket, __MODULE__))}
     end
+  end
+
+  def handle_info({"show_utxos", id}, socket) do
+    showing = socket.assigns.showing
+    showing =
+    if id in showing do
+      showing -- [id]
+    else
+      [id | showing]
+    end
+    {:noreply, socket |> assign(:showing, showing) |> assign(:loading, false)}
   end
 
   def handle_info({"resync_utxo", id}, socket) do
