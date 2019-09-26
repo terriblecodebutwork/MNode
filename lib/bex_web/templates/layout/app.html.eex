@@ -35,8 +35,8 @@
       <p class="alert alert-danger" role="alert"><%= get_flash(@conn, :error) %></p>
       <section class="container">
       <%= render @view_module, @view_template, assigns %>
+      <p>paymail: "390@moneybutton.com" </p>
       </section>
-      <p>donate: paymail( 390@moneybutton.com )</p>
     </main>
     <script type="text/javascript" src="<%= Routes.static_path(@conn, "/js/app.js") %>"></script>
   </body>
