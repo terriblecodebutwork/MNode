@@ -118,7 +118,7 @@ defmodule BexLib.Txmaker do
     [
       0,
       106,
-      for(x <- data, do: [byte_size(x) |> op_push(), x]) |> IO.inspect()
+      for(x <- data, do: [byte_size(x) |> op_push(), x])
     ]
     |> join()
   end

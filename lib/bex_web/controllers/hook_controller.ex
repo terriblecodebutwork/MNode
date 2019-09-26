@@ -29,7 +29,7 @@ defmodule BexWeb.HookController do
   end
 
   def mb_hook(conn, params) do
-    IO.inspect(params)
+    Logger.warn inspect(params)
     text(conn, "ok")
   end
 

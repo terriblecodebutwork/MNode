@@ -20,7 +20,7 @@ defmodule Bex.MixProject do
   def application do
     [
       mod: {Bex.Application, []},
-      extra_applications: [:logger, :runtime_tools]
+      extra_applications: [:logger, :runtime_tools, :logger_file_backend]
     ]
   end
 
@@ -41,6 +41,7 @@ defmodule Bex.MixProject do
       {:gettext, "~> 0.11"},
       {:hackney, "~> 1.14.0"},
       {:jason, "~> 1.0"},
+      {:logger_file_backend, "~> 0.0.10"},
       {:phoenix, "~> 1.4.9"},
       {:phoenix_pubsub, "~> 1.1"},
       {:phoenix_ecto, "~> 4.0"},

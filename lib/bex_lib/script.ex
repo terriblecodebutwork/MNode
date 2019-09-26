@@ -125,7 +125,6 @@ defmodule BexLib.Script do
       |> Binary.to_list()
       |> Enum.map(fn x -> [x] end)
 
-    IO.puts(chars)
     chars |> IO.iodata_to_binary()
   end
 

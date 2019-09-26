@@ -60,7 +60,7 @@ defmodule BexWeb.ParserLive do
                 clean_script(x) end)
         end)
       end)
-    %{tx | input: new_in, output: new_out} |> IO.inspect()
+    %{tx | input: new_in, output: new_out}
   end
 
   defp clean_script(script) do
