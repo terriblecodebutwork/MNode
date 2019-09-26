@@ -14,10 +14,11 @@
           <div class="row">
             <div class="column">
               <a class="navigation-title" href="/">
-                <h1 class="title">MNode</h1>
+                <h1 class="title">nicedata.space</h1>
               </a>
+              <p>power by MNode</p>
             </div>
-            <div class="column">
+            <%# <div class="column">
               <ul class="navigation-list float-right">
                 <li class="navigation-item">
                   <a class="navigation-link" href="/nodes">Nodes</a>
@@ -26,7 +27,7 @@
                   <a class="navigation-link" href="/dashboardx">DashboradX</a>
                 </li>
               </ul>
-            </div>
+            </div> %>
           </div>
         </section>
       </nav>
@@ -35,6 +36,7 @@
       <section class="container">
       <%= render @view_module, @view_template, assigns %>
       </section>
+      <p>donate: paymail( 390@moneybutton.com )</p>
     </main>
     <script type="text/javascript" src="<%= Routes.static_path(@conn, "/js/app.js") %>"></script>
   </body>

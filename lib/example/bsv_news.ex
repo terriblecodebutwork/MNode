@@ -4,6 +4,9 @@ defmodule BsvNews do
   alias Bex.Wallet.PrivateKey
   alias Bex.CoinManager
   alias Bex.Wallet
+  alias BexLib.Key
+  require Logger
+
   use GenServer
   @address "1Z2c8YiWRXGFj3zUWapfsEEJj1Qi482jZ"
   @root_node "BsvNews"
@@ -33,14 +36,21 @@ defmodule BsvNews do
     {:ok, state}
   end
 
-  def handle_cast({:hook_msg, %{id: id, utxo: utxo, data: data}}, state) do
+  def handle_cast({:hook_msg, %{id: id, txid: txid, data: data}}, state) do
     if Enum.any?(state.pool, fn x -> x.id == id end) do
+      Logger.info("duplicate webhook, txid: #{txid}")
       {:noreply, state}
     else
-      Wallet.save_utxo(utxo)
+      # new webhook msg
       pool = MapSet.put(state.pool, %{id: id, timestamp: timestamp()})
-      build_mnode(state.base_key.id, data, utxo)
-      {:noreply, %{state | pool: pool}}
+      case get_and_validate_utxo(txid) do
+        false ->
+          Logger.info("invalid utxo, txid: #{txid}")
+        utxo ->
+          Wallet.save_utxo(utxo)
+          build_mnode(state.base_key.id, data, utxo)
+        end
+        {:noreply, %{state | pool: pool}}
     end
   end
 
@@ -82,6 +92,29 @@ defmodule BsvNews do
         ]
 
         CoinManager.create_mnode(key, parent, utxo.txid, contents)
+    end
+  end
+
+  @address "1Z2c8YiWRXGFj3zUWapfsEEJj1Qi482jZ"
+  @script Key.address_to_pkscript(@address)
+  @value Decimal.cast(10000)
+
+  def get_and_validate_utxo(txid) do
+    {:ok, rawtx} = SvApi.transaction(txid)
+    {:ok, tx} = BexLib.Parser.parse_rawtx(rawtx)
+
+    case Enum.find(tx.output, fn x -> x.raw_script == @script end) do
+      nil ->
+        false
+      out ->
+        v = Decimal.cast(out.value)
+        case v |> Decimal.cmp(@value) do
+          :lt ->
+            false
+
+          _ ->
+            %{txid: txid, value: v, index: out.index, lock_script: @script}
+        end
     end
   end
 end

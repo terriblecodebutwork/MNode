@@ -4,16 +4,15 @@ defmodule BexWeb.HookController do
   require Logger
 
   @secret "1b49274f7149c9472be2bb3fdc868c32"
-  @address "1Z2c8YiWRXGFj3zUWapfsEEJj1Qi482jZ"
-  @value Decimal.cast(10000)
+
 
   @doc """
   Verify the secret.
   """
   def mb_hook(conn, %{"secret" => @secret, "payment" => payment}) do
-    {user_id, user_name, content, utxo} = parse_payment(payment)
+    {user_id, user_name, content, txid} = parse_payment(payment)
 
-    case content && utxo do
+    case content && txid do
       false ->
         Logger.error("invalid payment: #{inspect(payment)}")
         nil
@@ -21,7 +20,7 @@ defmodule BexWeb.HookController do
       _ ->
         BsvNews.hook_msg(%{
           id: payment["id"],
-          utxo: utxo,
+          txid: txid,
           data: %{user_name: user_name, uid: user_id, content: content}
         })
     end
@@ -45,13 +44,7 @@ defmodule BexWeb.HookController do
       |> Map.get("script")
       |> parse_content()
 
-    utxo =
-      payment["paymentOutputs"]
-      |> Enum.with_index()
-      |> Enum.find(fn {x, _i} -> x["to"] == @address end)
-      |> parse_utxo(txid)
-
-    {user_id, user_name, content, utxo}
+    {user_id, user_name, content, txid}
   end
 
   defp parse_content(str) do
@@ -70,17 +63,5 @@ defmodule BexWeb.HookController do
     end
   end
 
-  # mb webhook not include the index of outputs
-  defp parse_utxo({x, _index}, txid) do
-    v = Decimal.cast(x["satoshis"])
 
-    case v |> Decimal.cmp(@value) do
-      :lt ->
-        false
-
-      _ ->
-        # hard code index
-        %{txid: txid, value: v, index: 1, lock_script: Key.address_to_pkscript(x["to"])}
-    end
-  end
 end

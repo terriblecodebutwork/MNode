@@ -28,6 +28,10 @@ config :logger, :console,
 # Use Jason for JSON parsing in Phoenix
 config :phoenix, :json_library, Jason
 
+# Configures SvApi
+config :sv_api, mods: [SvApi.Bitindex]
+config :sv_api, bitindex_api_key: "44UFrLxSBgPxt4mibqw9m9voHps7RbgT1j92YE1K7XUKefBPLMiPXq7e5Lrmpp8NWa"
+
 # Import environment specific config. This must remain at the bottom
 # of this file so it overrides the configuration defined above.
 import_config "#{Mix.env()}.exs"
