@@ -123,9 +123,11 @@ defmodule BexWeb.IndexLive do
 
   def handle_info("resync_all", socket) do
     list = socket.assigns.private_keys
+
     for x <- list do
       Wallet.sync_utxos_of_private_key(x)
     end
+
     {:noreply, reload(socket)}
   end
 
@@ -143,12 +145,14 @@ defmodule BexWeb.IndexLive do
 
   def handle_info({"show_utxos", id}, socket) do
     showing = socket.assigns.showing
+
     showing =
-    if id in showing do
-      showing -- [id]
-    else
-      [id | showing]
-    end
+      if id in showing do
+        showing -- [id]
+      else
+        [id | showing]
+      end
+
     {:noreply, socket |> assign(:showing, showing) |> assign(:loading, false)}
   end
 

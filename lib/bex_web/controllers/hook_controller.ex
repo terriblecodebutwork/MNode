@@ -5,7 +5,6 @@ defmodule BexWeb.HookController do
 
   @secret "1b49274f7149c9472be2bb3fdc868c32"
 
-
   @doc """
   Verify the secret.
   """
@@ -29,7 +28,7 @@ defmodule BexWeb.HookController do
   end
 
   def mb_hook(conn, params) do
-    Logger.warn inspect(params)
+    Logger.warn(inspect(params))
     text(conn, "ok")
   end
 
@@ -62,6 +61,4 @@ defmodule BexWeb.HookController do
         false
     end
   end
-
-
 end

@@ -43,14 +43,17 @@ defmodule BsvNews do
     else
       # new webhook msg
       pool = MapSet.put(state.pool, %{id: id, timestamp: timestamp()})
+
       case get_and_validate_utxo(txid) do
         false ->
           Logger.info("invalid utxo, txid: #{txid}")
+
         utxo ->
           Wallet.save_utxo(utxo)
           build_mnode(state.base_key.id, data, utxo)
-        end
-        {:noreply, %{state | pool: pool}}
+      end
+
+      {:noreply, %{state | pool: pool}}
     end
   end
 
@@ -106,8 +109,10 @@ defmodule BsvNews do
     case Enum.find(tx.output, fn x -> x.raw_script == @script end) do
       nil ->
         false
+
       out ->
         v = Decimal.cast(out.value)
+
         case v |> Decimal.cmp(@value) do
           :lt ->
             false

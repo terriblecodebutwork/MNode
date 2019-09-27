@@ -276,25 +276,26 @@ parse_tx_in(<<TX_ref:32/bytes, Index:32/little, P/bytes>>, R, N) when N > 0 ->
                          script => parse_script(Script), sequence => Seq}|R], N - 1).
 
 parse_script(S) ->
-    try parse_script(S, []) of
+    try 'Elixir.BexLib.Script':parse(S) of
         R -> R
     catch
-        _:_ -> {nowaytoparsethisshit, S}
+        _:_ -> "Invalid Script"
     end.
 
-parse_script(<<H:8/little, T/bytes>>, R) ->
-    case opcode(H, T) of
-        {Result, T1} ->
-            parse_script(T1, [Result | R]);
-        else ->
-            {else, lists:reverse(R)};
-        endif ->
-            {endif, lists:reverse(R)}
-    end;
-parse_script(<<>>, R) ->
-    lists:reverse(R).
+% parse_script(<<H:8/little, T/bytes>>, R) ->
+%     case opcode(H, T) of
+%         {Result, T1} ->
+%             parse_script(T1, [Result | R]);
+%         else ->
+%             {else, lists:reverse(R)};
+%         endif ->
+%             {endif, lists:reverse(R)}
+%     end;
+% parse_script(<<>>, R) ->
+%     lists:reverse(R).
 
-opcode(H, Bin) when H >= 1 andalso H =< 75 ->
+%%FIXME there is a bug in script parse, use BexLib.Script.parse instead.
+opcode(H, Bin) when H >= 0 andalso H =< 75 ->
     <<B:H/binary, R/bytes>> = Bin,
     {{"PUSH", B}, R};
 opcode(99, Bin) ->

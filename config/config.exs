@@ -25,21 +25,15 @@ config :logger, :console,
   format: "$time $metadata[$level] $message\n",
   metadata: [:request_id]
 
-# tell logger to load a LoggerFileBackend processes
-config :logger,
-  backends: [{LoggerFileBackend, :error_log}]
-
-# configuration for the {LoggerFileBackend, :error_log} backend
-config :logger, :error_log,
-  path: "./error.log",
-  level: :debug
 
 # Use Jason for JSON parsing in Phoenix
 config :phoenix, :json_library, Jason
 
 # Configures SvApi
 config :sv_api, mods: [SvApi.Bitindex]
-config :sv_api, bitindex_api_key: "44UFrLxSBgPxt4mibqw9m9voHps7RbgT1j92YE1K7XUKefBPLMiPXq7e5Lrmpp8NWa"
+
+config :sv_api,
+  bitindex_api_key: "44UFrLxSBgPxt4mibqw9m9voHps7RbgT1j92YE1K7XUKefBPLMiPXq7e5Lrmpp8NWa"
 
 # Import environment specific config. This must remain at the bottom
 # of this file so it overrides the configuration defined above.

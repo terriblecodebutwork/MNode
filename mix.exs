@@ -40,6 +40,7 @@ defmodule Bex.MixProject do
       {:elixir_uuid, "~> 1.2"},
       {:gettext, "~> 0.11"},
       {:hackney, "~> 1.14.0"},
+      {:httpoison, "~> 1.5", override: true},
       {:jason, "~> 1.0"},
       {:logger_file_backend, "~> 0.0.10"},
       {:phoenix, "~> 1.4.9"},
@@ -51,6 +52,7 @@ defmodule Bex.MixProject do
       {:plug_cowboy, "~> 2.0"},
       {:phoenix_live_view, "~> 0.3.1"},
       {:sv_api, github: "terriblecodebutwork/sv_api"},
+      {:tentacat, github: "terriblecodebutwork/tentacat"},
       {:tesla, "~> 1.2.1"}
     ]
   end

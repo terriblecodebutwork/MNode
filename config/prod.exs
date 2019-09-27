@@ -16,6 +16,15 @@ config :bex, BexWeb.Endpoint,
 # Do not print debug messages in production
 config :logger, level: :info
 
+# tell logger to load a LoggerFileBackend processes
+config :logger,
+  backends: [{LoggerFileBackend, :error_log}]
+
+# configuration for the {LoggerFileBackend, :error_log} backend
+config :logger, :error_log,
+  path: "./error.log",
+  level: :debug
+
 # ## SSL Support
 #
 # To get SSL working, you will need to add the `https` key

@@ -60,6 +60,6 @@ defmodule Bex.Txrepo do
   end
 
   defp do_broadcast(tx) do
-    Logger.info inspect(Bitindex.broadcast_hex_tx(tx))
+    Logger.info(inspect(Bitindex.broadcast_hex_tx(tx)))
   end
 end
