@@ -14,7 +14,7 @@
 -record(peer, {state = start, host, port, socket, buffer}).
 
 connect(Host) ->
-    spawn_link(fun() -> do_connect(Host) end).
+    spawn(fun() -> do_connect(Host) end).
 
 do_connect(Host) ->
     {ok, Socket} = gen_tcp:connect(Host, 8333, [binary, {packet, 0}, {active, false}]),
@@ -30,6 +30,8 @@ loop(#peer{state = version_sent} = P) ->
 
 loop(#peer{state = loop, socket = Socket} = P) ->
     receive
+        version ->
+            send_message(Socket, version_msg());
         ping ->
             send_message(Socket, ping_msg());
         getheaders ->
@@ -38,15 +40,20 @@ loop(#peer{state = loop, socket = Socket} = P) ->
             send_message(Socket, getaddr_msg());
         mempool ->
             send_message(Socket, mempool_msg());
-        Other ->
-            send_message(Socket, Other)
+        {tx, Tx} ->
+            send_message(Socket, tx_msg(Tx));
+        close ->
+            gen_tcp:close(Socket),
+            exit(normal);
+        _Other ->
+            invalid_msg
     after 0 ->
         ok
     end,
     case parse_message(P#peer.buffer) of
         {ok, Command, Payload} ->
             {Data, _Rest} = parse(Command, Payload),
-            io:format("[remote] ~s\n~p\n", [Command, Data]),
+            % io:format("[remote] ~s\n~p\n", [Command, Data]),
             handle_command(Command, Data, Socket),
             loop(P#peer{buffer = <<>>});
         {error, incomplete} ->
@@ -59,7 +66,7 @@ loop(#peer{state = loop, socket = Socket} = P) ->
 send_message(Socket, Msg) ->
     {ok, Command, P} = parse_message(Msg),
     {Data, _Rest} = parse(Command, P),
-    io:format("[local ] ~s\n~p\n", [Command, Data]),
+    % io:format("[local ] ~s\n~p\n", [Command, Data]),
     gen_tcp:send(Socket, Msg).
 
 get_checksum(Bin) ->
@@ -112,6 +119,9 @@ getaddr_msg() ->
 
 mempool_msg() ->
     make_message(mempool, <<>>).
+
+tx_msg(Tx) ->
+    make_message(tx, Tx).
 
 atom_to_cmd(A) ->
     S = list_to_binary(atom_to_list(A)),
@@ -227,7 +237,7 @@ parse("block", Bin) ->
     {parse_header(Bin), <<>>};
 
 parse(Other, Bin) ->
-    io:format("=====================~s~n", [io_lib:print({Other, Bin})]),
+    % io:format("=====================~s~n", [io_lib:print({Other, Bin})]),
     {Bin, <<>>}.
 
 % parse("alert", <<Ver:32/little-signed,
@@ -530,7 +540,16 @@ get_prev(_B) -> todo.
 %% :sv_peer.connect {159, 203, 171, 73}
 %% :sv_peer.connect {159, 65, 152, 200}
 
-% test() ->
-%     % sv_peer:connect({159, 65, 152, 200}).
-%     IP = hd(sv_bootstrap:seed_nodes()),
-%     sv_peer:connect(IP).
+
+%% @doc Get addrs for bootstrap from DNS.
+get_addrs_ipv4_dns() ->
+    L = ["seed.bitcoinsv.io",
+         "seed.cascharia.com",
+         "seed.satoshisvision.network"
+        ],
+    lists:flatten([nslookup_ipv4(A) || A <- L]).
+
+nslookup_ipv4(Addr) ->
+    Type = a,
+    Class = in,
+    inet_res:lookup(Addr, Class, Type).

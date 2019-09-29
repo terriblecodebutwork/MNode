@@ -3,16 +3,14 @@ defmodule Bex.Txrepo do
   #FIXME should use PSQL to persistant the txs.
   """
   use GenServer
-  alias BexLib.Bitindex
   require Logger
-
-  @broadcast true
 
   def start_link(_) do
     GenServer.start_link(
       __MODULE__,
       %{
-        queue: :queue.new()
+        queue: :queue.new(),
+        status: :on
       },
       name: __MODULE__
     )
@@ -22,34 +20,52 @@ defmodule Bex.Txrepo do
     GenServer.cast(__MODULE__, {:add, txid, hex_tx})
   end
 
-  def start_broadcast() do
-    GenServer.cast(__MODULE__, :start_broadcast)
+  def turn_on() do
+    GenServer.cast(__MODULE__, :turn_on)
+  end
+
+  def turn_off() do
+    GenServer.cast(__MODULE__, :turn_off)
+  end
+
+  @doc """
+  get a list of pending txs.
+  """
+  def list() do
+    GenServer.call(__MODULE__, :list)
   end
 
   @interval 1000
 
   def init(state) do
-    if @broadcast do
+    if state.status == :on do
       :timer.send_after(@interval, :broadcast)
     end
 
     {:ok, state}
   end
 
+  def handle_call(:list, _from, state = %{queue: q}) do
+    {:reply, :queue.to_list(q), state}
+  end
+
   def handle_cast({:add, txid, hex_tx}, state = %{queue: q}) do
     {:noreply, %{state | queue: :queue.in({txid, hex_tx}, q)}}
   end
 
-  def handle_cast(:start_broadcast, state) do
+  def handle_cast(:turn_on, state) do
     :timer.send_after(@interval, :broadcast)
-    {:noreply, state}
+    {:noreply, %{ state | status: :on} }
+  end
+  def handle_cast(:turn_off, state) do
+    {:noreply, %{ state | status: :off} }
   end
 
-  def handle_info(:broadcast, state = %{queue: q}) do
+  def handle_info(:broadcast, state = %{queue: q, status: :on}) do
     case :queue.out(q) do
       {{:value, {txid, hex_tx}}, q} ->
         Logger.debug("broadcasting: " <> txid)
-        {:ok, _} = do_broadcast(hex_tx)
+        do_broadcast(hex_tx)
         :timer.send_after(@interval, :broadcast)
         {:noreply, %{state | queue: q}}
 
@@ -59,7 +75,23 @@ defmodule Bex.Txrepo do
     end
   end
 
+  def handle_info(:broadcast, state) do
+    Logger.info("TxRepo is off.")
+    {:noreply, state}
+  end
+
+  # defp do_broadcast(tx) do
+  #   case SvApi.broadcast(tx) do
+  #     {:error, msg} ->
+  #       Logger.error(tx <> "\n" <> msg)
+  #     _ ->
+  #       nil
+  #   end
+  # end
+
   defp do_broadcast(tx) do
-    Logger.info(inspect(Bitindex.broadcast_hex_tx(tx)))
+    #FIXME there is no way to know is tx been accepted
+    # maybe try to get the tx from SvApi?
+    Bex.Broadcaster.send_all(tx)
   end
 end

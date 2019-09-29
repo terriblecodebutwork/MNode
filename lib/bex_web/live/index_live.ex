@@ -21,6 +21,7 @@ defmodule BexWeb.IndexLive do
   end
 
   defp reload(socket) do
+    :timer.sleep(1000)
     private_keys =
       Wallet.list_private_keys()
       # |> Enum.filter(fn x -> x.base_key_id == nil end)

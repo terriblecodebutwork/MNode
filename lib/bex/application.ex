@@ -10,6 +10,7 @@ defmodule Bex.Application do
     children = [
       # Start the Ecto repository
       Bex.Repo,
+      Bex.Broadcaster,
       Bex.Txrepo,
       Bex.CoinManager,
       BsvNews,
