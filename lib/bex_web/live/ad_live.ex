@@ -28,10 +28,14 @@ defmodule BexWeb.AdLive do
   def render(assigns) do
     ~L"""
     <section>
+      <a href="/gun"><h1>来复枪</h1></a>
+    </section>
+
+    <section>
       <h1>小喇叭</h1>
       <form phx-submit="laba">
         <label>广告内容:</label>
-        <input value="<%= @content %>" name="content" />
+        <input style="height: 100px; width: 300px" value="<%= @content %>" name="content" ></input>
         <label>不超过 200 汉字</label>
         <br/>
         <label>发送次数:</label>
@@ -42,19 +46,14 @@ defmodule BexWeb.AdLive do
     </section>
 
     <section>
-      <a href="/gun"><h1>来复枪</h1></a>
-    </section>
-
-    <section>
-      <h2>仓库</h2>
       <p>充值地址: <%= @key.address %></p>
       <p>我的 BSV: <%= @balance %> 千聪<button phx-click="flash" <%= if @loading, do: "disabled" %>>刷新余额</button></p>
       <p>本次已发送: <%= @ad_count %></p>
-      <p>专属浏览器: <a target="_blank" href="https://whatsonchain.com/address/<%= @key.address %>">WhatsOnChain</a></p>
     </section>
 
     <section>
       <h2>使用说明</h2>
+      <p>可在<a target="_blank" href="https://genesis.bitdb.network/query/1FnauZ9aUH2Bex6JzdcV4eNX7oLSSEbxtN/ewogICJ2IjogMywKICAicSI6IHsKICAgICJmaW5kIjogewogICAgICAib3V0LmgyIjogImU0YjhhZGU1OGQ4ZWU0YmFiYWU2YjA5MWU1ODViMWU1OTI4Y2U1OWJiZGU2ODg5MGU3YWI4YjM3MzBlNTkxYThlNWI5YjQiCiAgICB9LAogICAgInByb2plY3QiOiB7CiAgICAgICJvdXQuczIiOiAxLAogICAgICAib3V0LnMzIjogMSwKICAgICAgIm91dC5sczMiOiAxLAogICAgICAiaW4iOiAxCiAgICB9LAogICAgImxpbWl0IjogMTAwMAogIH0sCiAgInIiOiB7CiAgICAiZiI6ICJbLltdIHwge2FkOiAoLm91dFswXS5zMyArIC5vdXRbMF0ubHMzKSwgZnJvbTogLmluWzBdLmUuYX0gXSIKICB9Cn0=">这里</a>查看全部广告. </p>
       <p>请勿充值大量金额. 任何财产损失, 本网站概不负责.</p>
       <p>私钥ID保存在本地, 使用过程中请勿删除浏览器缓存.</p>
       <p>每条广告花费 1千聪费用, 本站收取总花费的10% (每 10 笔交易中, 有 1 笔用于支付费用)).</p>
@@ -108,7 +107,7 @@ defmodule BexWeb.AdLive do
         send self(), {:do_send, a-1, c}
         {balance - 1, ad_count + 1}
       else
-        CoinManager.send_opreturn(key.id, [c], @coin_sat)
+        CoinManager.send_opreturn(key.id, ["中华人民共和国成立70周年", c], @coin_sat)
         send self(), {:do_send, a-1 , c}
         {balance - 1, ad_count + 1}
       end
