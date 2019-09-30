@@ -41,19 +41,22 @@ defmodule BexWeb.GunLive do
     <section>
       <p>充值地址: <%= @key.address %></p>
       <p>我的 BSV: <%= @balance %> 千聪<button phx-click="flash" <%= if @loading, do: "disabled" %>>刷新余额 refresh</button></p>
-      <p>充值浏览器: <a target="_blank" href="https://whatsonchain.com/address/<%= @key.address %>">WhatsOnChain</a></p>
+      <p>浏览器: <a target="_blank" href="https://whatsonchain.com/address/<%= @key.address %>">WhatsOnChain</a></p>
       <br />
       <p>子弹 x <%= @bullet %></p>
       <button phx-click="split" <%= if @spliting, do: "disabled" %>>制造子弹 create bullet</button>
-      <p>子弹浏览器: <a target="_blank" href="https://whatsonchain.com/address/<%= @key2.address %>">WhatsOnChain</a></p>
+      <p>浏览器(新交易存在延迟): <a target="_blank" href="https://whatsonchain.com/address/<%= @key2.address %>">WhatsOnChain</a></p>
     </section>
 
     <section>
       <form phx-submit="gun">
         <label>目标地址:</label>
         <input value="<%= @target %>" name="target" />
+        <p>推荐使用打点钱包收款地址, 并打开消息提示</p>
         <br/>
-        <button type="submit" <%= if @shooting, do: "disabled" %> >发射 shoot</button>
+        <button type="submit" <%= if @shooting, do: "disabled" %> >
+          <h1 style="width: 40px; height: 20px">发射 shoot</h1>
+        </button>
       </form>
     </section>
 
