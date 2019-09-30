@@ -11,15 +11,16 @@ defmodule BexWeb.PageController do
   end
 
   def ad(conn, _params) do
-    case get_session(conn, "key") do
-      nil ->
-        priv = Key.new_private_key() |> Binary.to_hex()
-        {:ok, key} = Wallet.create_private_key(%{"hex" => priv})
-        put_session(conn, "key", key.id)
-      key ->
-        Logger.debug "key: #{key}"
-        conn
-    end
-    |> LiveView.Controller.live_render(BexWeb.AdLive, session: %{key: get_session(conn, "key")})
+    conn =
+      case get_session(conn, "key") do
+        nil ->
+          priv = Key.new_private_key() |> Binary.to_hex()
+          {:ok, key} = Wallet.create_private_key(%{"hex" => priv})
+          put_session(conn, "key", key.id)
+        key ->
+          Logger.debug "key: #{key}"
+          conn
+      end
+    LiveView.Controller.live_render(conn, BexWeb.AdLive, session: %{key: get_session(conn, "key")})
   end
 end
