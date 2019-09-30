@@ -90,7 +90,6 @@ defmodule BexWeb.AdLive do
     {:noreply, socket}
   end
   def handle_info({:do_send, a, c}, socket) do
-    IO.inspect a
     key = socket.assigns.key
     ad_count = socket.assigns.ad_count
     balance = socket.assigns.balance

@@ -17,8 +17,12 @@ connect(Host) ->
     spawn(fun() -> do_connect(Host) end).
 
 do_connect(Host) ->
-    {ok, Socket} = gen_tcp:connect(Host, 8333, [binary, {packet, 0}, {active, false}]),
-    loop(#peer{socket=Socket}).
+    case gen_tcp:connect(Host, 8333, [binary, {packet, 0}, {active, false}]) of
+        {ok, Socket} ->
+            loop(#peer{socket=Socket});
+        _ ->
+            ok
+    end.
 
 loop(#peer{state = start} = P) ->
     send_message(P#peer.socket, version_msg()),
