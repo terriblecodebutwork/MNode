@@ -35,7 +35,7 @@ defmodule Bex.Txrepo do
     GenServer.call(__MODULE__, :list)
   end
 
-  @interval 1000
+  @interval 1
 
   def init(state) do
     if state.status == :on do
