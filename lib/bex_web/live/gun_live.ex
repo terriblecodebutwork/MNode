@@ -9,7 +9,7 @@ defmodule BexWeb.GunLive do
   alias Bex.Repo
   alias Bex.Txrepo
 
-  @coin_sat Decimal.cast(1000)
+  @coin_sat Decimal.cast(999)
 
   def mount(%{key: id, key2: id2}, socket) do
     send self(), :sync
