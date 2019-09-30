@@ -25,6 +25,7 @@ defmodule BexWeb.Router do
     live "/meta/:id", MetaLive
     live "/parser", ParserLive
     live "/parser/:rawtx", ParserLive
+    get "/ad", PageController, :ad
   end
 
   # Other scopes may use custom stacks.

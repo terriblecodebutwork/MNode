@@ -55,6 +55,22 @@ defmodule Bex.Wallet.Utxo do
     }
   end
 
+  def return_utxo(contents) do
+    %Utxo{
+      value: Decimal.cast(0),
+      lock_script: Script.return(contents),
+      type: :data
+    }
+  end
+
+  def address_utxo(address, value) do
+    %Utxo{
+      value: Decimal.cast(value),
+      lock_script: Key.address_to_pkscript(address),
+      type: :dust
+    }
+  end
+
   def set_utxo_type(u = %{type: type}, _coin_sat) when not is_nil(type) do
     u
   end
@@ -97,20 +113,24 @@ defmodule Bex.Wallet.Utxo do
   end
 
   def mint_all(%PrivateKey{utxos: utxos, lock_script: s, id: pkid}, coin_sat) do
-    inputs = Enum.filter(utxos, fn u -> u.type == :gold end)
-    v = sum_of_value(inputs)
-    coin_num = Decimal.div_int(v, coin_sat) |> Decimal.to_integer()
-    coin_utxo = %__MODULE__{value: coin_sat, private_key_id: pkid, lock_script: s}
-    outputs = List.duplicate(coin_utxo, coin_num)
-    change_script = s
-    change_pkid = pkid
+    inputs = Enum.filter(utxos, fn u -> Decimal.cmp(u.value, coin_sat) == :gt end)
+    if inputs !== [] do
+      v = sum_of_value(inputs)
+      coin_num = Decimal.div_int(v, coin_sat) |> Decimal.to_integer()
+      coin_utxo = %__MODULE__{value: coin_sat, private_key_id: pkid, lock_script: s}
+      outputs = List.duplicate(coin_utxo, coin_num)
+      change_script = s
+      change_pkid = pkid
 
-    case handle_change(inputs, outputs, change_script, change_pkid) do
-      {:error, msg} ->
-        {:error, msg}
+      case handle_change(inputs, outputs, change_script, change_pkid) do
+        {:error, msg} ->
+          {:error, msg}
 
-      {:ok, inputs, outputs} ->
-        make_tx(inputs, outputs, coin_sat)
+        {:ok, inputs, outputs} ->
+          make_tx(inputs, outputs, coin_sat)
+      end
+    else
+      {:error, "nothing to mint"}
     end
   end
 

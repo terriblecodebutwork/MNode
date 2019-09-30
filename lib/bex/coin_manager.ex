@@ -51,6 +51,10 @@ defmodule Bex.CoinManager do
     GenServer.call(__MODULE__, {:mint, pkid})
   end
 
+  def mint(pkid, coin_sat) do
+    GenServer.call(__MODULE__, {:mint, pkid, coin_sat})
+  end
+
   @doc """
   Get n coins of one private key.
   #FIXME
@@ -110,6 +114,15 @@ defmodule Bex.CoinManager do
     )
     |> Repo.all()
   end
+  defp query_to_get_coin(pkid, n, coin_sat) do
+    from(u in Utxo,
+      where: u.value == ^coin_sat and u.private_key_id == ^pkid,
+      limit: ^n,
+      lock: "FOR UPDATE SKIP LOCKED",
+      order_by: [asc: :id]
+    )
+    |> Repo.all()
+  end
 
   def handle_call({:get_coins, pkid, n}, _from, state) do
     {:reply, do_get_coins(pkid, n, state.coin_sat), state}
@@ -125,6 +138,10 @@ defmodule Bex.CoinManager do
 
   def handle_call({:mint, pkid}, _from, state) do
     {:reply, do_mint(pkid, state.coin_sat), state}
+  end
+
+  def handle_call({:mint, pkid, coin_sat}, _from, state) do
+    {:reply, do_mint(pkid, coin_sat), state}
   end
 
   def handle_call({:create_root_mnode, pkid, iname, content}, _from, state) do
@@ -164,7 +181,7 @@ defmodule Bex.CoinManager do
   end
 
   defp do_get_coins(pkid, n, coin_sat) do
-    utxos = query_to_get_coin(pkid, n)
+    utxos = query_to_get_coin(pkid, n, coin_sat)
 
     if length(utxos) == n do
       {:ok, utxos}
@@ -216,6 +233,32 @@ defmodule Bex.CoinManager do
       {:error, msg} ->
         {:error, msg}
     end
+  end
+
+  @doc """
+  use a utxo that equal to coin_sat
+  """
+  def send_opreturn(pkid, contents, coin_sat) do
+    p = Repo.get!(PrivateKey, pkid)
+    {:ok, inputs} = do_get_coins(pkid, 1, coin_sat)
+    outputs = [Utxo.return_utxo(contents)]
+    {:ok, txid, hex_tx} = Utxo.make_tx(inputs, outputs, coin_sat)
+    Txrepo.add(txid, hex_tx)
+    {:ok, txid, hex_tx}
+  end
+
+  @doc """
+  send a single utxo to a address
+
+  1 in 1 out tx's size is 191 B
+  """
+  def send_to_address(pkid, address, coin_sat) do
+    p = Repo.get!(PrivateKey, pkid)
+    {:ok, inputs} = do_get_coins(pkid, 1, coin_sat)
+    outputs = [Utxo.address_utxo(address, Decimal.sub(hd(inputs).value, 191))]
+    {:ok, txid, hex_tx} = Utxo.make_tx(inputs, outputs, coin_sat)
+    Txrepo.add(txid, hex_tx)
+    {:ok, txid, hex_tx}
   end
 
   defp do_create_root_mnode(pkid, iname, content, coin_sat) do

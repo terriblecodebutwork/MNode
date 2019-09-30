@@ -114,6 +114,13 @@ defmodule BexLib.Script do
     |> to_binary()
   end
 
+  def return(contents) when is_list(contents) do
+    ([
+      :OP_FALSE,
+      :OP_RETURN
+    ] ++ contents) |> to_binary()
+  end
+
   @doc """
   Print and get the human readable opreturn data
   form hex.
