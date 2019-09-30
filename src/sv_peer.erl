@@ -30,8 +30,13 @@ loop(#peer{state = start} = P) ->
     loop(P#peer{state = version_sent});
 
 loop(#peer{state = version_sent} = P) ->
-    {ok, B} = gen_tcp:recv(P#peer.socket, 0, 50*1000),
-    loop(P#peer{state = loop, buffer = B});
+    case gen_tcp:recv(P#peer.socket, 0, 5000) of
+        {ok, B} ->
+            loop(P#peer{state = loop, buffer = B});
+        _ ->
+            timer:sleep(5000),
+            do_connect(P#peer.host)
+    end;
 
 loop(#peer{state = loop, socket = Socket} = P) ->
     receive
@@ -62,7 +67,7 @@ loop(#peer{state = loop, socket = Socket} = P) ->
             handle_command(Command, Data, Socket),
             loop(P#peer{buffer = <<>>});
         {error, incomplete} ->
-            case gen_tcp:recv(Socket, 0, 1000) of
+            case gen_tcp:recv(Socket, 0, 5000) of
                 {ok, B} ->
                     Buffer = P#peer.buffer,
                     loop(P#peer{buffer = <<Buffer/bytes, B/bytes>>});
@@ -74,8 +79,8 @@ loop(#peer{state = loop, socket = Socket} = P) ->
 
 
 send_message(Socket, Msg) ->
-    {ok, Command, P} = parse_message(Msg),
-    {Data, _Rest} = parse(Command, P),
+    % {ok, Command, P} = parse_message(Msg),
+    % {Data, _Rest} = parse(Command, P),
     % io:format("[local ] ~s\n~p\n", [Command, Data]),
     gen_tcp:send(Socket, Msg).
 
@@ -517,7 +522,8 @@ handle_command("getheaders", _Data, _Socket) ->
     ok;
 
 handle_command("inv", #{raw := Bin}, Socket) ->
-    send_message(Socket, getdata_msg(Bin));
+    % send_message(Socket, getdata_msg(Bin));
+    ok;
 
 handle_command(_Command, _Data, _Socket) ->
     ok.
