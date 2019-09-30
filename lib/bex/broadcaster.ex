@@ -35,20 +35,18 @@ defmodule Bex.Broadcaster do
     {:ok, state, {:continue, :get_nodes} }
   end
 
+
   def handle_continue(:get_nodes, state) do
     pids = reconnect()
-    :timer.send_interval(60_000, :reconnect)
     {:noreply, %{ state | nodes: pids} }
   end
 
-  # reconnect all nodes every 1 minutes
-  def handle_info(:reconnect, state) do
-    for pid <- state.nodes do
-      send pid, :close
-    end
-    pids = reconnect()
-    {:noreply, %{ state | nodes: pids} }
-  end
+  # # reconnect all nodes every 30 seconds
+  # def handle_info(:reconnect, state) do
+  #   Logger.info "reconnect"
+  #   pids = reconnect()
+  #   {:noreply, %{ state | nodes: pids} }
+  # end
 
   def handle_call(:list_nodes, _from, state = %{nodes: nodes}) do
     {:reply, nodes, state}
@@ -57,6 +55,8 @@ defmodule Bex.Broadcaster do
   def handle_cast({:send_all, tx}, state = %{nodes: nodes}) do
     binary_tx = tx |> Binary.from_hex()
     for pid <- nodes do
+      send pid, {:tx, binary_tx}
+      send pid, {:tx, binary_tx}
       send pid, {:tx, binary_tx}
     end
     # spawn_link(fn -> check_tx(tx) end)

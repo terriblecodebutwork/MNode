@@ -36,6 +36,7 @@ defmodule BexWeb.Endpoint do
   plug Plug.MethodOverride
   plug Plug.Head
 
+  @max_age 60*60*24*365*10
   # The session will be stored in the cookie and signed,
   # this means its contents can be read but not tampered with.
   # Set :encryption_salt if you would also like to encrypt it.
@@ -43,7 +44,7 @@ defmodule BexWeb.Endpoint do
     store: :cookie,
     key: "_bex_key",
     signing_salt: "vSmq27Cu",
-    max_age: 2592000
+    max_age: @max_age
 
   plug BexWeb.Router
 end

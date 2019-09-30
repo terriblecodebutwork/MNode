@@ -42,6 +42,10 @@ defmodule BexWeb.AdLive do
     </section>
 
     <section>
+      <a href="/gun"><h1>来复枪</h1></a>
+    </section>
+
+    <section>
       <h2>仓库</h2>
       <p>充值地址: <%= @key.address %></p>
       <p>我的 BSV: <%= @balance %> 千聪<button phx-click="flash" <%= if @loading, do: "disabled" %>>刷新余额</button></p>
@@ -78,6 +82,10 @@ defmodule BexWeb.AdLive do
     {:noreply, assign(socket, :loading, true)}
   end
 
+  def handle_event("gun", _, socket) do
+    {:noreply, redirect(socket, to: "/")}
+  end
+
   def handle_info(:sync, socket) do
     key = socket.assigns.key
     Wallet.sync_utxos_of_private_key(key)
@@ -112,8 +120,6 @@ defmodule BexWeb.AdLive do
   defp count_coins(key) do
     CoinManager.mint(key.id, @coin_sat)
     :timer.sleep(1000)
-    key = Repo.preload(key, :utxos)
-    key.utxos
-    |> Enum.count(fn x -> x.value == @coin_sat end)
+    Wallet.count_balance(key) |> Decimal.div_int(1000) |> Decimal.to_integer()
   end
 end

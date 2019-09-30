@@ -112,13 +112,28 @@ defmodule Bex.Wallet.Utxo do
     end
   end
 
-  def mint_all(%PrivateKey{utxos: utxos, lock_script: s, id: pkid}, coin_sat) do
+  def mint_all(%PrivateKey{utxos: utxos, lock_script: s, id: pkid}, coin_sat, opt \\ []) do
     inputs = Enum.filter(utxos, fn u -> Decimal.cmp(u.value, coin_sat) == :gt end)
     if inputs !== [] do
       v = sum_of_value(inputs)
       coin_num = Decimal.div_int(v, coin_sat) |> Decimal.to_integer()
-      coin_utxo = %__MODULE__{value: coin_sat, private_key_id: pkid, lock_script: s}
-      outputs = List.duplicate(coin_utxo, coin_num)
+      coin_num =
+        if coin_num > 28_000 do
+          28_000
+        else
+          coin_num
+        end
+
+      outputs =
+        case opt do
+          [to: key2] ->
+            coin_utxo = %__MODULE__{value: coin_sat, private_key_id: key2.id, lock_script: key2.lock_script}
+            List.duplicate(coin_utxo, coin_num)
+          [] ->
+            coin_utxo = %__MODULE__{value: coin_sat, private_key_id: pkid, lock_script: s}
+            List.duplicate(coin_utxo, coin_num)
+        end
+
       change_script = s
       change_pkid = pkid
 

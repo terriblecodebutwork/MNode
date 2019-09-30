@@ -19,9 +19,10 @@ connect(Host) ->
 do_connect(Host) ->
     case gen_tcp:connect(Host, 8333, [binary, {packet, 0}, {active, false}]) of
         {ok, Socket} ->
-            loop(#peer{socket=Socket});
+            loop(#peer{socket=Socket, host=Host});
         _ ->
-            ok
+            timer:sleep(5000),
+            do_connect(Host)
     end.
 
 loop(#peer{state = start} = P) ->
@@ -61,9 +62,14 @@ loop(#peer{state = loop, socket = Socket} = P) ->
             handle_command(Command, Data, Socket),
             loop(P#peer{buffer = <<>>});
         {error, incomplete} ->
-            {ok, B} = gen_tcp:recv(Socket, 0, 120*1000),
-            Buffer = P#peer.buffer,
-            loop(P#peer{buffer = <<Buffer/bytes, B/bytes>>})
+            case gen_tcp:recv(Socket, 0, 1000) of
+                {ok, B} ->
+                    Buffer = P#peer.buffer,
+                    loop(P#peer{buffer = <<Buffer/bytes, B/bytes>>});
+                {error, timeout} ->
+                    timer:sleep(5000),
+                    do_connect(P#peer.host)
+            end
     end.
 
 

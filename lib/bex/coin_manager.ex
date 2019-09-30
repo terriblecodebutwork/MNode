@@ -55,6 +55,10 @@ defmodule Bex.CoinManager do
     GenServer.call(__MODULE__, {:mint, pkid, coin_sat})
   end
 
+  def mint(pkid, coin_sat, opt) do
+    GenServer.call(__MODULE__, {:mint, pkid, coin_sat, opt})
+  end
+
   @doc """
   Get n coins of one private key.
   #FIXME
@@ -143,6 +147,9 @@ defmodule Bex.CoinManager do
   def handle_call({:mint, pkid, coin_sat}, _from, state) do
     {:reply, do_mint(pkid, coin_sat), state}
   end
+  def handle_call({:mint, pkid, coin_sat, opt}, _from, state) do
+    {:reply, do_mint(pkid, coin_sat, opt), state}
+  end
 
   def handle_call({:create_root_mnode, pkid, iname, content}, _from, state) do
     {:reply, do_create_root_mnode(pkid, iname, content, state.coin_sat), state}
@@ -222,10 +229,10 @@ defmodule Bex.CoinManager do
     end
   end
 
-  defp do_mint(pkid, coin_sat) do
+  defp do_mint(pkid, coin_sat, opt \\ []) do
     p = Repo.get!(PrivateKey, pkid) |> Repo.preload(:utxos)
 
-    case Utxo.mint_all(p, coin_sat) do
+    case Utxo.mint_all(p, coin_sat, opt) do
       {:ok, txid, hex_tx} ->
         Txrepo.add(txid, hex_tx)
         {:ok, txid, hex_tx}
@@ -250,12 +257,12 @@ defmodule Bex.CoinManager do
   @doc """
   send a single utxo to a address
 
-  1 in 1 out tx's size is 191 B
+  1 in 1 out tx's size is 192 B (compressed sign 191B)
   """
   def send_to_address(pkid, address, coin_sat) do
     p = Repo.get!(PrivateKey, pkid)
     {:ok, inputs} = do_get_coins(pkid, 1, coin_sat)
-    outputs = [Utxo.address_utxo(address, Decimal.sub(hd(inputs).value, 191))]
+    outputs = [Utxo.address_utxo(address, Decimal.sub(hd(inputs).value, 193))]
     {:ok, txid, hex_tx} = Utxo.make_tx(inputs, outputs, coin_sat)
     Txrepo.add(txid, hex_tx)
     {:ok, txid, hex_tx}

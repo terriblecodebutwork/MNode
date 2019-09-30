@@ -23,4 +23,32 @@ defmodule BexWeb.PageController do
       end
     LiveView.Controller.live_render(conn, BexWeb.AdLive, session: %{key: get_session(conn, "key")})
   end
+
+  def gun(conn, _params) do
+    conn =
+      case get_session(conn) do
+        %{"key" => key, "key2" => key2} ->
+          Logger.debug "key: #{key}; key2: #{key2}"
+          conn
+
+        %{"key" => key} ->
+          priv = Key.new_private_key() |> Binary.to_hex()
+          {:ok, key2} = Wallet.create_private_key(%{"hex" => priv})
+
+          conn
+          |> put_session("key2", key2.id)
+
+        _ ->
+          priv = Key.new_private_key() |> Binary.to_hex()
+          {:ok, key} = Wallet.create_private_key(%{"hex" => priv})
+
+          priv = Key.new_private_key() |> Binary.to_hex()
+          {:ok, key2} = Wallet.create_private_key(%{"hex" => priv})
+
+          conn
+          |> put_session("key", key.id)
+          |> put_session("key2", key2.id)
+      end
+    LiveView.Controller.live_render(conn, BexWeb.GunLive, session: %{key: get_session(conn, "key"), key2: get_session(conn, "key2")})
+  end
 end

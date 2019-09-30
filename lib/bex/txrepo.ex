@@ -35,11 +35,9 @@ defmodule Bex.Txrepo do
     GenServer.call(__MODULE__, :list)
   end
 
-  @interval 1
-
   def init(state) do
     if state.status == :on do
-      :timer.send_after(@interval, :broadcast)
+      send self(), :broadcast
     end
 
     {:ok, state}
@@ -54,7 +52,7 @@ defmodule Bex.Txrepo do
   end
 
   def handle_cast(:turn_on, state) do
-    :timer.send_after(@interval, :broadcast)
+    send self(), :broadcast
     {:noreply, %{ state | status: :on} }
   end
   def handle_cast(:turn_off, state) do
@@ -66,11 +64,11 @@ defmodule Bex.Txrepo do
       {{:value, {txid, hex_tx}}, q} ->
         Logger.debug("broadcasting: " <> txid)
         do_broadcast(hex_tx)
-        :timer.send_after(@interval, :broadcast)
+        send self(), :broadcast
         {:noreply, %{state | queue: q}}
 
       _ ->
-        :timer.send_after(@interval, :broadcast)
+        :timer.send_after 1000, :broadcast
         {:noreply, state}
     end
   end
@@ -93,5 +91,6 @@ defmodule Bex.Txrepo do
     #FIXME there is no way to know is tx been accepted
     # maybe try to get the tx from SvApi?
     Bex.Broadcaster.send_all(tx)
+    SvApi.broadcast(tx)
   end
 end

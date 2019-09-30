@@ -123,6 +123,24 @@ defmodule Bex.Wallet do
     Repo.all(Utxo)
   end
 
+  def count_balance(%PrivateKey{} = key) do
+    (from u in Utxo,
+      where: u.private_key_id == ^key.id,
+      select: sum(u.value))
+    |> Repo.one!()
+    |> case do
+      nil -> 0
+      any -> any
+    end
+  end
+
+  def count_utxo(%PrivateKey{} = key) do
+    (from u in Utxo,
+      where: u.private_key_id == ^key.id,
+      select: count())
+    |> Repo.one!()
+  end
+
   @doc """
   Get and save the utoxs of a private key from api.
   """
