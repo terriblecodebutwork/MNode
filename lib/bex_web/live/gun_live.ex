@@ -111,7 +111,7 @@ defmodule BexWeb.GunLive do
     {:noreply, assign(socket, %{loading: false, balance: balance})}
   end
 
-  @clip 25
+  @clip 5
 
   def handle_info({:shoot, bullet}, socket) do
     key2 = socket.assigns.key2
@@ -122,8 +122,8 @@ defmodule BexWeb.GunLive do
         CoinManager.send_to_address(key2.id, target, @coin_sat)
       end
       bullet = bullet - @clip
-      send self, {:shoot, bullet}
-      {:noreply, assign(socket, %{bullet: bullet})}
+      # :timer.send_after 1000, self, {:shoot, bullet}
+      {:noreply, assign(socket, %{bullet: bullet, shooting: false})}
     else
       for _ <- 1..bullet do
         CoinManager.send_to_address(key2.id, target, @coin_sat)
@@ -132,28 +132,6 @@ defmodule BexWeb.GunLive do
     end
   end
 
-  def handle_info({:do_send, 0, _}, socket) do
-    {:noreply, socket}
-  end
-  def handle_info({:do_send, a, c}, socket) do
-    key = socket.assigns.key
-    ad_count = socket.assigns.ad_count
-    balance = socket.assigns.balance
-
-    {balance, ad_count} =
-      if rem(ad_count, 9) == 0 do
-        CoinManager.send_to_address(key.id, "1FUBsjgSju23wGqR47ywynyynigxvtTCyZ", @coin_sat)
-        send self(), {:do_send, a-1, c}
-        {balance - 1, ad_count + 1}
-      else
-        CoinManager.send_opreturn(key.id, [c], @coin_sat)
-        send self(), {:do_send, a-1 , c}
-        {balance - 1, ad_count + 1}
-      end
-    :timer.sleep(500)
-
-    {:noreply, assign(socket, %{ad_count: ad_count, balance: balance})}
-  end
 
   defp count_coins(key) do
     Wallet.count_balance(key) |> Decimal.div_int(1000) |> Decimal.to_integer()
