@@ -56,20 +56,20 @@ defmodule BexLib.Key do
     |> public_key_to_address()
   end
 
-  # def privkey_to_wif(priv) do
-  #   # mainnet
-  #   prefix = <<0x80>>
+  def private_key_to_wif(priv) do
+    # mainnet
+    prefix = <<0x80>>
 
-  #   suffix =
-  #     if compressed_priv?(priv) do
-  #       <<0x01>>
-  #     else
-  #       ""
-  #     end
+    suffix =
+      if compressed_priv?(priv) do
+        <<0x01>>
+      else
+        ""
+      end
 
-  #   (prefix <> priv <> suffix)
-  #   |> Base58Check.encode()
-  # end
+    (prefix <> priv <> suffix)
+    |> Base58Check.encode()
+  end
 
   def compressed_priv?(priv) do
     pub = priv |> private_key_to_public_key()

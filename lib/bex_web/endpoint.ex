@@ -42,7 +42,8 @@ defmodule BexWeb.Endpoint do
   plug Plug.Session,
     store: :cookie,
     key: "_bex_key",
-    signing_salt: "vSmq27Cu"
+    signing_salt: "vSmq27Cu",
+    max_age: 2592000
 
   plug BexWeb.Router
 end

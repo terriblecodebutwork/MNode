@@ -35,7 +35,7 @@ defmodule BexWeb.AdLive do
         <label>不超过 200 汉字</label>
         <br/>
         <label>发送次数:</label>
-        <input type="number" name="amount" />
+        <input placeholder=0 type="number" name="amount" />
         <br/>
         <button type="submit">发送</button>
       </from>
