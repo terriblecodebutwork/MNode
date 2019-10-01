@@ -34,6 +34,7 @@ loop(#peer{state = version_sent} = P) ->
         {ok, B} ->
             loop(P#peer{state = loop, buffer = B});
         _ ->
+            gen_tcp:close(P#peer.socket),
             timer:sleep(5000),
             do_connect(P#peer.host)
     end;
@@ -72,6 +73,7 @@ loop(#peer{state = loop, socket = Socket} = P) ->
                     Buffer = P#peer.buffer,
                     loop(P#peer{buffer = <<Buffer/bytes, B/bytes>>});
                 {error, timeout} ->
+                    gen_tcp:close(P#peer.socket),
                     timer:sleep(5000),
                     do_connect(P#peer.host)
             end
