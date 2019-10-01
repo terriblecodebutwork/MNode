@@ -14,7 +14,7 @@
 -record(peer, {state = start, host, port, socket, buffer}).
 
 connect(Host) ->
-    spawn(fun() -> do_connect(Host) end).
+    spawn_link(fun() -> do_connect(Host) end).
 
 do_connect(Host) ->
     case gen_tcp:connect(Host, 8333, [binary, {packet, 0}, {active, false}]) of
