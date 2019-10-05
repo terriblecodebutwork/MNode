@@ -56,8 +56,6 @@ defmodule Bex.Broadcaster do
     binary_tx = tx |> Binary.from_hex()
     for pid <- nodes do
       send pid, {:tx, binary_tx}
-      send pid, {:tx, binary_tx}
-      send pid, {:tx, binary_tx}
     end
     # spawn_link(fn -> check_tx(tx) end)
     {:noreply, state }

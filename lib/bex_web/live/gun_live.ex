@@ -47,7 +47,7 @@ defmodule BexWeb.GunLive do
       <br />
       <label>子弹 x <%= @bullet %></label>
       <button phx-click="split" <%= if @spliting, do: "disabled" %>>
-        <h1 style="width: 40px; height: 20px">制造 make</h1>
+        <h1>制造 make</h1>
       </button>
     </section>
 
@@ -56,7 +56,7 @@ defmodule BexWeb.GunLive do
         <label>目标地址:</label>
         <input value="<%= @target %>" name="target" />
         <button type="submit" <%= if @shooting, do: "disabled" %> >
-          <h1 style="width: 40px; height: 20px">发射 shoot</h1>
+          <h1>发射 shoot</h1>
         </button>
         <p>推荐使用打点钱包收款地址, 并打开消息提示</p>
       </form>

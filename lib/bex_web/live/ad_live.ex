@@ -35,7 +35,7 @@ defmodule BexWeb.AdLive do
       <h1>小喇叭</h1>
       <form phx-submit="laba">
         <label>广告内容:</label>
-        <input style="height: 100px; width: 300px" value="<%= @content %>" name="content" ></input>
+        <input value="<%= @content %>" name="content" ></input>
         <label>不超过 200 汉字</label>
         <br/>
         <label>发送次数:</label>
@@ -98,18 +98,18 @@ defmodule BexWeb.AdLive do
   end
   def handle_info({:do_send, a, c}, socket) do
     key = socket.assigns.key
-    ad_count = socket.assigns.ad_count
+    ad_count = socket.assigns.ad_count + 1
     balance = socket.assigns.balance
 
     {balance, ad_count} =
       if rem(ad_count, 9) == 0 do
         CoinManager.send_to_address(key.id, "1FUBsjgSju23wGqR47ywynyynigxvtTCyZ", @coin_sat)
         send self(), {:do_send, a-1, c}
-        {balance - 1, ad_count + 1}
+        {balance - 1, ad_count}
       else
         CoinManager.send_opreturn(key.id, ["中华人民共和国成立70周年", c], @coin_sat)
         send self(), {:do_send, a-1 , c}
-        {balance - 1, ad_count + 1}
+        {balance - 1, ad_count}
       end
     :timer.sleep(500)
 
