@@ -18,6 +18,11 @@
   </li>
 
   <li>
+    <strong>WIF:</strong>
+    <%= @private_key.hex |> BexLib.Key.private_key_to_wif() %>
+  </li>
+
+  <li>
     <strong>APP_KEY:</strong>
     <%= @private_key.app_key %>
   </li>
