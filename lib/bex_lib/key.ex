@@ -3,6 +3,7 @@ defmodule BexLib.Key do
   # alias BexLib.Script
   alias BexLib.Crypto
   alias BexLib.Script
+  alias Bex.Wallet.PrivateKey
 
   @address_prefix [
     public: 0,
@@ -54,6 +55,10 @@ defmodule BexLib.Key do
     pri
     |> private_key_to_public_key()
     |> public_key_to_address()
+  end
+
+  def private_key_to_wif(%PrivateKey{bn: bn}) do
+    private_key_to_wif(bn)
   end
 
   def private_key_to_wif(priv) do

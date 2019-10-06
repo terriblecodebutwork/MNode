@@ -19,7 +19,7 @@
 
   <li>
     <strong>WIF:</strong>
-    <%= @private_key.hex |> BexLib.Key.private_key_to_wif() %>
+    <%= @private_key |> BexLib.Key.private_key_to_wif() %>
   </li>
 
   <li>
