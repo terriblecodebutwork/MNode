@@ -5,6 +5,11 @@ defmodule BexWeb.PrivateKeyController do
   alias Bex.Wallet.PrivateKey
   alias Bex.Repo
 
+  def index(conn, %{"address" => address}) do
+    private_key = Wallet.get_private_key_by_address!(address) |> Repo.preload(:utxos)
+    render(conn, "show.html", private_key: private_key)
+  end
+
   def index(conn, _params) do
     private_keys = Wallet.list_private_keys()
     render(conn, "index.html", private_keys: private_keys)

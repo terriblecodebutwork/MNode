@@ -43,6 +43,11 @@ defmodule Bex.Wallet do
   """
   def get_private_key!(id), do: Repo.get!(PrivateKey, id)
 
+  def get_private_key_by_address!(address) do
+    Repo.one!(from p in PrivateKey,
+      where: p.address == ^address)
+  end
+
   @doc """
   Creates a private_key.
 
