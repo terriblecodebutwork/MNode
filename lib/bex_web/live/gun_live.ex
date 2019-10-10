@@ -46,20 +46,18 @@ defmodule BexWeb.GunLive do
       <p>我的 BSV: <%= @balance %> 千聪<button phx-click="flash" <%= if @loading, do: "disabled" %>>刷新余额 refresh</button></p>
       <br />
       <label>子弹 x <%= @bullet %></label>
-      <button phx-click="split" <%= if @spliting, do: "disabled" %>>
-        <h1>制造 make</h1>
-      </button>
+      <button phx-click="split" <%= if @spliting, do: "disabled" %>>制造</button>
     </section>
 
     <section>
-      <form phx-submit="gun">
+      <form phx-change="gun">
         <label>目标地址:</label>
         <input value="<%= @target %>" name="target" />
-        <button type="submit" <%= if @shooting, do: "disabled" %> >
-          <h1>发射 shoot</h1>
-        </button>
+
         <p>推荐使用打点钱包收款地址, 并打开消息提示</p>
       </form>
+      <button phx-click="shoot" <%= if @shooting, do: "disabled" %>>发射</button>
+      <button phx-click="withdraw" <%= if @shooting, do: "disabled" %>>全部转出</button>
     </section>
 
     <section style="bottom: 0px; position: fixed">
@@ -79,13 +77,37 @@ defmodule BexWeb.GunLive do
     key2 = socket.assigns.key2
     bullet = socket.assigns.bullet
     cond do
+      Key.is_address?(addr) == false ->
+        {:noreply, assign(socket, :error, "提示: 目标地址格式不正确")}
       addr == key.address or addr == key2.address ->
         {:noreply, assign(socket, :error, "提示: 请示用其它目标地址") }
-      bullet <= 0 ->
-        {:noreply, assign(socket, :error, "提示: 请先制造子弹") }
       true ->
-        send self(), {:shoot, bullet}
-        {:noreply, assign(socket, :target, addr) |> assign(:error, "") |> assign(:shooting, true)}
+        {:noreply, assign(socket, :target, addr) |> assign(:error, "")}
+    end
+  end
+
+  def handle_event("shoot", _, socket) do
+    bullet = socket.assigns.bullet
+    target = socket.assigns.target
+    if bullet > 0 and target !== "" do
+      send self(), {:shoot, bullet}
+      {:noreply, assign(socket, :shooting, true)}
+    else
+      {:noreply, socket}
+    end
+  end
+
+  def handle_event("withdraw", _, socket) do
+    target = socket.assigns.target
+    if target !== "" do
+      key = socket.assigns.key
+      key2 = socket.assigns.key2
+      CoinManager.sweep(key, target)
+      CoinManager.sweep(key2, target)
+      :timer.sleep(1000)
+      {:noreply, assign(socket, :error, "提示: 转出成功, 请检查钱包")}
+    else
+      {:noreply, assign(socket, :error, "提示: 目标地址格式不正确")}
     end
   end
 
@@ -110,10 +132,13 @@ defmodule BexWeb.GunLive do
 
   def handle_info(:sync, socket) do
     key = socket.assigns.key
+    key2 = socket.assigns.key2
     Wallet.sync_utxos_of_private_key(key)
+    Wallet.sync_utxos_of_private_key(key2)
     :timer.sleep(1000)
     balance = count_coins(key)
-    {:noreply, assign(socket, %{loading: false, balance: balance})}
+    bullet = Wallet.count_utxo(key2)
+    {:noreply, assign(socket, %{bullet: bullet, loading: false, balance: balance})}
   end
 
   @clip 5

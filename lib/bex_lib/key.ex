@@ -120,4 +120,14 @@ defmodule BexLib.Key do
     ]
     |> IO.iodata_to_binary()
   end
+
+  def is_address?(str) do
+    try do
+      address_to_public_key_hash(str)
+      true
+    catch
+      _, _ ->
+        false
+    end
+  end
 end

@@ -13,6 +13,7 @@ defmodule Bex.CoinManager do
   alias Bex.Wallet.PrivateKey
   alias BexLib.Key
   alias Bex.Txrepo
+  alias BexLib.Txmaker
   import Ecto.Query
   require Logger
 
@@ -20,6 +21,17 @@ defmodule Bex.CoinManager do
 
   @coin_sat Decimal.cast(10_000)
   @permission_num 1
+
+  ## FIXME don't do anything when inputs is empty
+  def sweep(key, target) do
+    inputs = key |> Repo.preload(:utxos) |> Map.get(:utxos)
+    inputs_value = Utxo.sum_of_value(inputs)
+    fee = Txmaker.estimate_tx_fee(length(inputs), 1, true, false)
+    outputs = [Utxo.address_utxo(target, Decimal.sub(inputs_value, fee))]
+    {:ok, txid, hex_tx} = Utxo.make_tx(inputs, outputs, @coin_sat)
+    Txrepo.add(txid, hex_tx)
+    {:ok, txid, hex_tx}
+  end
 
   def sync_utxo(pkid) do
     p = Repo.get!(PrivateKey, pkid)
@@ -42,6 +54,10 @@ defmodule Bex.CoinManager do
 
   def recast(pkid) do
     GenServer.call(__MODULE__, {:recast, pkid})
+  end
+
+  def recast(pkid, coin_sat) do
+    GenServer.call(__MODULE__, {:recast, pkid, coin_sat})
   end
 
   @doc """
@@ -140,6 +156,13 @@ defmodule Bex.CoinManager do
     {:reply, do_recast(pkid, state.coin_sat), state}
   end
 
+  def handle_call({:recast, pkid, coin_sat}, _from, state) do
+    {:reply, do_recast(pkid, coin_sat), state}
+  end
+  def handle_call({:recast, pkid, coin_sat, opt}, _from, state) do
+    {:reply, do_recast(pkid, coin_sat, opt), state}
+  end
+
   def handle_call({:mint, pkid}, _from, state) do
     {:reply, do_mint(pkid, state.coin_sat), state}
   end
@@ -198,7 +221,7 @@ defmodule Bex.CoinManager do
     end
   end
 
-  defp do_recast(pkid, coin_sat) do
+  defp do_recast(pkid, coin_sat, opt \\ []) do
     p = Repo.get!(PrivateKey, pkid)
 
     dusts =
@@ -214,8 +237,13 @@ defmodule Bex.CoinManager do
     if coin_num == 0 do
       {:error, "not enough dusts"}
     else
-      change_script = Key.private_key_to_p2pkh_script(p.bn)
       change_pkid = p.id
+      p = case opt do
+        [] -> p
+        [to: key2] ->
+          key2
+      end
+      change_script = Key.private_key_to_p2pkh_script(p.bn)
       coin_utxo = %Utxo{value: coin_sat, private_key_id: p.id, lock_script: change_script}
       outputs = List.duplicate(coin_utxo, coin_num)
 
