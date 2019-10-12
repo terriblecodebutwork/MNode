@@ -56,4 +56,15 @@ defmodule BexWeb.PageController do
       session: %{key: get_session(conn, "key"), key2: get_session(conn, "key2")}
     )
   end
+
+  def merkle_path(conn, %{"txid" => t}) do
+    path = Bex.Store.get_merkle_path(t)
+    conn
+    |> put_resp_header("Access-Control-Allow-Origin", "*")
+    |> json(%{merkle_path: path})
+  end
+
+  def merkle_page(conn, _) do
+    render(conn, "merkle.html")
+  end
 end

@@ -1,0 +1,23 @@
+<h1><i>M</i>erkle API</h1>
+
+<h1><i>T</i>ry it</h1>
+<code>curl http://localhost:4000/api/merkle/a87e31b0e252fecc4a487e054fbcbd2545ea8a110747ef875a59b2e3780101db</code>
+
+<h3><i>F</i>AQ</h3>
+<ul>
+    <li>what is merkle tree?</li>
+    <a href="https://en.bitcoin.it/wiki/Protocol_documentation#Merkle_Trees">https://en.bitcoin.it/wiki/Protocol_documentation#Merkle_Trees</a>
+
+    <li>how to calculate the merkle root with this api?</li>
+    <a>baba</a>
+</ul>
+
+
+<h3><i>F</i>eatures coming soon...</h3>
+<ul>
+    <li>block header data</li>
+    <li>simple SPV in browser</li>
+</ul>
+
+<h3><i>L</i>astest Block Height: <%= Bex.Store.MerkleSaver.last_block_height() %></h3>
+<p>txids download from whatsonchain.com</p>

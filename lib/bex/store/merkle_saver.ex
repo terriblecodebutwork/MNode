@@ -8,16 +8,19 @@ defmodule Bex.Store.MerkleSaver do
   alias Bex.Repo
   alias Bex.Store.Merkle
   alias Bex.Store
+  require Logger
 
   @interval 120_000
 
   ## HELPERS
 
   def get_block_page(uri) do
+    :timer.sleep(100)
     get("https://api.whatsonchain.com/v1/bsv/main#{uri}")
   end
 
   def get_block_by_height(height) do
+    :timer.sleep(100)
     get("https://api.whatsonchain.com/v1/bsv/main/block/height/#{height}")
   end
 
@@ -77,7 +80,7 @@ defmodule Bex.Store.MerkleSaver do
     end)
   end
 
-  defp concat_hash(h1, h2) do
+  def concat_hash(h1, h2) do
     BexLib.Crypto.double_sha256(little_bn(h1) <> little_bn(h2))
     |> Binary.reverse()
     |> Binary.to_hex()
@@ -143,14 +146,16 @@ defmodule Bex.Store.MerkleSaver do
 
   def init(_) do
     h = last_block_height()
-    # send(self(), :download)
+    send(self(), :download)
     {:ok, %{block_height: h + 1}}
   end
 
   def handle_info(:download, %{block_height: h}) do
     block_merkle_tree(h)
     |> save_merkle_tree(h)
-    |> IO.inspect()
+
+    Logger.info "block #{h} 's merkle path complete"
+    send self, :download
 
     {:noreply, %{block_height: h + 1}}
   end

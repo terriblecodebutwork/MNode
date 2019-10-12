@@ -24,32 +24,51 @@ defmodule Bex.Store do
   def get_merkle_path(txid) do
     if block_complete?(txid) do
       path =
-        Repo.all(
-          from(m in Merkle,
-            join:
-              p in fragment(
-                """
-                  (WITH RECURSIVE merkle_tree AS (
-                    SELECT *
+        Ecto.Adapters.SQL.query!(Repo,
+          """
+          WITH RECURSIVE merkle_tree AS (
+                    SELECT 0 AS level, top_id, id, pair_id
                     FROM merkle
-                    WHERE merkle.id = ?
+                    WHERE merkle.id = '#{txid}'
                   UNION ALL
-                    SELECT n.*
+                    SELECT level+1, n.top_id, n.id, n.pair_id
                     FROM merkle n
                     INNER JOIN merkle_tree p ON p.top_id = n.id
-                ) SELECT * FROM merkle_tree)
-                """,
-                ^txid
-              ),
-            on: m.id == p.id,
-            select: {m.pair_id, m.id}
-          )
+                ) SELECT id, pair_id, level
+                  FROM merkle_tree
+                  ORDER BY level
+          """
         )
+        |> Map.get(:rows)
+        # Repo.all(
+        #   from(m in Merkle,
+        #     join:
+        #       p in fragment(
+        #         """
+        #         (WITH RECURSIVE merkle_tree AS (
+        #             SELECT 0 AS level, top_id, id, pair_id
+        #             FROM merkle
+        #             WHERE merkle.id = ?
+        #           UNION ALL
+        #             SELECT level+1, n.top_id, n.id, n.pair_id
+        #             FROM merkle n
+        #             INNER JOIN merkle_tree p ON p.top_id = n.id
+        #         ) SELECT id, pair_id, level
+        #           FROM merkle_tree
+        #           ORDER BY level
+        #         )
+        #         """,
+        #         ^txid
+        #       ),
+        #     on: m.id == p.id,
+        #     select: {m.pair_id, m.id}
+        #   )
+        # )
         |> Enum.map(fn
-          {nil, root} ->
+          [root, nil, _] ->
             root
 
-          {pair_id, _id} ->
+          [_id, pair_id, _] ->
             pair_id
         end)
 

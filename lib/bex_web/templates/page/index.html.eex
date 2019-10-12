@@ -1,4 +1,5 @@
 <ul>
+    <li><a href="/merkle">Merkle Path API</a></li>
     <li><a href="/parser">Parse BSV TX</a></li>
     <li><a href="/ad">Post AD on BSV</a></li>
 </ul>

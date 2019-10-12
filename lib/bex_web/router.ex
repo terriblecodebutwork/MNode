@@ -27,6 +27,7 @@ defmodule BexWeb.Router do
     live "/parser/:rawtx", ParserLive
     get "/ad", PageController, :ad
     get "/gun", PageController, :gun
+    get "/merkle", PageController, :merkle_page
   end
 
   # Other scopes may use custom stacks.
@@ -36,5 +37,7 @@ defmodule BexWeb.Router do
     post "/mnode", ApiController, :create
     get "/mnode", ApiController, :find
     post "/webhook/154814876", HookController, :mb_hook
+
+    get "/merkle/:txid", PageController, :merkle_path
   end
 end

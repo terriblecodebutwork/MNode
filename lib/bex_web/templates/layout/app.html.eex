@@ -16,7 +16,7 @@
               <a class="navigation-title" href="/">
                 <h1 class="title">nicedata.space</h1>
               </a>
-              <p>power by MNode</p>
+              <p>power by <i>M</i>Node</p>
             </div>
             <%# <div class="column">
               <ul class="navigation-list float-right">
