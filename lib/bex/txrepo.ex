@@ -78,6 +78,11 @@ defmodule Bex.Txrepo do
     {:noreply, state}
   end
 
+  def handle_info(other, state) do
+    Logger.error(inspect(other))
+    {:noreply, state}
+  end
+
   # defp do_broadcast(tx) do
   #   case SvApi.broadcast(tx) do
   #     {:error, msg} ->
