@@ -26,7 +26,13 @@ defmodule Bex.Store.MerkleSaver do
 
   defp get(url) do
     %{status_code: 200, body: body} = HTTPoison.get!(url)
-    Jason.decode!(body)
+    case Jason.decode(body) do
+      {:ok, data} -> data
+      {:error, _} ->
+        # block height overflow
+        :timer.sleep(@interval)
+        get(url)
+    end
   end
 
   @doc """
@@ -120,7 +126,8 @@ defmodule Bex.Store.MerkleSaver do
         block_height: height,
         id: h1,
         pair_id: h2,
-        top_id: top
+        top_id: top,
+        at_left: true
       })
 
     {:ok, _} =

@@ -27,53 +27,34 @@ defmodule Bex.Store do
         Ecto.Adapters.SQL.query!(Repo,
           """
           WITH RECURSIVE merkle_tree AS (
-                    SELECT 0 AS level, top_id, id, pair_id
+                    SELECT 0 AS level, top_id, id, pair_id, at_left
                     FROM merkle
                     WHERE merkle.id = '#{txid}'
                   UNION ALL
-                    SELECT level+1, n.top_id, n.id, n.pair_id
+                    SELECT level+1, n.top_id, n.id, n.pair_id, n.at_left
                     FROM merkle n
                     INNER JOIN merkle_tree p ON p.top_id = n.id
-                ) SELECT id, pair_id, level
+                ) SELECT id, pair_id, level, at_left
                   FROM merkle_tree
                   ORDER BY level
           """
         )
         |> Map.get(:rows)
-        # Repo.all(
-        #   from(m in Merkle,
-        #     join:
-        #       p in fragment(
-        #         """
-        #         (WITH RECURSIVE merkle_tree AS (
-        #             SELECT 0 AS level, top_id, id, pair_id
-        #             FROM merkle
-        #             WHERE merkle.id = ?
-        #           UNION ALL
-        #             SELECT level+1, n.top_id, n.id, n.pair_id
-        #             FROM merkle n
-        #             INNER JOIN merkle_tree p ON p.top_id = n.id
-        #         ) SELECT id, pair_id, level
-        #           FROM merkle_tree
-        #           ORDER BY level
-        #         )
-        #         """,
-        #         ^txid
-        #       ),
-        #     on: m.id == p.id,
-        #     select: {m.pair_id, m.id}
-        #   )
-        # )
         |> Enum.map(fn
-          [root, nil, _] ->
+          [root, nil, _, _] ->
             root
 
-          [_id, pair_id, _] ->
-            pair_id
+          [_id, pair_id, _, at_left] ->
+            if at_left do
+              # itself at left, its pair at right
+              ["r", pair_id]
+            else
+              pair_id
+            end
         end)
 
       case path do
-        [root] -> path
+        [_root] -> path
         list -> [txid | list]
       end
     else

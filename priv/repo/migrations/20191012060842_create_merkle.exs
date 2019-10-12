@@ -8,6 +8,7 @@ defmodule Bex.Repo.Migrations.CreateMerkle do
       add :top_id, references(:merkle, type: :string)
       add :pair_id, references(:merkle, type: :string)
       add :root, :boolean
+      add :at_left, :boolean
 
       timestamps()
     end
