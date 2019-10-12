@@ -7,7 +7,11 @@ defmodule Bex.StoreTest do
     alias Bex.Store.Merkle
 
     @valid_attrs %{left: "some left", right: "some right", top: "some top"}
-    @update_attrs %{left: "some updated left", right: "some updated right", top: "some updated top"}
+    @update_attrs %{
+      left: "some updated left",
+      right: "some updated right",
+      top: "some updated top"
+    }
     @invalid_attrs %{left: nil, right: nil, top: nil}
 
     def merkle_fixture(attrs \\ %{}) do

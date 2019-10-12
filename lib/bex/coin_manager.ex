@@ -134,6 +134,7 @@ defmodule Bex.CoinManager do
     )
     |> Repo.all()
   end
+
   defp query_to_get_coin(pkid, n, coin_sat) do
     from(u in Utxo,
       where: u.value == ^coin_sat and u.private_key_id == ^pkid,
@@ -159,6 +160,7 @@ defmodule Bex.CoinManager do
   def handle_call({:recast, pkid, coin_sat}, _from, state) do
     {:reply, do_recast(pkid, coin_sat), state}
   end
+
   def handle_call({:recast, pkid, coin_sat, opt}, _from, state) do
     {:reply, do_recast(pkid, coin_sat, opt), state}
   end
@@ -170,6 +172,7 @@ defmodule Bex.CoinManager do
   def handle_call({:mint, pkid, coin_sat}, _from, state) do
     {:reply, do_mint(pkid, coin_sat), state}
   end
+
   def handle_call({:mint, pkid, coin_sat, opt}, _from, state) do
     {:reply, do_mint(pkid, coin_sat, opt), state}
   end
@@ -238,11 +241,16 @@ defmodule Bex.CoinManager do
       {:error, "not enough dusts"}
     else
       change_pkid = p.id
-      p = case opt do
-        [] -> p
-        [to: key2] ->
-          key2
-      end
+
+      p =
+        case opt do
+          [] ->
+            p
+
+          [to: key2] ->
+            key2
+        end
+
       change_script = Key.private_key_to_p2pkh_script(p.bn)
       coin_utxo = %Utxo{value: coin_sat, private_key_id: p.id, lock_script: change_script}
       outputs = List.duplicate(coin_utxo, coin_num)

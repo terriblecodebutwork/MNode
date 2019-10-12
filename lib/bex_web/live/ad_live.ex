@@ -11,8 +11,9 @@ defmodule BexWeb.AdLive do
   @coin_sat Decimal.cast(1000)
 
   def mount(%{key: id}, socket) do
-    send self(), :sync
+    send(self(), :sync)
     key = Wallet.get_private_key!(id)
+
     {
       :ok,
       socket
@@ -63,21 +64,22 @@ defmodule BexWeb.AdLive do
 
   def handle_event("laba", %{"amount" => a, "content" => c}, socket) do
     balance = socket.assigns.balance
+
     a =
       case Integer.parse(a) do
-        {x, _ } -> x
+        {x, _} -> x
         _ -> 0
       end
 
     if a !== 0 and a <= balance and byte_size(c) <= 800 do
-      send self, {:do_send, a, c}
+      send(self, {:do_send, a, c})
     end
 
     {:noreply, assign(socket, :sending, true) |> assign(:content, c)}
   end
 
   def handle_event("flash", _, socket) do
-    send self(), :sync
+    send(self(), :sync)
     {:noreply, assign(socket, :loading, true)}
   end
 
@@ -96,6 +98,7 @@ defmodule BexWeb.AdLive do
   def handle_info({:do_send, 0, _}, socket) do
     {:noreply, socket}
   end
+
   def handle_info({:do_send, a, c}, socket) do
     key = socket.assigns.key
     ad_count = socket.assigns.ad_count + 1
@@ -104,13 +107,14 @@ defmodule BexWeb.AdLive do
     {balance, ad_count} =
       if rem(ad_count, 9) == 0 do
         CoinManager.send_to_address(key.id, "1FUBsjgSju23wGqR47ywynyynigxvtTCyZ", @coin_sat)
-        send self(), {:do_send, a-1, c}
+        send(self(), {:do_send, a - 1, c})
         {balance - 1, ad_count}
       else
         CoinManager.send_opreturn(key.id, ["中华人民共和国成立70周年", c], @coin_sat)
-        send self(), {:do_send, a-1 , c}
+        send(self(), {:do_send, a - 1, c})
         {balance - 1, ad_count}
       end
+
     :timer.sleep(500)
 
     {:noreply, assign(socket, %{ad_count: ad_count, balance: balance})}

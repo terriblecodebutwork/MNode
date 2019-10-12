@@ -1,5 +1,4 @@
 defmodule BexLib.Parser do
-
   def parse_rawtx(rawtx, opts) do
     cond do
       :human in opts ->
@@ -9,9 +8,11 @@ defmodule BexLib.Parser do
               :ok,
               clean(tx)
             }
+
           any ->
             any
         end
+
       true ->
         parse_rawtx(rawtx)
     end
@@ -76,7 +77,6 @@ defmodule BexLib.Parser do
 
   defp put_tx_size(tx, bn) do
     size = byte_size(bn)
-    Map.put tx, :size, size
+    Map.put(tx, :size, size)
   end
-
 end

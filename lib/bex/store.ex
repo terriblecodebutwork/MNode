@@ -21,6 +21,66 @@ defmodule Bex.Store do
     Repo.all(Merkle)
   end
 
+  def get_merkle_path(txid) do
+    if block_complete?(txid) do
+      path =
+        Repo.all(
+          from(m in Merkle,
+            join:
+              p in fragment(
+                """
+                  (WITH RECURSIVE merkle_tree AS (
+                    SELECT *
+                    FROM merkle
+                    WHERE merkle.id = ?
+                  UNION ALL
+                    SELECT n.*
+                    FROM merkle n
+                    INNER JOIN merkle_tree p ON p.top_id = n.id
+                ) SELECT * FROM merkle_tree)
+                """,
+                ^txid
+              ),
+            on: m.id == p.id,
+            select: {m.pair_id, m.id}
+          )
+        )
+        |> Enum.map(fn
+          {nil, root} ->
+            root
+
+          {pair_id, _id} ->
+            pair_id
+        end)
+
+      case path do
+        [root] -> path
+        list -> [txid | list]
+      end
+    else
+      "txid not found, maybe block downloading didn't complete"
+    end
+  end
+
+  defp block_complete?(txid) do
+    case Repo.get(Merkle, txid) do
+      nil ->
+        false
+
+      %Merkle{block_height: h} ->
+        !!get_merkle_root(h)
+    end
+  end
+
+  def get_merkle_root(height) do
+    from(m in Merkle,
+      where:
+        m.block_height == ^height and
+          m.root == true
+    )
+    |> Repo.one()
+  end
+
   @doc """
   Gets a single merkle.
 

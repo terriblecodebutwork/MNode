@@ -116,9 +116,10 @@ defmodule BexLib.Script do
 
   def return(contents) when is_list(contents) do
     ([
-      :OP_FALSE,
-      :OP_RETURN
-    ] ++ contents) |> to_binary()
+       :OP_FALSE,
+       :OP_RETURN
+     ] ++ contents)
+    |> to_binary()
   end
 
   @doc """

@@ -44,8 +44,10 @@ defmodule Bex.Wallet do
   def get_private_key!(id), do: Repo.get!(PrivateKey, id)
 
   def get_private_key_by_address!(address) do
-    Repo.one!(from p in PrivateKey,
-      where: p.address == ^address)
+    Repo.one!(
+      from p in PrivateKey,
+        where: p.address == ^address
+    )
   end
 
   @doc """
@@ -129,9 +131,10 @@ defmodule Bex.Wallet do
   end
 
   def count_balance(%PrivateKey{} = key) do
-    (from u in Utxo,
+    from(u in Utxo,
       where: u.private_key_id == ^key.id,
-      select: sum(u.value))
+      select: sum(u.value)
+    )
     |> Repo.one!()
     |> case do
       nil -> 0
@@ -140,9 +143,10 @@ defmodule Bex.Wallet do
   end
 
   def count_utxo(%PrivateKey{} = key) do
-    (from u in Utxo,
+    from(u in Utxo,
       where: u.private_key_id == ^key.id,
-      select: count())
+      select: count()
+    )
     |> Repo.one!()
   end
 

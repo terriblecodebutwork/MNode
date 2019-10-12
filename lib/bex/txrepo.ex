@@ -37,7 +37,7 @@ defmodule Bex.Txrepo do
 
   def init(state) do
     if state.status == :on do
-      send self(), :broadcast
+      send(self(), :broadcast)
     end
 
     {:ok, state}
@@ -52,11 +52,12 @@ defmodule Bex.Txrepo do
   end
 
   def handle_cast(:turn_on, state) do
-    send self(), :broadcast
-    {:noreply, %{ state | status: :on} }
+    send(self(), :broadcast)
+    {:noreply, %{state | status: :on}}
   end
+
   def handle_cast(:turn_off, state) do
-    {:noreply, %{ state | status: :off} }
+    {:noreply, %{state | status: :off}}
   end
 
   def handle_info(:broadcast, state = %{queue: q, status: :on}) do
@@ -64,11 +65,11 @@ defmodule Bex.Txrepo do
       {{:value, {txid, hex_tx}}, q} ->
         Logger.debug("broadcasting: " <> txid)
         do_broadcast(hex_tx)
-        send self(), :broadcast
+        send(self(), :broadcast)
         {:noreply, %{state | queue: q}}
 
       _ ->
-        :timer.send_after 1000, :broadcast
+        :timer.send_after(1000, :broadcast)
         {:noreply, state}
     end
   end
@@ -93,7 +94,7 @@ defmodule Bex.Txrepo do
   # end
 
   defp do_broadcast(tx) do
-    #FIXME there is no way to know is tx been accepted
+    # FIXME there is no way to know is tx been accepted
     # maybe try to get the tx from SvApi?
     Bex.Broadcaster.send_all(tx)
     SvApi.broadcast(tx)

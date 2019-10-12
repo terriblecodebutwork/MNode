@@ -32,13 +32,12 @@ defmodule Bex.Broadcaster do
   @interval 1000
 
   def init(state) do
-    {:ok, state, {:continue, :get_nodes} }
+    {:ok, state, {:continue, :get_nodes}}
   end
-
 
   def handle_continue(:get_nodes, state) do
     pids = reconnect()
-    {:noreply, %{ state | nodes: pids} }
+    {:noreply, %{state | nodes: pids}}
   end
 
   # # reconnect all nodes every 30 seconds
@@ -54,11 +53,13 @@ defmodule Bex.Broadcaster do
 
   def handle_cast({:send_all, tx}, state = %{nodes: nodes}) do
     binary_tx = tx |> Binary.from_hex()
+
     for pid <- nodes do
-      send pid, {:tx, binary_tx}
+      send(pid, {:tx, binary_tx})
     end
+
     # spawn_link(fn -> check_tx(tx) end)
-    {:noreply, state }
+    {:noreply, state}
   end
 
   ## helpers
@@ -66,6 +67,7 @@ defmodule Bex.Broadcaster do
   # get pids
   defp reconnect() do
     nodes = :sv_peer.get_addrs_ipv4_dns()
+
     for host <- nodes do
       :sv_peer.connect(host)
     end
@@ -74,8 +76,6 @@ defmodule Bex.Broadcaster do
   defp check_tx(tx) do
     :timer.sleep(5000)
     txid = BexLib.Txmaker.get_txid_from_hex_tx(tx)
-    Logger.info "check tx:" <> inspect(SvApi.transaction(txid))
+    Logger.info("check tx:" <> inspect(SvApi.transaction(txid)))
   end
-
-
 end

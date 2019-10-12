@@ -59,5 +59,4 @@ defmodule BexWeb.ParserLive do
 
     {:noreply, assign(socket, :loading, false) |> assign(:tx, tx)}
   end
-
 end

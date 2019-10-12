@@ -12,10 +12,11 @@ defmodule BexWeb.GunLive do
   @coin_sat Decimal.cast(999)
 
   def mount(%{key: id, key2: id2}, socket) do
-    send self(), :sync
+    send(self(), :sync)
     key = Wallet.get_private_key!(id)
     key2 = Wallet.get_private_key!(id2)
     bullet = Wallet.count_utxo(key2)
+
     {
       :ok,
       socket
@@ -70,17 +71,21 @@ defmodule BexWeb.GunLive do
   end
 
   def handle_event("gun", %{"target" => ""}, socket) do
-    {:noreply, socket |> assign(:error, "") }
+    {:noreply, socket |> assign(:error, "")}
   end
+
   def handle_event("gun", %{"target" => addr}, socket) do
     key = socket.assigns.key
     key2 = socket.assigns.key2
     bullet = socket.assigns.bullet
+
     cond do
       Key.is_address?(addr) == false ->
         {:noreply, assign(socket, :error, "提示: 目标地址格式不正确")}
+
       addr == key.address or addr == key2.address ->
-        {:noreply, assign(socket, :error, "提示: 请示用其它目标地址") }
+        {:noreply, assign(socket, :error, "提示: 请示用其它目标地址")}
+
       true ->
         {:noreply, assign(socket, :target, addr) |> assign(:error, "")}
     end
@@ -89,8 +94,9 @@ defmodule BexWeb.GunLive do
   def handle_event("shoot", _, socket) do
     bullet = socket.assigns.bullet
     target = socket.assigns.target
+
     if bullet > 0 and target !== "" do
-      send self(), {:shoot, bullet}
+      send(self(), {:shoot, bullet})
       {:noreply, assign(socket, :shooting, true)}
     else
       {:noreply, socket}
@@ -99,6 +105,7 @@ defmodule BexWeb.GunLive do
 
   def handle_event("withdraw", _, socket) do
     target = socket.assigns.target
+
     if target !== "" do
       key = socket.assigns.key
       key2 = socket.assigns.key2
@@ -112,12 +119,12 @@ defmodule BexWeb.GunLive do
   end
 
   def handle_event("flash", _, socket) do
-    send self(), :sync
+    send(self(), :sync)
     {:noreply, assign(socket, :loading, true)}
   end
 
   def handle_event("split", _, socket) do
-    send self(), :split
+    send(self(), :split)
     {:noreply, assign(socket, :spliting, true)}
   end
 
@@ -147,10 +154,12 @@ defmodule BexWeb.GunLive do
     key2 = socket.assigns.key2
     target = socket.assigns.target
     Txrepo.turn_on()
+
     if bullet > @clip do
       for _ <- 1..@clip do
         CoinManager.send_to_address(key2.id, target, @coin_sat)
       end
+
       bullet = bullet - @clip
       # :timer.send_after 1000, self, {:shoot, bullet}
       {:noreply, assign(socket, %{bullet: bullet, shooting: false})}
@@ -158,10 +167,10 @@ defmodule BexWeb.GunLive do
       for _ <- 1..bullet do
         CoinManager.send_to_address(key2.id, target, @coin_sat)
       end
+
       {:noreply, assign(socket, %{bullet: 0, shooting: false})}
     end
   end
-
 
   defp count_coins(key) do
     Wallet.count_balance(key) |> Decimal.div_int(1000) |> Decimal.to_integer()
