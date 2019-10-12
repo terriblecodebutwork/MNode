@@ -8,3 +8,6 @@ alias Bex.Wallet.Document
 alias Bex.CoinManager
 alias Bex.Txrepo
 alias BexLib.Script
+alias Bex.Store
+alias Bex.Store.Merkle
+alias Bex.Store.MerkleSaver
