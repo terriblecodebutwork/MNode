@@ -12,8 +12,6 @@ defmodule Bex.Store.Merkle do
     field :at_left, :boolean
     belongs_to :pair, Merkle, foreign_key: :pair_id
     belongs_to :top, Merkle, foreign_key: :top_id
-
-    timestamps()
   end
 
   @doc false

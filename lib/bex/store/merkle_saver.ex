@@ -35,18 +35,6 @@ defmodule Bex.Store.MerkleSaver do
     end
   end
 
-  @doc """
-  Get the height of last merkleroot saved block.
-  """
-  def last_block_height() do
-    from(m in Merkle,
-      where: m.root,
-      select: max(m.block_height)
-    )
-    |> Repo.one()
-    |> Kernel.||(-1)
-  end
-
   def get_block_txs(height) do
     info = get_block_by_height(height)
 
@@ -104,6 +92,10 @@ defmodule Bex.Store.MerkleSaver do
         id: hash,
         root: true
       })
+    {:ok, _} =
+      Store.create_block_header(%{
+        id: height
+      })
   end
 
   def save_merkle(l, h) when is_list(l) do
@@ -152,7 +144,13 @@ defmodule Bex.Store.MerkleSaver do
   ## CALLBACKS
 
   def init(_) do
-    h = last_block_height()
+    ## FIXME start from 0
+    {:ok, _} =
+      Store.create_block_header(%{
+        id: 190000
+      })
+
+    h = Store.last_block_height()
     send(self(), :download)
     {:ok, %{block_height: h + 1}}
   end

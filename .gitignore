@@ -38,3 +38,4 @@ npm-debug.log
 /priv/static/
 
 prod.sh
+.vscode/settings.json

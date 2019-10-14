@@ -7,6 +7,7 @@ defmodule Bex.Store do
   alias Bex.Repo
 
   alias Bex.Store.Merkle
+  alias Bex.Store.BlockHeader
 
   @doc """
   Returns the list of merkle.
@@ -110,9 +111,9 @@ defmodule Bex.Store do
 
   """
   def create_merkle(attrs \\ %{}) do
-    %Merkle{}
-    |> Merkle.changeset(attrs)
-    |> Repo.insert(on_conflict: :nothing)
+     %Merkle{}
+        |> Merkle.changeset(attrs)
+        |> Repo.insert(on_conflict: :nothing)
   end
 
   @doc """
@@ -160,5 +161,24 @@ defmodule Bex.Store do
   """
   def change_merkle(%Merkle{} = merkle) do
     Merkle.changeset(merkle, %{})
+  end
+
+  ## BlockHeader
+
+  def create_block_header(attrs \\ %{}) do
+    %BlockHeader{}
+    |> BlockHeader.changeset(attrs)
+    |> Repo.insert(on_conflict: :replace_all, conflict_target: {:constraint, :block_headers_pkey})
+  end
+
+    @doc """
+  Get the height of last merkleroot saved block.
+  """
+  def last_block_height() do
+    from(h in BlockHeader,
+      select: max(h.id)
+    )
+    |> Repo.one()
+    |> Kernel.||(-1)
   end
 end

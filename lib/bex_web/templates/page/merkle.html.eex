@@ -22,5 +22,5 @@
     <li>simple SPV in browser</li>
 </ul>
 
-<h3><i>L</i>astest Block Height: <%= Bex.Store.MerkleSaver.last_block_height() %></h3>
+<h3><i>L</i>atest Block Height: <%= Bex.Store.last_block_height() %></h3>
 <p>txids download from whatsonchain.com</p>
