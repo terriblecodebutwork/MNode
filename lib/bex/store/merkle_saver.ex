@@ -145,12 +145,6 @@ defmodule Bex.Store.MerkleSaver do
   ## CALLBACKS
 
   def init(_) do
-    ## FIXME start from 0
-    {:ok, _} =
-      Store.create_block_header(%{
-        id: 190000
-      })
-
     h = Store.last_block_height()
     send(self(), :download)
     {:ok, %{block_height: h + 1}}
