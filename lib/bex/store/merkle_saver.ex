@@ -11,16 +11,17 @@ defmodule Bex.Store.MerkleSaver do
   require Logger
 
   @interval 120_000
+  @rate_limit 1000
 
   ## HELPERS
 
   def get_block_page(uri) do
-    :timer.sleep(100)
+    :timer.sleep(@rate_limit)
     get("https://api.whatsonchain.com/v1/bsv/main#{uri}")
   end
 
   def get_block_by_height(height) do
-    :timer.sleep(100)
+    :timer.sleep(@rate_limit)
     get("https://api.whatsonchain.com/v1/bsv/main/block/height/#{height}")
   end
 
