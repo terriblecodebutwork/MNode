@@ -54,7 +54,7 @@ defmodule BexWeb.AdLive do
 
     <section>
       <h2>使用说明</h2>
-      <p>可在<a target="_blank" href="https://genesis.bitdb.network/query/1FnauZ9aUH2Bex6JzdcV4eNX7oLSSEbxtN/ewogICJ2IjogMywKICAicSI6IHsKICAgICJmaW5kIjogewogICAgICAib3V0LmgyIjogImU0YjhhZGU1OGQ4ZWU0YmFiYWU2YjA5MWU1ODViMWU1OTI4Y2U1OWJiZGU2ODg5MGU3YWI4YjM3MzBlNTkxYThlNWI5YjQiCiAgICB9LAogICAgInByb2plY3QiOiB7CiAgICAgICJvdXQuczIiOiAxLAogICAgICAib3V0LnMzIjogMSwKICAgICAgIm91dC5sczMiOiAxLAogICAgICAiaW4iOiAxCiAgICB9LAogICAgImxpbWl0IjogMTAwMAogIH0sCiAgInIiOiB7CiAgICAiZiI6ICJbLltdIHwge2FkOiAoLm91dFswXS5zMyArIC5vdXRbMF0ubHMzKSwgZnJvbTogLmluWzBdLmUuYX0gXSIKICB9Cn0=">这里</a>查看全部广告. </p>
+      <p>可在<a target="_blank" href="https://genesis.bitdb.network/query/1FnauZ9aUH2Bex6JzdcV4eNX7oLSSEbxtN/ewogICJ2IjogMywKICAicSI6IHsKICAgICJmaW5kIjogewogICAgICAib3V0LmgyIjogImU0YjhhZGU1OGQ4ZWU0YmFiYWU2YjA5MWU1ODViMWU1OTI4Y2U1OWJiZGU2ODg5MGU3YWI4YjM3MzBlNTkxYThlNWI5YjQiCiAgICB9LAogICAgInByb2plY3QiOiB7CiAgICAgICJvdXQuczIiOiAxLAogICAgICAib3V0LnMzIjogMSwKICAgICAgIm91dC5sczMiOiAxLAogICAgICAiaW4iOiAxCiAgICB9LAogICAgImxpbWl0IjogNTAwMAogIH0sCiAgInIiOiB7CiAgICAiZiI6ICJbLltdIHwge2FkOiAoLm91dFswXS5zMyArIC5vdXRbMF0ubHMzKSwgZnJvbTogLmluWzBdLmUuYX1dIHwgW3JlZHVjZSAuW10gYXMgJHggKHt0OiB7fSwgY291bnQ6IDAsIHI6IFtdfTsgLiB8IGlmICR4ID09IC50IHRoZW4gLiB8IC5jb3VudCArPSAxIGVsc2UgLiB8IC5yICs9IFt7YWQ6IC50LmFkLCBmcm9tOiAudC5mcm9tLCBjb3VudDogLmNvdW50fV0gfCAudCA9ICR4IHwgLmNvdW50ID0gMCBlbmQgKV0gfCAuW10gfCAudC5jb3VudCA9IC5jb3VudCB8IC5yICs9IFsudF0gfCAuciB8IGRlbCguWzBdKSIKICB9Cn0=">这里</a>查看全部广告. </p>
       <p>请勿充值大量金额. 任何财产损失, 本网站概不负责.</p>
       <p>私钥ID保存在本地, 使用过程中请勿删除浏览器缓存.</p>
       <p>每条广告花费 1千聪费用, 本站收取总花费的10% (每 10 笔交易中, 有 1 笔用于支付费用)).</p>
