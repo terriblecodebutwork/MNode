@@ -51,6 +51,7 @@ defmodule Bex.MixProject do
       {:phoenix_live_reload, "~> 1.2", only: :dev},
       {:plug_cowboy, "~> 2.0"},
       {:phoenix_live_view, "~> 0.3.1"},
+      {:rocksdb, "~> 1.0"},
       {:sv_api, github: "terriblecodebutwork/sv_api"},
       {:tentacat, github: "terriblecodebutwork/tentacat"},
       {:tesla, "~> 1.2.1"}

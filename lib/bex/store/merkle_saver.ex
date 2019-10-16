@@ -13,6 +13,8 @@ defmodule Bex.Store.MerkleSaver do
   @interval 120_000
   @rate_limit 1000
 
+  @block_limit 150_000 # FIXME need better db
+
   ## HELPERS
 
   def get_block_page(uri) do
@@ -146,10 +148,15 @@ defmodule Bex.Store.MerkleSaver do
 
   def init(_) do
     h = Store.last_block_height()
-    send(self(), :download)
+    if !System.get_env("NO_MERKLE") do
+      send(self(), :download)
+    end
     {:ok, %{block_height: h + 1}}
   end
 
+  def handle_info(:download, state = %{block_height: h}) when h >= @block_limit do
+    {:noreply, state}
+  end
   def handle_info(:download, %{block_height: h}) do
     block_merkle_tree(h)
     |> save_merkle_tree(h)
