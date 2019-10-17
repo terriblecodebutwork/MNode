@@ -88,16 +88,17 @@ defmodule Bex.CoinManager do
   iname: the name of new mnode
   pname: the name of parent mnode
   """
-  def create_mnode(pkid, false, iname, content) when is_binary(iname) do
+  def create_mnode(pkid, pname, iname, content, opts \\ [])
+  def create_mnode(pkid, false, iname, content, opts) when is_binary(iname) do
     Logger.info("creating root mnode: #{iname}")
-    Logger.info(inspect(GenServer.call(__MODULE__, {:create_root_mnode, pkid, iname, content})))
+    Logger.info(inspect(GenServer.call(__MODULE__, {:create_root_mnode, pkid, iname, content, opts})))
   end
 
-  def create_mnode(pkid, pname, iname, content) when is_binary(iname) and is_binary(pname) do
+  def create_mnode(pkid, pname, iname, content, opts) when is_binary(iname) and is_binary(pname) do
     Logger.info("creating child mnode: #{pname} >> #{iname}")
 
     Logger.info(
-      inspect(GenServer.call(__MODULE__, {:create_sub_mnode, pkid, pname, iname, content}))
+      inspect(GenServer.call(__MODULE__, {:create_sub_mnode, pkid, pname, iname, content, opts}))
     )
   end
 
@@ -177,12 +178,12 @@ defmodule Bex.CoinManager do
     {:reply, do_mint(pkid, coin_sat, opt), state}
   end
 
-  def handle_call({:create_root_mnode, pkid, iname, content}, _from, state) do
-    {:reply, do_create_root_mnode(pkid, iname, content, state.coin_sat), state}
+  def handle_call({:create_root_mnode, pkid, iname, content, opts}, _from, state) do
+    {:reply, do_create_root_mnode(pkid, iname, content, state.coin_sat, opts), state}
   end
 
-  def handle_call({:create_sub_mnode, pkid, pname, iname, content}, _from, state) do
-    {:reply, do_create_sub_mnode(pkid, pname, iname, content, state.coin_sat), state}
+  def handle_call({:create_sub_mnode, pkid, pname, iname, content, opts}, _from, state) do
+    {:reply, do_create_sub_mnode(pkid, pname, iname, content, state.coin_sat, opts), state}
   end
 
   def handle_cast({:set_coin_sat, v}, state) do
@@ -304,7 +305,7 @@ defmodule Bex.CoinManager do
     {:ok, txid, hex_tx}
   end
 
-  defp do_create_root_mnode(pkid, iname, content, coin_sat) do
+  defp do_create_root_mnode(pkid, iname, content, coin_sat, opts) do
     p = Repo.get!(PrivateKey, pkid)
     {:ok, inputs} = do_get_coins(pkid, 1, coin_sat)
     {:ok, c_key} = Wallet.derive_and_insert_key(p, p, iname)
@@ -313,9 +314,8 @@ defmodule Bex.CoinManager do
 
     meta = Utxo.meta_utxo(c_key.address, content)
     outputs = [meta | List.duplicate(c_permission_utxo, @permission_num)]
-    # send change to base key
-    change_script = p.lock_script
-    change_pkid = p.id
+
+    {change_script, change_pkid} = Utxo.change_to_address(p, opts)
 
     case Utxo.handle_change(inputs, outputs, change_script, change_pkid) do
       {:error, msg} ->
@@ -329,13 +329,13 @@ defmodule Bex.CoinManager do
     end
   end
 
-  defp do_create_sub_mnode(pkid, pname, iname, content, coin_sat) do
+  defp do_create_sub_mnode(pkid, pname, iname, content, coin_sat, opts) do
     p = Repo.get!(PrivateKey, pkid)
 
     case Wallet.find_key_with_dir(p, pname) do
       {:ok, p_key} ->
         # parent key exists
-        case Utxo.create_sub_dir(p_key, iname, content, coin_sat) do
+        case Utxo.create_sub_dir(p_key, iname, content, coin_sat, opts) do
           {:ok, txid, hex_tx} ->
             Txrepo.add(txid, hex_tx)
             {:ok, txid, hex_tx}

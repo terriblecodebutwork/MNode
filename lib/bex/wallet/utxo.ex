@@ -63,6 +63,19 @@ defmodule Bex.Wallet.Utxo do
     }
   end
 
+  @doc """
+  handle the :change_to option, and return the {lockscript, pkid}
+  """
+  def change_to_address(p, opts) do
+    case opts[:change_to] do
+      nil ->
+        # send change to base key
+        {p.lock_script, p.id}
+      addr when is_binary(addr) ->
+        {Key.address_to_pkscript(addr), nil}
+    end
+  end
+
   def address_utxo(address, value) do
     %Utxo{
       value: Decimal.cast(value),
@@ -73,6 +86,11 @@ defmodule Bex.Wallet.Utxo do
 
   def set_utxo_type(u = %{type: type}, _coin_sat) when not is_nil(type) do
     u
+  end
+
+  @zero Decimal.cast(0)
+  def set_utxo_type(utxo = %{value: @zero}, _) do
+    Map.put(utxo, :type, :data)
   end
 
   def set_utxo_type(utxo = %{value: @permission_sat}, _) do
@@ -185,7 +203,7 @@ defmodule Bex.Wallet.Utxo do
   # dir is full dir
   # c_ child
   # s_ self
-  def create_sub_dir(s_key, c_dir, content, coin_sat) do
+  def create_sub_dir(s_key, c_dir, content, coin_sat, opts) do
     base_key = Repo.preload(s_key, :base_key).base_key
     s_permission = Wallet.get_a_permission(s_key)
     inputs = [s_permission, Wallet.get_a_coin(base_key)]
@@ -202,9 +220,7 @@ defmodule Bex.Wallet.Utxo do
       s_permission | List.duplicate(c_permission_utxo, @permission_num)
     ]
 
-    # send change to base key
-    change_script = base_key.lock_script
-    change_pkid = base_key.id
+    {change_script, change_pkid} = change_to_address(base_key, opts)
 
     case handle_change(inputs, outputs, change_script, change_pkid) do
       {:error, msg} ->

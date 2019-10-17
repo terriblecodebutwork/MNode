@@ -27,6 +27,7 @@ defmodule BexWeb.Router do
     live "/parser/:rawtx", ParserLive
     get "/ad", PageController, :ad
     get "/gun", PageController, :gun
+    get "/chat", PageController, :chat
     get "/merkle", PageController, :merkle_page
   end
 

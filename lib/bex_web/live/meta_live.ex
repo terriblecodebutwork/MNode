@@ -57,6 +57,7 @@ defmodule BexWeb.MetaLive do
           <p>Address: <%= k.address %></p>
           <p>Dir: <%= k.dir %></p>
           <p>ParentDir: <%= k.parent_key.dir %></p>
+          <p>Contents: <%= Bex.MetaNode.get_node(@key, k.dir) |> inspect() %></p>
 
           <form phx-submit="create_sub_dir">
             <input name="dir:<%= k.id %>">

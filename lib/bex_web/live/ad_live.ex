@@ -28,12 +28,14 @@ defmodule BexWeb.AdLive do
 
   def render(assigns) do
     ~L"""
-    <section>
-      <a href="/gun"><h1>来复枪</h1></a>
-    </section>
+    <h1>广告墙</h1>
+
+    <nav>
+      <a href="/chat">聊天室</a>
+      <a href="/gun">来复枪</a>
+    </nav>
 
     <section>
-      <h1>小喇叭</h1>
       <form phx-submit="laba">
         <label>广告内容:</label>
         <input value="<%= @content %>" name="content" ></input>
