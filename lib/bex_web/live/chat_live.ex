@@ -68,7 +68,7 @@ defmodule BexWeb.ChatLive do
   @msg_size_limit 800
 
   defp msg_tree() do
-    {:safe, "<div>hello</div>"}
+    {:safe, "<div>施工中🚧请勿使用</div>"}
   end
 
   def handle_event("editing", %{"content" => c}, socket) do

@@ -43,6 +43,12 @@ defmodule Bex.Wallet.Utxo do
     |> validate_required([:value, :lock_script, :type])
   end
 
+  @topic inspect(__MODULE__)
+
+  def subscribe do
+    Phoenix.PubSub.subscribe(Bex.PubSub, @topic)
+  end
+
   def meta_utxo(addr, content, p_txid \\ "NULL") do
     content = content || []
     Logger.debug("meta_utxo: #{inspect({addr, content, p_txid})}")
