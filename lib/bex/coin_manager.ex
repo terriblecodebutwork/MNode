@@ -230,7 +230,8 @@ defmodule Bex.CoinManager do
 
     dusts =
       from(u in Utxo,
-        where: u.private_key_id == ^p.id and u.type == "dust"
+        where: u.private_key_id == ^p.id and u.type == "dust",
+        limit: 100
       )
       |> Repo.all()
 
@@ -261,7 +262,9 @@ defmodule Bex.CoinManager do
           {:error, msg}
 
         {:ok, inputs, outputs} ->
-          Utxo.make_tx(inputs, outputs, coin_sat)
+          {:ok, txid, hex_tx} = Utxo.make_tx(inputs, outputs, coin_sat)
+          Txrepo.add(txid, hex_tx)
+          {:ok, txid, hex_tx}
       end
     end
   end
@@ -315,7 +318,7 @@ defmodule Bex.CoinManager do
     meta = Utxo.meta_utxo(c_key.address, content)
     outputs = [meta | List.duplicate(c_permission_utxo, @permission_num)]
 
-    {change_script, change_pkid} = Utxo.change_to_address(p, opts)
+    {change_script, change_pkid} = Utxo.change_to_address(p, opts) |> IO.inspect()
 
     case Utxo.handle_change(inputs, outputs, change_script, change_pkid) do
       {:error, msg} ->

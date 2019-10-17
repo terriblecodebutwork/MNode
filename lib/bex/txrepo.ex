@@ -98,5 +98,7 @@ defmodule Bex.Txrepo do
     # maybe try to get the tx from SvApi?
     Bex.Broadcaster.send_all(tx)
     SvApi.broadcast(tx)
+    |> inspect()
+    |> Logger.debug()
   end
 end

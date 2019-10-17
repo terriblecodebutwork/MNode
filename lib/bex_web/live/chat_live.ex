@@ -12,6 +12,10 @@ defmodule BexWeb.ChatLive do
   @root_node "小喇叭聊天室"
   @payment_address "19Rsk91jS1bmUASDfyKV5LbN4XCGEReoxY"
 
+  def create_root() do
+    CoinManager.create_mnode(1, false, @root_node, ["欢迎来到小喇叭聊天室, 这里有你最好的朋友👬"], change_to: @payment_address)
+  end
+
   def mount(%{key: id}, socket) do
     send(self(), :sync)
     key = Wallet.get_private_key!(id)

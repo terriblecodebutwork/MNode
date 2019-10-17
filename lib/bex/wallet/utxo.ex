@@ -270,7 +270,7 @@ defmodule Bex.Wallet.Utxo do
 
   defp add_change(outputs, change, s, p) do
     if change do
-      [%__MODULE__{lock_script: s, value: change, private_key_id: p} | outputs]
+      outputs ++ [%__MODULE__{lock_script: s, value: change, private_key_id: p}]
     else
       outputs
     end
