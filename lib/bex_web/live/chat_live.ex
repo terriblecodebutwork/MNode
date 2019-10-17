@@ -37,11 +37,6 @@ defmodule BexWeb.ChatLive do
     ~L"""
     <h1>小喇叭聊天室</h1>
 
-    <nav>
-      <a href="/ad">广告墙</a>
-      <a href="/gun">来复枪</a>
-    </nav>
-
     <section>
       <p>充值地址: <%= @key.address %></p>
       <p>我的小喇叭: <%= @balance %> 个<button phx-click="flash" <%= if @loading, do: "disabled" %>>刷新余额</button></p>

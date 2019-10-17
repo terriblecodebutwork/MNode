@@ -30,10 +30,11 @@ defmodule BexWeb.AdLive do
     ~L"""
     <h1>广告墙</h1>
 
-    <nav>
-      <a href="/chat">聊天室</a>
-      <a href="/gun">来复枪</a>
-    </nav>
+    <section>
+      <p>充值地址: <%= @key.address %></p>
+      <p>我的小喇叭: <%= @balance %> 个<button phx-click="flash" <%= if @loading, do: "disabled" %>>刷新余额</button></p>
+      <p>本次已发送: <%= @ad_count %></p>
+    </section>
 
     <section>
       <form phx-submit="laba">
@@ -42,24 +43,18 @@ defmodule BexWeb.AdLive do
         <label>不超过 200 汉字</label>
         <br/>
         <label>发送次数:</label>
-        <input placeholder=0 type="number" name="amount" />
+        <input placeholder=1 type="number" name="amount" />
         <br/>
         <button type="submit">发送</button>
       </from>
     </section>
 
     <section>
-      <p>充值地址: <%= @key.address %></p>
-      <p>我的 BSV: <%= @balance %> 千聪<button phx-click="flash" <%= if @loading, do: "disabled" %>>刷新余额</button></p>
-      <p>本次已发送: <%= @ad_count %></p>
-    </section>
-
-    <section>
       <h2>使用说明</h2>
-      <p>可在<a target="_blank" href="https://genesis.bitdb.network/query/1FnauZ9aUH2Bex6JzdcV4eNX7oLSSEbxtN/ewogICJ2IjogMywKICAicSI6IHsKICAgICJmaW5kIjogewogICAgICAib3V0LmgyIjogImU0YjhhZGU1OGQ4ZWU0YmFiYWU2YjA5MWU1ODViMWU1OTI4Y2U1OWJiZGU2ODg5MGU3YWI4YjM3MzBlNTkxYThlNWI5YjQiCiAgICB9LAogICAgInByb2plY3QiOiB7CiAgICAgICJvdXQuczIiOiAxLAogICAgICAib3V0LnMzIjogMSwKICAgICAgIm91dC5sczMiOiAxLAogICAgICAiaW4iOiAxCiAgICB9LAogICAgImxpbWl0IjogNTAwMAogIH0sCiAgInIiOiB7CiAgICAiZiI6ICJbLltdIHwge2FkOiAoLm91dFswXS5zMyArIC5vdXRbMF0ubHMzKSwgZnJvbTogLmluWzBdLmUuYX1dIHwgW3JlZHVjZSAuW10gYXMgJHggKHt0OiB7fSwgY291bnQ6IDAsIHI6IFtdfTsgLiB8IGlmICR4ID09IC50IHRoZW4gLiB8IC5jb3VudCArPSAxIGVsc2UgLiB8IC5yICs9IFt7YWQ6IC50LmFkLCBmcm9tOiAudC5mcm9tLCBjb3VudDogLmNvdW50fV0gfCAudCA9ICR4IHwgLmNvdW50ID0gMCBlbmQgKV0gfCAuW10gfCAudC5jb3VudCA9IC5jb3VudCB8IC5yICs9IFsudF0gfCAuciB8IGRlbCguWzBdKSIKICB9Cn0=">这里</a>查看全部广告. </p>
+      <p>可在<a target="_blank" href="https://genesis.bitdb.network/query/1FnauZ9aUH2Bex6JzdcV4eNX7oLSSEbxtN/ewogICJ2IjogMywKICAicSI6IHsKICAgICJmaW5kIjogewogICAgICAib3V0LmgyIjogImU0YjhhZGU1OGQ4ZWU0YmFiYWU2YjA5MWU1ODViMWU1OTI4Y2U1OWJiZGU2ODg5MGU3YWI4YjM3MzBlNTkxYThlNWI5YjQiCiAgICB9LAogICAgInByb2plY3QiOiB7CiAgICAgICJvdXQuczIiOiAxLAogICAgICAib3V0LnMzIjogMSwKICAgICAgIm91dC5sczMiOiAxLAogICAgICAiaW4iOiAxCiAgICB9LAogICAgImxpbWl0IjogNTAwMAogIH0sCiAgInIiOiB7CiAgICAiZiI6ICJbLltdIHwge2FkOiAoLm91dFswXS5zMyArIC5vdXRbMF0ubHMzKSwgZnJvbTogLmluWzBdLmUuYX1dIHwgW3JlZHVjZSAuW10gYXMgJHggKHt9OyAuIHwgaWYgJHggPT0gLnQgdGhlbiAuIHwgLmNvdW50ICs9IDEgZWxzZSAuIHwgLnIgKz0gW3thZDogLnQuYWQsIGZyb206IC50LmZyb20sIGNvdW50OiAuY291bnR9XSB8IC50ID0gJHggfCAuY291bnQgPSAxIGVuZCApXSB8IC5bXSB8IC50LmNvdW50ID0gLmNvdW50IHwgLnIgKz0gWy50XSB8IC5yIHwgZGVsKC5bMF0pIgogIH0KfQ==">这里</a>查看全部广告. </p>
       <p>请勿充值大量金额. 任何财产损失, 本网站概不负责.</p>
       <p>私钥ID保存在本地, 使用过程中请勿删除浏览器缓存.</p>
-      <p>每条广告花费 1千聪费用, 本站收取总花费的10% (每 10 笔交易中, 有 1 笔用于支付费用)).</p>
+      <p>每条广告花费 1 个小喇叭, 每个小喇叭价值 1000 聪.</p>
     </section>
     """
   end
@@ -106,20 +101,12 @@ defmodule BexWeb.AdLive do
     ad_count = socket.assigns.ad_count + 1
     balance = socket.assigns.balance
 
-    {balance, ad_count} =
-      if rem(ad_count, 9) == 0 do
-        CoinManager.send_to_address(key.id, "1FUBsjgSju23wGqR47ywynyynigxvtTCyZ", @coin_sat)
-        send(self(), {:do_send, a - 1, c})
-        {balance - 1, ad_count}
-      else
-        CoinManager.send_opreturn(key.id, ["中华人民共和国成立70周年", c], @coin_sat)
-        send(self(), {:do_send, a - 1, c})
-        {balance - 1, ad_count}
-      end
+    CoinManager.send_opreturn(key.id, ["中华人民共和国成立70周年", c], @coin_sat, change_to: "1FUBsjgSju23wGqR47ywynyynigxvtTCyZ")
+    send(self(), {:do_send, a - 1, c})
 
     :timer.sleep(500)
 
-    {:noreply, assign(socket, %{ad_count: ad_count, balance: balance})}
+    {:noreply, assign(socket, %{ad_count: ad_count, balance: balance - 1})}
   end
 
   defp count_coins(key) do

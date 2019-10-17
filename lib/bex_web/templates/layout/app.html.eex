@@ -18,16 +18,11 @@
               </a>
               <p>power by <i>M</i>Node</p>
             </div>
-            <%# <div class="column">
-              <ul class="navigation-list float-right">
-                <li class="navigation-item">
-                  <a class="navigation-link" href="/nodes">Nodes</a>
-                </li>
-                <li class="navigation-item">
-                  <a class="navigation-link" href="/dashboardx">DashboradX</a>
-                </li>
-              </ul>
-            </div> %>
+            <nav>
+              <a href="/chat">聊天室</a>
+              <a href="/ad">广告墙</a>
+              <a href="/gun">提款机</a>
+            </nav>
           </div>
         </section>
       </nav>

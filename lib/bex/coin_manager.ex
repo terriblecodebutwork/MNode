@@ -285,13 +285,22 @@ defmodule Bex.CoinManager do
   @doc """
   use a utxo that equal to coin_sat
   """
-  def send_opreturn(pkid, contents, coin_sat) do
+  def send_opreturn(pkid, contents, coin_sat, opts \\ []) do
     p = Repo.get!(PrivateKey, pkid)
     {:ok, inputs} = do_get_coins(pkid, 1, coin_sat)
     outputs = [Utxo.return_utxo(contents)]
-    {:ok, txid, hex_tx} = Utxo.make_tx(inputs, outputs, coin_sat)
-    Txrepo.add(txid, hex_tx)
-    {:ok, txid, hex_tx}
+
+    {change_script, change_pkid} = Utxo.change_to_address(p, opts)
+
+    case Utxo.handle_change(inputs, outputs, change_script, change_pkid) do
+      {:error, msg} ->
+        {:error, msg}
+
+      {:ok, inputs, outputs} ->
+        {:ok, txid, hex_tx} = Utxo.make_tx(inputs, outputs, coin_sat)
+        Txrepo.add(txid, hex_tx)
+        {:ok, txid, hex_tx}
+    end
   end
 
   @doc """
@@ -318,7 +327,7 @@ defmodule Bex.CoinManager do
     meta = Utxo.meta_utxo(c_key.address, content)
     outputs = [meta | List.duplicate(c_permission_utxo, @permission_num)]
 
-    {change_script, change_pkid} = Utxo.change_to_address(p, opts) |> IO.inspect()
+    {change_script, change_pkid} = Utxo.change_to_address(p, opts)
 
     case Utxo.handle_change(inputs, outputs, change_script, change_pkid) do
       {:error, msg} ->

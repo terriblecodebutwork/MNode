@@ -34,11 +34,7 @@ defmodule BexWeb.GunLive do
 
   def render(assigns) do
     ~L"""
-    <section>
-      <a href="/ad"><h1>小喇叭</h1></a>
-    </section>
-
-    <h1>来复枪</h1>
+    <h1>提款机</h1>
 
     <h1><%= @error %></h1>
 
@@ -46,8 +42,6 @@ defmodule BexWeb.GunLive do
       <p>充值地址: <%= @key.address %></p>
       <p>我的 BSV: <%= @balance %> 千聪<button phx-click="flash" <%= if @loading, do: "disabled" %>>刷新余额 refresh</button></p>
       <br />
-      <label>子弹 x <%= @bullet %></label>
-      <button phx-click="split" <%= if @spliting, do: "disabled" %>>制造</button>
     </section>
 
     <section>
@@ -57,7 +51,6 @@ defmodule BexWeb.GunLive do
 
         <p>推荐使用打点钱包收款地址, 并打开消息提示</p>
       </form>
-      <button phx-click="shoot" <%= if @shooting, do: "disabled" %>>发射</button>
       <button phx-click="withdraw" <%= if @shooting, do: "disabled" %>>全部转出</button>
     </section>
 
