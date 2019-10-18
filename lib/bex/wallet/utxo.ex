@@ -208,7 +208,14 @@ defmodule Bex.Wallet.Utxo do
   def create_sub_dir(s_key, c_dir, content, coin_sat, opts) do
     base_key = Repo.preload(s_key, :base_key).base_key
     s_permission = Wallet.get_a_permission(s_key)
-    inputs = [s_permission|Wallet.get_coins(base_key, 2)]
+
+    funds = case opts[:fund] do
+      {id, n} ->
+        Wallet.get_coins(Wallet.get_private_key!(id), coin_sat, n)
+      nil ->
+        Wallet.get_coins(base_key, coin_sat, 2)
+    end
+    inputs = [s_permission|funds]
     {:ok, c_key} = Wallet.derive_and_insert_key(base_key, s_key, c_dir)
 
     c_permission_utxo = c_permission_utxo(c_key)

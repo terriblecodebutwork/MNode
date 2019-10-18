@@ -14,6 +14,7 @@ defmodule BexWeb.ChatLive do
   @payment_address ChatEngine.payment_address()
   @base_key_id ChatEngine.base_key_id()
   @lobby ChatEngine.root_node() <> "/大厅"
+  @root_node ChatEngine.root_node()
 
 
 
@@ -85,10 +86,6 @@ defmodule BexWeb.ChatLive do
 
   @msg_size_limit 800
 
-  defp msg_tree() do
-    {:safe, "<div>施工中🚧请勿使用</div>"}
-  end
-
   def handle_event("editing", %{"content" => c}, socket) do
     s = byte_size(c)
 
@@ -135,8 +132,7 @@ defmodule BexWeb.ChatLive do
     balance = socket.assigns.balance
 
     # FIXME add more channel
-    {:ok, txid, _hex_tx} = ChatEngine.new(base_key, "大厅", ["小喇叭聊天内容", Jason.encode!(%{data: c, user: key.address})])
-    CoinManager.send_opreturn(key.id, ["小喇叭聊天室", txid], @coin_sat, change_to: @payment_address, inputs: 2)
+    {:ok, _txid, _hex_tx} = CoinManager.create_mnode(base_key.id, @root_node <> "/" <> "大厅", UUID.uuid1(), ["小喇叭聊天内容", Jason.encode!(%{data: c, user: key.address})], change_to: @payment_address, fund: {key.id, 2})
 
     :timer.sleep(500)
 

@@ -52,6 +52,10 @@ defmodule Bex.CoinManager do
     GenServer.call(__MODULE__, :get_coin_sat)
   end
 
+  def make(args) do
+    GenServer.call(__MODULE__, {:make, args})
+  end
+
   def recast(pkid) do
     GenServer.call(__MODULE__, {:recast, pkid})
   end
@@ -188,6 +192,10 @@ defmodule Bex.CoinManager do
 
   def handle_call({:create_sub_mnode, pkid, pname, iname, content, opts}, _from, state) do
     {:reply, do_create_sub_mnode(pkid, pname, iname, content, state.coin_sat, opts), state}
+  end
+
+  def handle_call({:make, args}, state) do
+    {:reply, do_make(args), state}
   end
 
   def handle_cast({:set_coin_sat, v}, state) do
@@ -383,5 +391,10 @@ defmodule Bex.CoinManager do
       :lt -> :dust
       :gt -> :gold
     end
+  end
+
+  def do_make(args) do
+    #TODO
+    args
   end
 end

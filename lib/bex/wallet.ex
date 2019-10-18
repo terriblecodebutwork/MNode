@@ -226,14 +226,20 @@ defmodule Bex.Wallet do
     |> Repo.one!()
   end
 
-  def get_coins(%PrivateKey{} = p, n) do
-    from(u in Utxo,
-      where: u.type == "coin" and u.private_key_id == ^p.id,
+  def get_coins(%PrivateKey{} = p, v, n) do
+    coins = from(u in Utxo,
+      where: u.value == ^v and u.private_key_id == ^p.id,
       lock: "FOR UPDATE SKIP LOCKED",
       limit: ^n,
       order_by: [asc: :id]
     )
     |> Repo.all()
+
+    if length(coins) == n do
+      coins
+    else
+      raise("not enough coins in :" <> p.address)
+    end
   end
 
   @doc """
