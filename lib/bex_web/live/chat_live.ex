@@ -132,7 +132,7 @@ defmodule BexWeb.ChatLive do
     balance = socket.assigns.balance
 
     # FIXME add more channel
-    {:ok, _txid, _hex_tx} = CoinManager.create_mnode(base_key.id, @root_node <> "/" <> "大厅", UUID.uuid1(), ["小喇叭聊天内容", Jason.encode!(%{data: c, user: key.address})], change_to: @payment_address, fund: {key.id, 2})
+    {:ok, _txid, _hex_tx} = CoinManager.create_mnode(base_key.id, @root_node <> "/" <> "大厅", UUID.uuid1(), ["小喇叭聊天内容", Jason.encode!(%{data: c, user: key.address})], change_to: @payment_address, fund: {key.id, 2}, coin_sat: @coin_sat)
 
     :timer.sleep(500)
 

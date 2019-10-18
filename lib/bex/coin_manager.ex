@@ -80,15 +80,6 @@ defmodule Bex.CoinManager do
   end
 
   @doc """
-  Get n coins of one private key.
-  #FIXME
-  should not use this, it will cause race condition.
-  """
-  def get_coins(pkid, n) do
-    GenServer.call(__MODULE__, {:get_coins, pkid, n})
-  end
-
-  @doc """
   iname: the name of new mnode
   pname: the name of parent mnode
   """
@@ -154,10 +145,6 @@ defmodule Bex.CoinManager do
     |> Repo.all()
   end
 
-  def handle_call({:get_coins, pkid, n}, _from, state) do
-    {:reply, do_get_coins(pkid, n, state.coin_sat), state}
-  end
-
   def handle_call(:get_coin_sat, _from, state) do
     {:reply, state.coin_sat, state}
   end
@@ -187,11 +174,11 @@ defmodule Bex.CoinManager do
   end
 
   def handle_call({:create_root_mnode, pkid, iname, content, opts}, _from, state) do
-    {:reply, do_create_root_mnode(pkid, iname, content, state.coin_sat, opts), state}
+    {:reply, do_create_root_mnode(pkid, iname, content, opts[:coin_sat] || state.coin_sat, opts), state}
   end
 
   def handle_call({:create_sub_mnode, pkid, pname, iname, content, opts}, _from, state) do
-    {:reply, do_create_sub_mnode(pkid, pname, iname, content, state.coin_sat, opts), state}
+    {:reply, do_create_sub_mnode(pkid, pname, iname, content, opts[:coin_sat] || state.coin_sat, opts), state}
   end
 
   def handle_call({:make, args}, state) do
