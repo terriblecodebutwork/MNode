@@ -25,7 +25,7 @@ defmodule BexWeb.MetaLive do
 
     state = %{
       loaded: true,
-      key: Wallet.get_private_key!(id) |> Repo.preload(:parent_key),
+      key: Wallet.get_private_key!(id) |> Repo.preload([:parent_key, :utxos]),
       id: id,
       derive_keys:
         PrivateKey.get_derive_keys_by_id(id) |> Enum.map(fn x -> Repo.preload(x, :parent_key) end)
@@ -47,6 +47,13 @@ defmodule BexWeb.MetaLive do
     ~L"""
     <%= if @loaded do %>
     <h1>MetaNet Nodes</h1>
+    <ul>
+      <li>Address: <%= @key.address %></li>
+      <%= for {k, v} <- Enum.group_by(@key.utxos, fn x -> x.type end) do %>
+      <li><%= k %>: <%= length(v) %></li>
+      <% end %>
+    </ul>
+    <button phx-click="resync">Resync</button>
     <form phx-submit="create_root_dir">
       <input name="dir">
       <button type="submit">Create Root Node</button>
@@ -81,6 +88,11 @@ defmodule BexWeb.MetaLive do
     {:noreply, reload(socket)}
   end
 
+  def handle_event("resync", _, socket) do
+    send self(), :resync
+    {:noreply, assign(socket, :loaded, false)}
+  end
+
   # dir is the sub-folder name
   # need connact with hold dirs
   #
@@ -93,5 +105,11 @@ defmodule BexWeb.MetaLive do
     dir = parent_key.dir <> "/" <> dir
     CoinManager.create_mnode(socket.assigns.key.id, parent_key.dir, dir, [dir])
     {:noreply, reload(socket)}
+  end
+
+  def handle_info(:resync, socket) do
+    key = socket.assigns.key
+    Wallet.sync_utxos_of_private_key(key)
+    {:noreply, reload(assign(socket, :loaded, true))}
   end
 end

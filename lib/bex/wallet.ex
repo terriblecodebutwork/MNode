@@ -158,7 +158,8 @@ defmodule Bex.Wallet do
 
     case Api.get_utxos_from_api(private_key.address, api) do
       {:ok, utxos} ->
-        Repo.delete_all(Ecto.assoc(private_key, :utxos))
+        from(u in Utxo, where: u.private_key_id == ^private_key.id and u.type != "data")
+        |> Repo.delete_all()
 
         Repo.insert_all(
           Utxo,
