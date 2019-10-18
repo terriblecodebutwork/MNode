@@ -24,7 +24,9 @@ defmodule Bex.Application do
     # See https://hexdocs.pm/elixir/Supervisor.html
     # for other strategies and supported options
     opts = [strategy: :one_for_one, name: Bex.Supervisor]
-    Supervisor.start_link(children, opts)
+    r = Supervisor.start_link(children, opts)
+    bootstrap()
+    r
   end
 
   # Tell Phoenix to update the endpoint configuration
@@ -32,5 +34,9 @@ defmodule Bex.Application do
   def config_change(changed, _new, removed) do
     BexWeb.Endpoint.config_change(changed, removed)
     :ok
+  end
+
+  def bootstrap() do
+    Bex.ChatEngine.init_chatnode()
   end
 end

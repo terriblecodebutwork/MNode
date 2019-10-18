@@ -17,6 +17,7 @@ defmodule Bex.Wallet.Utxo do
   alias BexLib.Script
   alias __MODULE__
   alias Bex.CoinManager
+  alias Bex.ChatEngine
   require Logger
   # alias Bex.Wallet.Mission
 
@@ -41,12 +42,6 @@ defmodule Bex.Wallet.Utxo do
     |> cast(attrs, [:value, :lock_script, :txid, :index, :type])
     |> cast_assoc(:private_key)
     |> validate_required([:value, :lock_script, :type])
-  end
-
-  @topic inspect(__MODULE__)
-
-  def subscribe do
-    Phoenix.PubSub.subscribe(Bex.PubSub, @topic)
   end
 
   def meta_utxo(addr, content, p_txid \\ "NULL") do
@@ -213,7 +208,7 @@ defmodule Bex.Wallet.Utxo do
   def create_sub_dir(s_key, c_dir, content, coin_sat, opts) do
     base_key = Repo.preload(s_key, :base_key).base_key
     s_permission = Wallet.get_a_permission(s_key)
-    inputs = [s_permission, Wallet.get_a_coin(base_key)]
+    inputs = [s_permission|Wallet.get_coins(base_key, 2)]
     {:ok, c_key} = Wallet.derive_and_insert_key(base_key, s_key, c_dir)
 
     c_permission_utxo = c_permission_utxo(c_key)
@@ -236,6 +231,7 @@ defmodule Bex.Wallet.Utxo do
       {:ok, inputs, outputs} ->
         {:ok, txid, hex_tx} = make_tx(inputs, outputs, coin_sat)
         Wallet.update_private_key(c_key, %{dir_txid: txid})
+        ChatEngine.notify(%{msg_id: c_dir, data: content, txid: txid, time: c_key.inserted_at})
         {:ok, txid, hex_tx}
     end
   end

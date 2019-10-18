@@ -6,6 +6,10 @@ defmodule Bex.MetaNode do
   alias Bex.Wallet.Utxo
   alias BexLib.Script
 
+  def get_node(_, nil), do: nil
+  def get_node(key_id, dir) when is_integer(key_id) do
+    Wallet.get_private_key!(key_id) |> get_node(dir)
+  end
   def get_node(base_key, dir) do
     case Wallet.find_txids_with_dir(base_key, dir) do
       {:ok, []} ->
@@ -17,7 +21,8 @@ defmodule Bex.MetaNode do
     end
   end
 
-  defp get_utxo_data(txid) do
+  def get_utxo_data(nil), do: nil
+  def get_utxo_data(txid) do
     query =
       from u in Utxo,
         where: u.txid == ^txid and u.type == "data"

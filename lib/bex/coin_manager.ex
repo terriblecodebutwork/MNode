@@ -93,18 +93,17 @@ defmodule Bex.CoinManager do
   def create_mnode(pkid, false, iname, content, opts) when is_binary(iname) do
     Logger.info("creating root mnode: #{iname}")
 
-    Logger.info(
-      inspect(GenServer.call(__MODULE__, {:create_root_mnode, pkid, iname, content, opts}))
-    )
+    r = GenServer.call(__MODULE__, {:create_root_mnode, pkid, iname, content, opts})
+    Logger.info(inspect(r))
+    r
   end
 
   def create_mnode(pkid, pname, iname, content, opts)
       when is_binary(iname) and is_binary(pname) do
     Logger.info("creating child mnode: #{pname} >> #{iname}")
-
-    Logger.info(
-      inspect(GenServer.call(__MODULE__, {:create_sub_mnode, pkid, pname, iname, content, opts}))
-    )
+    r = GenServer.call(__MODULE__, {:create_sub_mnode, pkid, pname, iname, content, opts})
+    Logger.info(inspect(r))
+    r
   end
 
   def init(state) do
@@ -291,8 +290,12 @@ defmodule Bex.CoinManager do
   use a utxo that equal to coin_sat
   """
   def send_opreturn(pkid, contents, coin_sat, opts \\ []) do
+    n = case opts[:inputs] do
+      nil -> 1
+      x when is_integer(x) -> x
+    end
     p = Repo.get!(PrivateKey, pkid)
-    {:ok, inputs} = do_get_coins(pkid, 1, coin_sat)
+    {:ok, inputs} = do_get_coins(pkid, n, coin_sat)
     outputs = [Utxo.return_utxo(contents)]
 
     {change_script, change_pkid} = Utxo.change_to_address(p, opts)
@@ -314,7 +317,6 @@ defmodule Bex.CoinManager do
   1 in 1 out tx's size is 192 B (compressed sign 191B)
   """
   def send_to_address(pkid, address, coin_sat) do
-    p = Repo.get!(PrivateKey, pkid)
     {:ok, inputs} = do_get_coins(pkid, 1, coin_sat)
     outputs = [Utxo.address_utxo(address, Decimal.sub(hd(inputs).value, 193))]
     {:ok, txid, hex_tx} = Utxo.make_tx(inputs, outputs, coin_sat)

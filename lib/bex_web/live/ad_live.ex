@@ -115,6 +115,6 @@ defmodule BexWeb.AdLive do
   defp count_coins(key) do
     CoinManager.mint(key.id, @coin_sat)
     :timer.sleep(1000)
-    Wallet.count_balance(key) |> Decimal.div_int(1000) |> Decimal.to_integer()
+    Wallet.count_balance(key) |> Decimal.div_int(@coin_sat) |> Decimal.to_integer()
   end
 end

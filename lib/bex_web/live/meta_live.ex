@@ -54,6 +54,8 @@ defmodule BexWeb.MetaLive do
     <ul>
       <%= for k <- @derive_keys || [] do %>
         <div style="margin: 10px">
+          <p>KeyID: <%= k.id %></p>
+          <p>ParentID: <%= k.parent_key_id %></p>
           <p>Address: <%= k.address %></p>
           <p>Dir: <%= k.dir %></p>
           <p>ParentDir: <%= k.parent_key.dir %></p>
