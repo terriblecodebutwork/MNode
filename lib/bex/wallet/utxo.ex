@@ -77,6 +77,7 @@ defmodule Bex.Wallet.Utxo do
       nil ->
         # send change to base key
         {p.lock_script, p.id}
+
       addr when is_binary(addr) ->
         {Key.address_to_pkscript(addr), nil}
     end

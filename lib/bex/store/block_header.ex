@@ -5,7 +5,6 @@ defmodule Bex.Store.BlockHeader do
   @primary_key {:id, :integer, autogenerate: false}
 
   schema "block_headers" do
-
     timestamps()
   end
 

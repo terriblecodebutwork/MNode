@@ -101,7 +101,10 @@ defmodule BexWeb.AdLive do
     ad_count = socket.assigns.ad_count + 1
     balance = socket.assigns.balance
 
-    CoinManager.send_opreturn(key.id, ["中华人民共和国成立70周年", c], @coin_sat, change_to: "1FUBsjgSju23wGqR47ywynyynigxvtTCyZ")
+    CoinManager.send_opreturn(key.id, ["中华人民共和国成立70周年", c], @coin_sat,
+      change_to: "1FUBsjgSju23wGqR47ywynyynigxvtTCyZ"
+    )
+
     send(self(), {:do_send, a - 1, c})
 
     :timer.sleep(500)

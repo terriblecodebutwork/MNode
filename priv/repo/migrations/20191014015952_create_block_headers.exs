@@ -7,6 +7,5 @@ defmodule Bex.Repo.Migrations.CreateBlockHeaders do
 
       timestamps()
     end
-
   end
 end

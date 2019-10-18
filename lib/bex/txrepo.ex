@@ -97,6 +97,7 @@ defmodule Bex.Txrepo do
     # FIXME there is no way to know is tx been accepted
     # maybe try to get the tx from SvApi?
     Bex.Broadcaster.send_all(tx)
+
     SvApi.broadcast(tx)
     |> inspect()
     |> Logger.debug()

@@ -13,7 +13,9 @@ defmodule BexWeb.ChatLive do
   @payment_address "19Rsk91jS1bmUASDfyKV5LbN4XCGEReoxY"
 
   def create_root() do
-    CoinManager.create_mnode(1, false, @root_node, ["欢迎来到小喇叭聊天室, 这里有你最好的朋友👬"], change_to: @payment_address)
+    CoinManager.create_mnode(1, false, @root_node, ["欢迎来到小喇叭聊天室, 这里有你最好的朋友👬"],
+      change_to: @payment_address
+    )
   end
 
   def mount(%{key: id}, socket) do
@@ -73,11 +75,14 @@ defmodule BexWeb.ChatLive do
 
   def handle_event("editing", %{"content" => c}, socket) do
     s = byte_size(c)
-    size_limit = if s <= @msg_size_limit do
-      s
-    else
-      "过多"
-    end
+
+    size_limit =
+      if s <= @msg_size_limit do
+        s
+      else
+        "过多"
+      end
+
     {:noreply, assign(socket, :size_limit, size_limit)}
   end
 

@@ -89,12 +89,17 @@ defmodule Bex.CoinManager do
   pname: the name of parent mnode
   """
   def create_mnode(pkid, pname, iname, content, opts \\ [])
+
   def create_mnode(pkid, false, iname, content, opts) when is_binary(iname) do
     Logger.info("creating root mnode: #{iname}")
-    Logger.info(inspect(GenServer.call(__MODULE__, {:create_root_mnode, pkid, iname, content, opts})))
+
+    Logger.info(
+      inspect(GenServer.call(__MODULE__, {:create_root_mnode, pkid, iname, content, opts}))
+    )
   end
 
-  def create_mnode(pkid, pname, iname, content, opts) when is_binary(iname) and is_binary(pname) do
+  def create_mnode(pkid, pname, iname, content, opts)
+      when is_binary(iname) and is_binary(pname) do
     Logger.info("creating child mnode: #{pname} >> #{iname}")
 
     Logger.info(

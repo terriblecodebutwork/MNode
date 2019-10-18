@@ -25,7 +25,8 @@ defmodule Bex.Store do
   def get_merkle_path(txid) do
     if block_complete?(txid) do
       path =
-        Ecto.Adapters.SQL.query!(Repo,
+        Ecto.Adapters.SQL.query!(
+          Repo,
           """
           WITH RECURSIVE merkle_tree AS (
                     SELECT 0 AS level, top_id, id, pair_id, at_left
@@ -111,9 +112,9 @@ defmodule Bex.Store do
 
   """
   def create_merkle(attrs \\ %{}) do
-     %Merkle{}
-        |> Merkle.changeset(attrs)
-        |> Repo.insert(on_conflict: :nothing)
+    %Merkle{}
+    |> Merkle.changeset(attrs)
+    |> Repo.insert(on_conflict: :nothing)
   end
 
   @doc """
@@ -171,7 +172,7 @@ defmodule Bex.Store do
     |> Repo.insert(on_conflict: :replace_all, conflict_target: {:constraint, :block_headers_pkey})
   end
 
-    @doc """
+  @doc """
   Get the height of last merkleroot saved block.
   """
   def last_block_height() do
