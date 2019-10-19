@@ -54,7 +54,7 @@ defmodule BexWeb.ChatLive do
 
     <div style="background-color: floralwhite">
       <div class="msgs" style="width: 100%;">
-        <%= for {_k, v} <- Enum.sort_by(@chat_log, fn {k, v} -> v.time end) do %>
+        <%= for {_k, v} <- Enum.sort_by(@chat_log, fn {_k, v} -> v.time end) do %>
         <p><strong><%= String.slice(v.data["user"], 0, 5) %></strong>: <%= v.data["data"] %> <a target="_blank" href="https://whatsonchain.com/tx/<%= v.txid %>"><%= v.time %></a></p>
         <% end %>
       </div>
@@ -136,7 +136,7 @@ defmodule BexWeb.ChatLive do
 
     :timer.sleep(500)
 
-    {:noreply, assign(socket, %{balance: balance - 2})}
+    {:noreply, assign(socket, %{balance: balance - 2, content: ""})}
   end
 
   def handle_info({:chat, %{msg_id: msg_id, data: data, txid: txid, time: time}}, socket) do
