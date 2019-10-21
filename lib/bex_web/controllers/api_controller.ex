@@ -131,4 +131,22 @@ defmodule BexWeb.ApiController do
         |> halt()
     end
   end
+
+  def write(conn, params) do
+    network = params["network"]
+    onchain_path = get_req_header(conn, "onchain_path")
+    filename = Path.basename(onchain_path)
+    type = MIME.from_path(filename)
+    Logger.debug "network: #{network}"
+    Logger.debug "onchain_path: #{onchain_path}"
+    Logger.debug "filename: #{filename}"
+    Logger.debug "type: #{type}"
+    IO.inspect conn
+    IO.inspect params
+    # case read_body(conn) do
+    #   {:ok, data, conn} ->
+    #     onchain(data)
+    # end
+    text(conn, "ok")
+  end
 end

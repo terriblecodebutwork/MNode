@@ -8,7 +8,9 @@ defmodule BexLib.Key do
   @address_prefix [
     public: 0,
     script: 5,
-    private: 128
+    private: 128,
+    testnet: 0x6f,
+    stn: 0x6f
   ]
 
   def new_private_key() do
@@ -43,18 +45,18 @@ defmodule BexLib.Key do
 
   Details can be found here: https://en.bitcoin.it/wiki/Technical_background_of_version_1_Bitcoin_addresses
   """
-  def public_key_to_address(pk) do
+  def public_key_to_address(pk, net \\ :public) do
     pk
     |> Crypto.sha256()
     |> Crypto.ripemd160()
-    |> Binary.prepend(@address_prefix[:public])
+    |> Binary.prepend(@address_prefix[net])
     |> Base58Check.encode()
   end
 
-  def private_key_to_address(pri) do
+  def private_key_to_address(pri, net \\ :public) do
     pri
     |> private_key_to_public_key()
-    |> public_key_to_address()
+    |> public_key_to_address(net)
   end
 
   def private_key_to_wif(%PrivateKey{bn: bn}) do

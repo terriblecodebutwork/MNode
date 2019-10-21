@@ -36,6 +36,7 @@ defmodule BexWeb.Router do
     pipe_through :api
 
     post "/mnode", ApiController, :create
+    post "/:network/write", ApiController, :write
     get "/mnode", ApiController, :find
     post "/webhook/154814876", HookController, :mb_hook
 

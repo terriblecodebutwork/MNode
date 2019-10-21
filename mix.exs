@@ -34,6 +34,7 @@ defmodule Bex.MixProject do
   defp deps do
     [
       {:binary, "0.0.4"},
+      {:cubdb, "~> 0.13.0"},
       {:decimal, "~> 1.0"},
       {:ecto_sql, "~> 3.2"},
       {:ecto_enum, "~> 1.3"},
@@ -51,7 +52,6 @@ defmodule Bex.MixProject do
       {:phoenix_live_reload, "~> 1.2", only: :dev},
       {:plug_cowboy, "~> 2.0"},
       {:phoenix_live_view, "~> 0.3.1"},
-      {:rocksdb, "~> 1.0"},
       {:sv_api, github: "terriblecodebutwork/sv_api"},
       {:tentacat, github: "terriblecodebutwork/tentacat"},
       {:tesla, "~> 1.2.1"}
