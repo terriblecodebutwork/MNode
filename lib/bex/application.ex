@@ -13,7 +13,8 @@ defmodule Bex.Application do
       Bex.Broadcaster,
       Bex.Txrepo,
       Bex.CoinManager,
-      BsvNews,
+      # BsvNews,
+      Bex.KV,
       Bex.Store.MerkleSaver,
       # Start the endpoint when the application starts
       BexWeb.Endpoint
@@ -37,6 +38,8 @@ defmodule Bex.Application do
   end
 
   def bootstrap() do
-    Bex.ChatEngine.init_chatnode()
+    spawn(fn ->
+      Bex.ChatEngine.init_chatnode()
+    end)
   end
 end

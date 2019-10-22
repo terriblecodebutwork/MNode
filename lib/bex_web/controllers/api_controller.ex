@@ -6,6 +6,9 @@ defmodule BexWeb.ApiController do
   alias BexLib.Bitindex
   alias Bex.CoinManager
   alias Bex.Util
+  alias Bex.MetaNode
+  alias BexLib.Key
+  alias Bex.KV
   require Logger
 
   plug :find_private_key
@@ -133,20 +136,53 @@ defmodule BexWeb.ApiController do
   end
 
   def write(conn, params) do
-    network = params["network"]
-    onchain_path = get_req_header(conn, "onchain_path")
-    filename = Path.basename(onchain_path)
-    type = MIME.from_path(filename)
-    Logger.debug "network: #{network}"
-    Logger.debug "onchain_path: #{onchain_path}"
-    Logger.debug "filename: #{filename}"
-    Logger.debug "type: #{type}"
-    IO.inspect conn
-    IO.inspect params
-    # case read_body(conn) do
-    #   {:ok, data, conn} ->
-    #     onchain(data)
-    # end
-    text(conn, "ok")
+    base_key = conn.assigns.private_key
+
+    if base_key.address == "1A1QQLSnKDm5YnvSdVgxKJsKBJZw4qBKNX" do
+      network = params["network"]
+      Logger.debug "network: #{network}"
+      address =
+        case network do
+          "mainnet" ->
+            "1A1QQLSnKDm5YnvSdVgxKJsKBJZw4qBKNX"
+          "stn" ->
+            "mpXMhPXm8FCLKuQ4M4fL9E5e3JAe1X6GnB"
+        end
+      onchain_path = get_req_header(conn, "onchain_path")
+      filename = Path.basename(onchain_path)
+      type = MIME.from_path(filename)
+      dir = Path.dirname(onchain_path)
+      dir_txid = find_dir_txid(network, dir)
+
+      Logger.debug "onchain_path: #{onchain_path}"
+      Logger.debug "filename: #{filename}"
+      Logger.debug "type: #{type}"
+      Logger.debug "dir: #{dir}"
+      Logger.debug "address: #{address}"
+      Logger.debug "dir_txid: #{dir_txid}"
+
+      IO.inspect conn
+      IO.inspect params
+
+      case read_body(conn, length: 90_000) do
+        {:ok, data, conn} ->
+          # if file_size <= 90kb, use b://
+          b_content = ["19HxigV4QyBv3tHpQVcUEQyq1pzZVdoAut", data, type, "binary", filename]
+          meta_content =
+            # use simple metanet style
+            # all child address are same
+            ["meta", address, dir_txid]
+          content = meta_content ++ b_content
+
+      end
+      text(conn, "ok")
+    else
+      text(conn, "wrong app_key")
+    end
   end
+
+  defp find_dir_txid(net, dir) do
+    KV.get({net, dir})
+  end
+
 end

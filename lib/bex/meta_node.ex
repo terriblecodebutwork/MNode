@@ -44,4 +44,5 @@ defmodule Bex.MetaNode do
   defp drop_metanet_metadata([:OP_RETURN, "meta", _, _ | contents]) do
     contents
   end
+
 end

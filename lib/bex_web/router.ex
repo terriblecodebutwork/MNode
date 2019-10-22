@@ -29,6 +29,7 @@ defmodule BexWeb.Router do
     get "/gun", PageController, :gun
     get "/chat", PageController, :chat
     get "/merkle", PageController, :merkle_page
+    get "/m2/:net/deposit/:tx", DepositController, :deposit
   end
 
   # Other scopes may use custom stacks.
