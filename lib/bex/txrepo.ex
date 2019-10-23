@@ -16,8 +16,27 @@ defmodule Bex.Txrepo do
     )
   end
 
-  def add(txid, hex_tx) when is_binary(hex_tx) and is_binary(txid) do
-    GenServer.cast(__MODULE__, {:add, txid, hex_tx})
+  # def add(txid, hex_tx) when is_binary(hex_tx) and is_binary(txid) do
+  #   GenServer.cast(__MODULE__, {:add, txid, hex_tx})
+  # end
+
+  # FIXME
+  def add(_txid, tx) do
+    spawn_link(fn ->
+      try_broadcast(tx, 10)
+    end)
+  end
+
+  defp try_broadcast(tx, 0) do
+    Logger.error("broadcast failed: #{inspect(tx)}")
+  end
+  defp try_broadcast(tx, n) do
+    case SvApi.broadcast(tx) do
+      {:ok, _} -> :ok
+      {:error, _} ->
+        :timer.sleep 300_000
+        try_broadcast(tx, n-1)
+    end
   end
 
   def turn_on() do

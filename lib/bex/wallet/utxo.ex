@@ -209,38 +209,47 @@ defmodule Bex.Wallet.Utxo do
     base_key = Repo.preload(s_key, :base_key).base_key
     s_permission = Wallet.get_a_permission(s_key)
 
-    funds = case opts[:fund] do
-      {id, n} ->
-        Wallet.get_coins(Wallet.get_private_key!(id), coin_sat, n)
-      nil ->
-        Wallet.get_coins(base_key, coin_sat, 2)
-    end
-    inputs = [s_permission|funds]
-    {:ok, c_key} = Wallet.derive_and_insert_key(base_key, s_key, c_dir)
+    funds =
+      case opts[:fund] do
+        {id, n} ->
+          Wallet.get_coins(Wallet.get_private_key!(id), coin_sat, n)
 
-    c_permission_utxo = c_permission_utxo(c_key)
+        nil ->
+          Wallet.get_coins(base_key, coin_sat, 1)
+      end
 
-    # is seems first param should be derived key's address
-    meta = meta_utxo(c_key.address, content, s_key.dir_txid)
+    case funds do
+      {:ok, funds} ->
+        inputs = [s_permission | funds]
+        {:ok, c_key} = Wallet.derive_and_insert_key(base_key, s_key, c_dir)
 
-    outputs = [
-      meta,
-      # reuse self permission
-      s_permission | List.duplicate(c_permission_utxo, @permission_num)
-    ]
+        c_permission_utxo = c_permission_utxo(c_key)
 
-    {change_script, change_pkid} = change_to_address(base_key, opts)
+        # is seems first param should be derived key's address
+        meta = meta_utxo(c_key.address, content, s_key.dir_txid)
 
-    case handle_change(inputs, outputs, change_script, change_pkid) do
+        outputs = [
+          meta,
+          # reuse self permission
+          s_permission | List.duplicate(c_permission_utxo, @permission_num)
+        ]
+
+        {change_script, change_pkid} = change_to_address(base_key, opts)
+
+        case handle_change(inputs, outputs, change_script, change_pkid) do
+          {:error, msg} ->
+            {:error, msg}
+
+          {:ok, inputs, outputs} ->
+            {:ok, txid, hex_tx} = make_tx(inputs, outputs, coin_sat)
+            Wallet.update_private_key(c_key, %{dir_txid: txid})
+            ChatEngine.notify(%{msg_id: c_dir, data: content, txid: txid, time: c_key.inserted_at})
+            {:ok, txid, hex_tx}
+        end
       {:error, msg} ->
         {:error, msg}
-
-      {:ok, inputs, outputs} ->
-        {:ok, txid, hex_tx} = make_tx(inputs, outputs, coin_sat)
-        Wallet.update_private_key(c_key, %{dir_txid: txid})
-        ChatEngine.notify(%{msg_id: c_dir, data: content, txid: txid, time: c_key.inserted_at})
-        {:ok, txid, hex_tx}
     end
+
   end
 
   def make_tx(inputs, outputs, coin_sat) do

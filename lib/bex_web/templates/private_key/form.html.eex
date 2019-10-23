@@ -8,6 +8,9 @@
   <%= label f, :hex %>
   <%= text_input f, :hex %>
   <%= error_tag f, :hex %>
+  <%= label f, :net %>
+  <%= text_input f, :net %>
+  <%= error_tag f, :net %>
 
   <div>
     <%= submit "Save" %>

@@ -7,10 +7,11 @@ defmodule BexLib.Key do
 
   @address_prefix [
     public: 0,
+    main: 0,
     script: 5,
     private: 128,
-    testnet: 0x6f,
-    stn: 0x6f
+    testnet: 0x6F,
+    stn: 0x6F
   ]
 
   def new_private_key() do
@@ -53,7 +54,11 @@ defmodule BexLib.Key do
     |> Base58Check.encode()
   end
 
-  def private_key_to_address(pri, net \\ :public) do
+  def private_key_to_address(p, net \\ :public)
+  def private_key_to_address(p, "main"), do: private_key_to_address(p, :main)
+  def private_key_to_address(p, "stn"), do: private_key_to_address(p, :stn)
+
+  def private_key_to_address(pri, net) do
     pri
     |> private_key_to_public_key()
     |> public_key_to_address(net)

@@ -62,6 +62,17 @@ defmodule Bex.Wallet do
       {:error, %Ecto.Changeset{}}
 
   """
+  def create_private_key(%{"hex" => hex, "net" => net}) do
+    case from(p in PrivateKey, where: p.hex == ^hex and p.net == ^net) |> Repo.one() do
+      nil ->
+        PrivateKey.hex_changeset(%{hex: hex, net: net})
+        |> Repo.insert()
+
+      one ->
+        {:ok, one}
+    end
+  end
+
   def create_private_key(%{"hex" => hex}) do
     PrivateKey.hex_changeset(%{hex: hex})
     |> Repo.insert()
@@ -227,18 +238,19 @@ defmodule Bex.Wallet do
   end
 
   def get_coins(%PrivateKey{} = p, v, n) do
-    coins = from(u in Utxo,
-      where: u.value == ^v and u.private_key_id == ^p.id,
-      lock: "FOR UPDATE SKIP LOCKED",
-      limit: ^n,
-      order_by: [asc: :id]
-    )
-    |> Repo.all()
+    coins =
+      from(u in Utxo,
+        where: u.value == ^v and u.private_key_id == ^p.id,
+        lock: "FOR UPDATE SKIP LOCKED",
+        limit: ^n,
+        order_by: [asc: :id]
+      )
+      |> Repo.all()
 
     if length(coins) == n do
-      coins
+      {:ok, coins}
     else
-      raise("not enough coins in :" <> p.address)
+      {:error, "not enough coins in :" <> p.address}
     end
   end
 
@@ -315,6 +327,7 @@ defmodule Bex.Wallet do
   # FIXME currently, we just use the latest version
   # of nodes with the same "dir"
   def find_key_with_dir(_, nil), do: {:error, nil}
+
   def find_key_with_dir(base = %PrivateKey{}, dir) do
     query =
       from p in PrivateKey,
@@ -333,6 +346,7 @@ defmodule Bex.Wallet do
 
   # this is a temperery solution for the multi-version nodes
   def find_txids_with_dir(_base, nil), do: {:error, nil}
+
   def find_txids_with_dir(base = %PrivateKey{}, dir) do
     query =
       from p in PrivateKey,

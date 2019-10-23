@@ -10,18 +10,20 @@ defmodule Bex.ChatEngine do
   def init_chatnode() do
     if Bex.MetaNode.get_node(@base_key_id, @root_node) == nil do
       CoinManager.create_mnode(@base_key_id, false, @root_node, ["欢迎来到小喇叭聊天室, 这里有你最好的朋友👬"],
-      change_to: @payment_address
-    )
+        change_to: @payment_address
+      )
     else
-      IO.puts "chatnode existed."
+      IO.puts("chatnode existed.")
     end
+
     lobby = @root_node <> "/大厅"
+
     if Bex.MetaNode.get_node(@base_key_id, lobby) == nil do
       CoinManager.create_mnode(@base_key_id, @root_node, lobby, ["小喇叭聊天大厅🏟"],
-      change_to: @payment_address
-    )
+        change_to: @payment_address
+      )
     else
-      IO.puts "lobby existed"
+      IO.puts("lobby existed")
     end
   end
 
@@ -45,5 +47,4 @@ defmodule Bex.ChatEngine do
   def key_of_dir(base_key, dir) do
     Wallet.find_key_with_dir(base_key, dir)
   end
-
 end

@@ -16,6 +16,7 @@ defmodule Bex.Wallet.PrivateKey do
     field :lock_script, :binary
     field :hex, :string
     field :app_key, :string
+    field :net, :string, default: "main"
     belongs_to :base_key, PrivateKey, foreign_key: :base_key_id
     has_many :derive_keys, PrivateKey, foreign_key: :base_key_id
     belongs_to :parent_key, PrivateKey, foreign_key: :parent_key_id
@@ -31,6 +32,7 @@ defmodule Bex.Wallet.PrivateKey do
     private_key
     |> cast(attrs, [
       :hex,
+      :net,
       :bn,
       :dir,
       :dir_txid,
@@ -46,13 +48,14 @@ defmodule Bex.Wallet.PrivateKey do
 
   def hex_changeset(%{hex: hex} = attrs) do
     bn = Base.decode16!(hex, case: :mixed)
+    net = attrs[:net] || "main"
 
     attrs =
       Map.merge(
         %{
           hex: hex,
           bn: bn,
-          address: Key.private_key_to_address(bn),
+          address: Key.private_key_to_address(bn, net),
           app_key: :crypto.strong_rand_bytes(32) |> Base.encode64(),
           lock_script: Key.private_key_to_p2pkh_script(bn)
         },

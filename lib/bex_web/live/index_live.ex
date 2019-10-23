@@ -11,34 +11,47 @@ defmodule BexWeb.IndexLive do
   alias BexLib.Bitindex
   alias Bex.CoinManager
   require Logger
+  import Ecto.Query
 
   def mount(_session, socket) do
     {:ok, reload(socket)}
   end
 
-  def handle_params(_params, _url, socket) do
-    {:noreply, reload(socket)}
+  def handle_params(%{"address" => address}, url, socket) do
+    {:noreply, socket |> assign(:url, url) |> assign(:address, address) |> reload()}
+  end
+  def handle_params(_, url, socket) do
+    {:noreply, socket |> assign(:url, url) |> reload()}
   end
 
   defp reload(socket) do
-    :timer.sleep(1000)
+    address = socket.assigns[:address]
 
-    private_keys =
-      Wallet.list_private_keys()
-      # |> Enum.filter(fn x -> x.base_key_id == nil end)
-      |> Enum.map(&Repo.preload(&1, :utxos))
+    key =
+      if address do
+        from(p in PrivateKey, where: p.address == ^address)
+        |> Repo.one!()
+        |> Repo.preload(:utxos)
+      else
+        nil
+      end
 
     socket
     |> assign(coin_sat: CoinManager.get_coin_sat())
-    |> assign(private_keys: private_keys)
+    |> assign(private_keys: [key])
     |> assign(loading: false)
     |> assign(showing: [])
   end
 
   def render(assigns) do
     ~L"""
-    <%= if @private_keys == [] do %>
-      <a href="/private_keys/new" >Import PrivateKey</a>
+    <%= if @private_keys == [nil] do %>
+      <a href="<%= @url %>/keys/new" >Import PrivateKey</a>
+      <form phx-submit="address">
+        <label>Enter Address</label>
+        <input name="address" />
+        <button type="submit">Find</button>
+      </form>
       <% else %>
 
       <div>
@@ -47,10 +60,6 @@ defmodule BexWeb.IndexLive do
               <input name="value" type="number">
               <button type="submit">Set</button>
         </form>
-      </div>
-
-      <div>
-        <button phx-click="resync_all">Resync all UTXOs</button>
       </div>
 
       <%= if @loading do %>
@@ -103,7 +112,11 @@ defmodule BexWeb.IndexLive do
   end
 
   def handle_event("meta", %{"id" => id}, socket) do
-    {:noreply, redirect(socket, to: Routes.live_path(socket, BexWeb.MetaLive, id))}
+    {:noreply, redirect(socket, to: Routes.live_path(socket, BexWeb.MetaLive, id: id))}
+  end
+
+  def handle_event("address", %{"address" => addr}, socket) do
+    {:noreply, redirect(socket, to: Routes.live_path(socket, BexWeb.IndexLive, address: addr))}
   end
 
   def handle_event("set_coin_sat", %{"value" => v}, socket) do

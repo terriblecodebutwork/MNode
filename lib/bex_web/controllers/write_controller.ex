@@ -1,4 +1,4 @@
-defmodule BexWeb.ApiController do
+defmodule BexWeb.WriteController do
   use BexWeb, :controller
 
   alias Bex.Wallet
@@ -22,7 +22,7 @@ defmodule BexWeb.ApiController do
     file: %Plug.Upload{}
 
   if only dir, create a dir; if path and file, creat the file.
-  Can not create dir or file under unexisted dir.
+  Can not write dir or file under unexisted dir.
   """
   def create(conn, %{"parent" => false, "name" => c_dir} = params) do
     c_dir = to_string(c_dir)
@@ -55,8 +55,41 @@ defmodule BexWeb.ApiController do
     create(conn, Map.merge(params, %{"parent" => parent, "name" => name}))
   end
 
-  def create(conn, _) do
-    json(conn, %{error: "`parent` or `name` didn't set"})
+  def create(conn, %{}) do
+    base_key = conn.assigns.private_key
+    [onchain_path] = get_req_header(conn, "onchain_path")
+    filename = Path.basename(onchain_path)
+    type = MIME.from_path(filename)
+    dir = Path.dirname(onchain_path)
+
+    content =
+      case read_body(conn, length: 90_000) do
+        {:ok, data, conn} ->
+          # if file_size <= 90kb, use b://
+          ["19HxigV4QyBv3tHpQVcUEQyq1pzZVdoAut", data, type, "binary", filename]
+
+        other ->
+          other
+      end
+
+    case CoinManager.create_mnode(base_key.id, dir, onchain_path, content) do
+      {:ok, txid, hex_tx} ->
+        respond(conn, nil, hex_tx, txid)
+
+      {:error, msg} ->
+        json(conn, %{code: 1, error: msg})
+    end
+  end
+
+  def mkdir(conn, %{}) do
+    base_key = conn.assigns.private_key
+    [onchain_path] = get_req_header(conn, "onchain_path")
+    case CoinManager.create_mnode(base_key.id, false, onchain_path, [Path.basename(onchain_path)]) do
+      {:ok, txid, hex_tx} ->
+        respond(conn, nil, hex_tx, txid)
+      {:error, msg} ->
+        json(conn, %{code: 1, error: msg})
+    end
   end
 
   defp respond(conn, _params, hex_tx, txid) do
@@ -135,54 +168,60 @@ defmodule BexWeb.ApiController do
     end
   end
 
-  def write(conn, params) do
-    base_key = conn.assigns.private_key
+  # defp right_base_key(b) do
+  #   if b.address == "1A1QQLSnKDm5YnvSdVgxKJsKBJZw4qBKNX" do
+  #     {:ok, b}
+  #   else
+  #     {:error, "wrong app key"}
+  #   end
+  # end
 
-    if base_key.address == "1A1QQLSnKDm5YnvSdVgxKJsKBJZw4qBKNX" do
-      network = params["network"]
-      Logger.debug "network: #{network}"
-      address =
-        case network do
-          "mainnet" ->
-            "1A1QQLSnKDm5YnvSdVgxKJsKBJZw4qBKNX"
-          "stn" ->
-            "mpXMhPXm8FCLKuQ4M4fL9E5e3JAe1X6GnB"
-        end
-      onchain_path = get_req_header(conn, "onchain_path")
-      filename = Path.basename(onchain_path)
-      type = MIME.from_path(filename)
-      dir = Path.dirname(onchain_path)
-      dir_txid = find_dir_txid(network, dir)
+  # defp right_netwrok("mainnet") do
+  #   case network do
+  #     "mainnet" ->
+  #       {:ok, "1A1QQLSnKDm5YnvSdVgxKJsKBJZw4qBKNX"}
+  #     "stn" ->
+  #       {:ok, "mpXMhPXm8FCLKuQ4M4fL9E5e3JAe1X6GnB"}
+  #     _ ->
+  #       {:error, "wrong network"}
+  #   end
+  # end
 
-      Logger.debug "onchain_path: #{onchain_path}"
-      Logger.debug "filename: #{filename}"
-      Logger.debug "type: #{type}"
-      Logger.debug "dir: #{dir}"
-      Logger.debug "address: #{address}"
-      Logger.debug "dir_txid: #{dir_txid}"
+  # def write(conn, params) do
+  #   base_key = conn.assigns.private_key
 
-      IO.inspect conn
-      IO.inspect params
+  #     case read_body(conn, length: 90_000) do
+  #       {:ok, data, conn} ->
+  #         # if file_size <= 90kb, use b://
+  #         b_content = ["19HxigV4QyBv3tHpQVcUEQyq1pzZVdoAut", data, type, "binary", filename]
+  #         meta_content =
+  #           # use simple metanet style
+  #           # all child address are same
+  #           ["meta", address, dir_txid]
+  #         content = meta_content ++ b_content
 
-      case read_body(conn, length: 90_000) do
-        {:ok, data, conn} ->
-          # if file_size <= 90kb, use b://
-          b_content = ["19HxigV4QyBv3tHpQVcUEQyq1pzZVdoAut", data, type, "binary", filename]
-          meta_content =
-            # use simple metanet style
-            # all child address are same
-            ["meta", address, dir_txid]
-          content = meta_content ++ b_content
+  #     end
+  #     text(conn, "ok")
+  #   else
+  #     text(conn, "wrong app_key")
+  #   end
+  # end
 
-      end
-      text(conn, "ok")
-    else
-      text(conn, "wrong app_key")
-    end
-  end
+  # defp find_dir_txid(net, dir) do
+  #   KV.get({net, dir})
+  # end
 
-  defp find_dir_txid(net, dir) do
-    KV.get({net, dir})
-  end
+  # defp continue(conn, base_key, address) do
+  #   onchain_path = get_req_header(conn, "onchain_path")
+  #   filename = Path.basename(onchain_path)
+  #   type = MIME.from_path(filename)
+  #   dir = Path.dirname(onchain_path)
+  #   dir_txid = KV.get({:dir, address, dir})
 
+  #   Logger.debug "onchain_path: #{onchain_path}"
+  #   Logger.debug "filename: #{filename}"
+  #   Logger.debug "type: #{type}"
+  #   Logger.debug "dir: #{dir}"
+  #   Logger.debug "address: #{address}"
+  #   Logger.debug "dir_txid: #{dir_txid}"
 end

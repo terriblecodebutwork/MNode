@@ -19,7 +19,7 @@ defmodule Bex.CoinManager do
 
   use GenServer
 
-  @coin_sat Decimal.cast(10_000)
+  @coin_sat Decimal.cast(90_500)
   @permission_num 1
 
   ## FIXME don't do anything when inputs is empty
@@ -79,6 +79,10 @@ defmodule Bex.CoinManager do
     GenServer.call(__MODULE__, {:mint, pkid, coin_sat, opt})
   end
 
+  def exists?(dir) do
+    from(p in PrivateKey, where: p.dir == ^dir) |> Repo.exists?()
+  end
+
   @doc """
   iname: the name of new mnode
   pname: the name of parent mnode
@@ -86,19 +90,27 @@ defmodule Bex.CoinManager do
   def create_mnode(pkid, pname, iname, content, opts \\ [])
 
   def create_mnode(pkid, false, iname, content, opts) when is_binary(iname) do
-    Logger.info("creating root mnode: #{iname}")
+    if exists?(iname) do
+      {:error, "#{iname} already exists"}
+    else
+      Logger.info("creating root mnode: #{iname}")
 
-    r = GenServer.call(__MODULE__, {:create_root_mnode, pkid, iname, content, opts})
-    Logger.info(inspect(r))
-    r
+      r = GenServer.call(__MODULE__, {:create_root_mnode, pkid, iname, content, opts})
+      Logger.info(inspect(r))
+      r
+    end
   end
 
   def create_mnode(pkid, pname, iname, content, opts)
       when is_binary(iname) and is_binary(pname) do
-    Logger.info("creating child mnode: #{pname} >> #{iname}")
-    r = GenServer.call(__MODULE__, {:create_sub_mnode, pkid, pname, iname, content, opts})
-    Logger.info(inspect(r))
-    r
+    if exists?(iname) do
+      {:error, "#{iname} already exists"}
+    else
+      Logger.info("creating child mnode: #{pname} >> #{iname}")
+      r = GenServer.call(__MODULE__, {:create_sub_mnode, pkid, pname, iname, content, opts})
+      Logger.info(inspect(r))
+      r
+    end
   end
 
   def init(state) do
@@ -174,11 +186,14 @@ defmodule Bex.CoinManager do
   end
 
   def handle_call({:create_root_mnode, pkid, iname, content, opts}, _from, state) do
-    {:reply, do_create_root_mnode(pkid, iname, content, opts[:coin_sat] || state.coin_sat, opts), state}
+    {:reply, do_create_root_mnode(pkid, iname, content, opts[:coin_sat] || state.coin_sat, opts),
+     state}
   end
 
   def handle_call({:create_sub_mnode, pkid, pname, iname, content, opts}, _from, state) do
-    {:reply, do_create_sub_mnode(pkid, pname, iname, content, opts[:coin_sat] || state.coin_sat, opts), state}
+    {:reply,
+     do_create_sub_mnode(pkid, pname, iname, content, opts[:coin_sat] || state.coin_sat, opts),
+     state}
   end
 
   def handle_call({:make, args}, state) do
@@ -285,10 +300,12 @@ defmodule Bex.CoinManager do
   use a utxo that equal to coin_sat
   """
   def send_opreturn(pkid, contents, coin_sat, opts \\ []) do
-    n = case opts[:inputs] do
-      nil -> 1
-      x when is_integer(x) -> x
-    end
+    n =
+      case opts[:inputs] do
+        nil -> 1
+        x when is_integer(x) -> x
+      end
+
     p = Repo.get!(PrivateKey, pkid)
     {:ok, inputs} = do_get_coins(pkid, n, coin_sat)
     outputs = [Utxo.return_utxo(contents)]
@@ -381,7 +398,7 @@ defmodule Bex.CoinManager do
   end
 
   def do_make(args) do
-    #TODO
+    # TODO
     args
   end
 end

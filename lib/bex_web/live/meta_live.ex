@@ -43,6 +43,17 @@ defmodule BexWeb.MetaLive do
     )
   end
 
+
+#   <form phx-submit="create_root_dir">
+#   <input name="dir">
+#   <button type="submit">Create Root Node</button>
+# </form>
+
+# <form phx-submit="create_sub_dir">
+# <input name="dir:<%= k.id %>">
+# <button type="submit">Create Child Node</button>
+# </form>
+
   def render(assigns) do
     ~L"""
     <%= if @loaded do %>
@@ -54,24 +65,17 @@ defmodule BexWeb.MetaLive do
       <% end %>
     </ul>
     <button phx-click="resync">Resync</button>
-    <form phx-submit="create_root_dir">
-      <input name="dir">
-      <button type="submit">Create Root Node</button>
-    </form>
+
     <ul>
       <%= for k <- @derive_keys || [] do %>
         <div style="margin: 10px">
-          <p>KeyID: <%= k.id %></p>
+          <h3>Dir: <%= k.dir %></h3>
+          <p>KeyID: <%= k.id %><p>
           <p>ParentID: <%= k.parent_key_id %></p>
           <p>Address: <%= k.address %></p>
-          <p>Dir: <%= k.dir %></p>
           <p>ParentDir: <%= k.parent_key.dir %></p>
           <p>Contents: <%= Bex.MetaNode.get_node(@key, k.dir) |> inspect() %></p>
 
-          <form phx-submit="create_sub_dir">
-            <input name="dir:<%= k.id %>">
-            <button type="submit">Create Child Node</button>
-          </form>
         </div>
       <% end %>
     </ul>
@@ -89,7 +93,7 @@ defmodule BexWeb.MetaLive do
   end
 
   def handle_event("resync", _, socket) do
-    send self(), :resync
+    send(self(), :resync)
     {:noreply, assign(socket, :loaded, false)}
   end
 

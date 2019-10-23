@@ -1,5 +1,4 @@
 defmodule Bex.Wallet.Document do
-
   @doc """
   "a/b/c" -> ["a", "a/b", "a/b/c"]
   """

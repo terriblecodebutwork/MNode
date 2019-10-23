@@ -16,8 +16,6 @@ defmodule BexWeb.ChatLive do
   @lobby ChatEngine.root_node() <> "/大厅"
   @root_node ChatEngine.root_node()
 
-
-
   def mount(%{key: id}, socket) do
     send(self(), :sync)
     key = Wallet.get_private_key!(id)
@@ -132,7 +130,16 @@ defmodule BexWeb.ChatLive do
     balance = socket.assigns.balance
 
     # FIXME add more channel
-    {:ok, _txid, _hex_tx} = CoinManager.create_mnode(base_key.id, @root_node <> "/" <> "大厅", UUID.uuid1(), ["小喇叭聊天内容", Jason.encode!(%{data: c, user: key.address})], change_to: @payment_address, fund: {key.id, 2}, coin_sat: @coin_sat)
+    {:ok, _txid, _hex_tx} =
+      CoinManager.create_mnode(
+        base_key.id,
+        @root_node <> "/" <> "大厅",
+        UUID.uuid1(),
+        ["小喇叭聊天内容", Jason.encode!(%{data: c, user: key.address})],
+        change_to: @payment_address,
+        fund: {key.id, 2},
+        coin_sat: @coin_sat
+      )
 
     :timer.sleep(500)
 
@@ -142,8 +149,11 @@ defmodule BexWeb.ChatLive do
   def handle_info({:chat, %{msg_id: msg_id, data: data, txid: txid, time: time}}, socket) do
     chat_log = socket.assigns.chat_log
     data = List.last(data) |> Jason.decode!()
-    {:noreply, assign(socket, :chat_log, Map.put(chat_log, msg_id, %{time: time, data: data, txid: txid}))}
+
+    {:noreply,
+     assign(socket, :chat_log, Map.put(chat_log, msg_id, %{time: time, data: data, txid: txid}))}
   end
+
   def handle_info(other, socket) do
     Logger.info("unkonwn msg" <> inspect(other))
     {:noreply, socket}
@@ -156,15 +166,20 @@ defmodule BexWeb.ChatLive do
   end
 
   def chat_log_under_key(key = %PrivateKey{}, n) do
-    query = from(p in PrivateKey,
-      where: p.parent_key_id == ^key.id,
-      limit: ^n)
+    query =
+      from(p in PrivateKey,
+        where: p.parent_key_id == ^key.id,
+        limit: ^n
+      )
+
     children = Repo.all(query)
+
     Enum.reduce(children, %{}, fn x, acc ->
       case Bex.MetaNode.get_utxo_data(x.dir_txid) do
         ["小喇叭聊天内容" | data] ->
           data = List.last(data) |> Jason.decode!()
           Map.put(acc, x.dir, %{data: data, txid: x.dir_txid, time: x.inserted_at})
+
         _ ->
           acc
       end
