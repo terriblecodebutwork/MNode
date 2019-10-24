@@ -43,16 +43,15 @@ defmodule BexWeb.MetaLive do
     )
   end
 
+  #   <form phx-submit="create_root_dir">
+  #   <input name="dir">
+  #   <button type="submit">Create Root Node</button>
+  # </form>
 
-#   <form phx-submit="create_root_dir">
-#   <input name="dir">
-#   <button type="submit">Create Root Node</button>
-# </form>
-
-# <form phx-submit="create_sub_dir">
-# <input name="dir:<%= k.id %>">
-# <button type="submit">Create Child Node</button>
-# </form>
+  # <form phx-submit="create_sub_dir">
+  # <input name="dir:<%= k.id %>">
+  # <button type="submit">Create Child Node</button>
+  # </form>
 
   def render(assigns) do
     ~L"""

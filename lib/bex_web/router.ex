@@ -43,7 +43,7 @@ defmodule BexWeb.Router do
   scope "/api", BexWeb do
     pipe_through :api
 
-    post "/write", WriteController, :create
+    post "/write", WriteController, :write
     post "/mkdir", WriteController, :mkdir
     get "/read", ReadController, :read
     post "/transfer", TransferController, :transfer

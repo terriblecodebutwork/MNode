@@ -20,6 +20,7 @@ defmodule BexWeb.IndexLive do
   def handle_params(%{"address" => address}, url, socket) do
     {:noreply, socket |> assign(:url, url) |> assign(:address, address) |> reload()}
   end
+
   def handle_params(_, url, socket) do
     {:noreply, socket |> assign(:url, url) |> reload()}
   end

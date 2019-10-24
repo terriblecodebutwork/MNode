@@ -375,8 +375,8 @@ defmodule Bex.CoinManager do
             {:error, msg}
         end
 
-      {:error, msg} ->
-        {:error, msg}
+      {:error, _msg} ->
+        {:error, "Dir '#{pname}' isn't exist."}
     end
   end
 

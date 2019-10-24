@@ -33,7 +33,9 @@ defmodule Bex.Txrepo do
 
   defp try_broadcast(txid, tx) do
     case SvApi.broadcast(tx) do
-      {:ok, _} -> :ok
+      {:ok, _} ->
+        :ok
+
       {:error, msg} ->
         pending({txid, tx, msg})
     end
