@@ -28,4 +28,12 @@ defmodule BexLib.Crypto do
   # def verify(sig, data, pubkey) do
   #   :crypto.verify(:ecdsa, :sha256, data, sig, [pubkey, :secp256k1])
   # end
+
+  @spec sha256_file(Path.t()) :: binary
+  def sha256_file(path) when is_binary(path) do
+    File.stream!(path, [], 2048)
+    |> Enum.reduce(:crypto.hash_init(:sha256), &:crypto.hash_update(&2, &1))
+    |> :crypto.hash_final()
+    |> Base.encode16(case: :lower)
+  end
 end

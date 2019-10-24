@@ -140,8 +140,8 @@ defmodule Bex.Wallet.Utxo do
       coin_num = Decimal.div_int(v, coin_sat) |> Decimal.to_integer()
 
       coin_num =
-        if coin_num > 28_000 do
-          28_000
+        if coin_num > 1000 do
+          1000
         else
           coin_num
         end

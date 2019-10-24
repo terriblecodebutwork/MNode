@@ -13,7 +13,7 @@ onchain_path: /user123
 curl -X POST  \
   'http://localhost:4000/api/mkdir' \
   -H 'app_KEY: TJAdn4wBhMJi+wHvVpLXquwaCD+2lQuVNad/PaIkbnA=' \
-  -H 'onchain_dir: /elixir'
+  -H 'onchain_path: /elixir'
 ```
 
 

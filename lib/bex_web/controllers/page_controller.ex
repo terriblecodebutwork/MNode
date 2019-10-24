@@ -5,9 +5,15 @@ defmodule BexWeb.PageController do
   alias Phoenix.LiveView
   alias BexLib.Key
   alias Bex.Wallet
+  alias Bex.Txrepo
 
   def index(conn, _params) do
     render(conn, "index.html")
+  end
+
+  def show_tx(conn, _params) do
+    data = Txrepo.list() |> inspect()
+    text(conn, "正在重试的交易\n" <> data)
   end
 
   def ad(conn, _params) do

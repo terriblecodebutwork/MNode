@@ -46,21 +46,17 @@ defmodule BexWeb.IndexLive do
   def render(assigns) do
     ~L"""
     <%= if @private_keys == [nil] do %>
-      <a href="<%= @url %>/keys/new" >Import PrivateKey</a>
-      <form phx-submit="address">
-        <label>Enter Address</label>
-        <input name="address" />
-        <button type="submit">Find</button>
-      </form>
-      <% else %>
+      <a href="<%= @url %>/keys/new" >导入私钥</a><span></span>
+      <a href="<%= @url %>/keys">全部地址</a>
 
-      <div>
-        <h3>Value of one Coin: <%= @coin_sat %></h3>
-        <form phx-submit="set_coin_sat">
-              <input name="value" type="number">
-              <button type="submit">Set</button>
+      <div style="margin-top: 15px;">
+        <form phx-submit="address">
+          <label>输入地址</label>
+          <input name="address" />
+          <button type="submit">查询</button>
         </form>
       </div>
+      <% else %>
 
       <%= if @loading do %>
       <h4>Loading...</h4>
@@ -69,33 +65,33 @@ defmodule BexWeb.IndexLive do
       <div>
         <table border="1">
           <tr>
-            <th>address</th>
-            <th>metanet</th>
+            <th>地址</th>
+            <th>元网</th>
             <th>coin</th>
-            <th>permission</th>
+            <th>perm</th>
             <th>gold</th>
             <th>dust</th>
-            <th>commands</th>
+            <th>操作</th>
           </tr>
         <%= for k <- @private_keys || [] do %>
           <tr>
             <td><a href="https://whatsonchain.com/address/<%= k.address %>" target="_blank"><pre><%= k.address %></pre></a></td>
             <td><%= if is_nil(k.base_key_id) do %>
-              <button phx-click="meta" phx-value-id="<%= k.id %>" >Metanet</button>
+              <button phx-click="meta" phx-value-id="<%= k.id %>" >查看元网结构</button>
             <% end %></td>
             <%= for t <- [:coin, :permission, :gold, :dust] do %>
             <td><%= Enum.count(k.utxos, fn x -> x.type == t end) %></td>
             <% end %>
             <td>
-              <button phx-click="resync_utxo" phx-value-id="<%= k.id %>" >ReSync UTXOs</button>
-              <button phx-click="recast" phx-value-id="<%= k.id %>">Recast</button>
-              <button phx-click="mint_all" phx-value-id="<%= k.id %>">Mint</button>
-              <button phx-click="show_utxos" phx-value-id="<%= k.id %>">show/hide</button>
+              <button phx-click="resync_utxo" phx-value-id="<%= k.id %>" >重新同步 UTXO</button>
+              <button phx-click="recast" phx-value-id="<%= k.id %>">合并零钱</button>
+              <button phx-click="mint_all" phx-value-id="<%= k.id %>">拆分大额</button>
+              <button phx-click="show_utxos" phx-value-id="<%= k.id %>">UTXO 详情</button>
             </td>
 
           </tr>
           <%= if k.id in @showing do %>
-            <%= for u <- Enum.sort_by(k.utxos, fn u -> u.value end, &>=/2) || [] do %>
+            <%= for u <- Enum.sort_by(k.utxos, fn u -> u.value end, &>=/2) do %>
             <tr>
               <td>type: <%= u.type %></td>
               <td>txid: <%= u.txid %></td>

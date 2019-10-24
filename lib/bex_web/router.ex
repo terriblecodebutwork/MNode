@@ -26,6 +26,7 @@ defmodule BexWeb.Router do
     end
 
     get "/", PageController, :index
+    get "/txrepo", PageController, :show_tx
 
     # resources "/utxos", UtxoController
 

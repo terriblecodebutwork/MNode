@@ -21,21 +21,21 @@ defmodule Bex.Txrepo do
   # end
 
   # FIXME
-  def add(_txid, tx) do
+  def add(txid, tx) do
     spawn_link(fn ->
-      try_broadcast(tx, 10)
+      try_broadcast(txid, tx)
     end)
   end
 
-  defp try_broadcast(tx, 0) do
-    Logger.error("broadcast failed: #{inspect(tx)}")
+  def pending(info) do
+    GenServer.cast(__MODULE__, {:pending, info})
   end
-  defp try_broadcast(tx, n) do
+
+  defp try_broadcast(txid, tx) do
     case SvApi.broadcast(tx) do
       {:ok, _} -> :ok
-      {:error, _} ->
-        :timer.sleep 300_000
-        try_broadcast(tx, n-1)
+      {:error, msg} ->
+        pending({txid, tx, msg})
     end
   end
 
@@ -66,8 +66,8 @@ defmodule Bex.Txrepo do
     {:reply, :queue.to_list(q), state}
   end
 
-  def handle_cast({:add, txid, hex_tx}, state = %{queue: q}) do
-    {:noreply, %{state | queue: :queue.in({txid, hex_tx}, q)}}
+  def handle_cast({:pending, info}, state = %{queue: q}) do
+    {:noreply, %{state | queue: :queue.in(info, q)}}
   end
 
   def handle_cast(:turn_on, state) do
@@ -81,14 +81,13 @@ defmodule Bex.Txrepo do
 
   def handle_info(:broadcast, state = %{queue: q, status: :on}) do
     case :queue.out(q) do
-      {{:value, {txid, hex_tx}}, q} ->
-        Logger.debug("broadcasting: " <> txid)
-        do_broadcast(hex_tx)
-        send(self(), :broadcast)
-        {:noreply, %{state | queue: q}}
+      {{:value, {txid, hex_tx, _msg}}, q1} ->
+        add(txid, hex_tx)
+        :timer.send_after(60_000, :broadcast)
+        {:noreply, %{state | queue: q1}}
 
       _ ->
-        :timer.send_after(1000, :broadcast)
+        :timer.send_after(60_000, :broadcast)
         {:noreply, state}
     end
   end
@@ -112,13 +111,13 @@ defmodule Bex.Txrepo do
   #   end
   # end
 
-  defp do_broadcast(tx) do
-    # FIXME there is no way to know is tx been accepted
-    # maybe try to get the tx from SvApi?
-    Bex.Broadcaster.send_all(tx)
+  # defp do_broadcast(tx) do
+  #   # FIXME there is no way to know is tx been accepted
+  #   # maybe try to get the tx from SvApi?
+  #   Bex.Broadcaster.send_all(tx)
 
-    SvApi.broadcast(tx)
-    |> inspect()
-    |> Logger.debug()
-  end
+  #   SvApi.broadcast(tx)
+  #   |> inspect()
+  #   |> Logger.debug()
+  # end
 end
