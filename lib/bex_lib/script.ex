@@ -88,7 +88,7 @@ defmodule BexLib.Script do
     do: <<@op_pushdata2, byte_size(word)::unsigned-little-integer-size(16)>> <> word
 
   def to_binary_word(word) when is_binary(word),
-    do: <<@op_pushdata4, byte_size(word)::unsigned-little-integer-size(16)>> <> word
+    do: <<@op_pushdata4, byte_size(word)::unsigned-little-integer-size(32)>> <> word
 
   def to_binary_word(word) when word in @op_names, do: <<@op[word]>>
 

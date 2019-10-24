@@ -119,6 +119,39 @@ defmodule BexWeb.WriteController do
   #   create(conn, Map.merge(params, %{"parent" => parent, "name" => name}))
   # end
 
+  @chunk_size 80_000
+  @read_option [read_length: @chunk_size, length: 1_000]
+
+  defp bcat_part(data, keyid) do
+    content = ["1ChDHzdd1H4wSjgGMHyndZm6qxEDGjqpJL", data]
+    {:ok, txid, _} = CoinManager.send_opreturn(keyid, content)
+    txid
+  end
+
+  defp multi_bcat(body, keyid, result) do
+    case Binary.split_at(body, @chunk_size) do
+      {data, <<>>} ->
+        [bcat_part(data, keyid) | result]
+      {data, body} ->
+        multi_bcat(body, keyid, [bcat_part(data, keyid) | result])
+    end
+  end
+
+  defp read_remain_part(conn, txids, keyid) do
+    len = @chunk_size
+    case read_body(conn, @read_option) do
+      {:ok, body, _} ->
+        if byte_size(body) > len do
+          Enum.reverse(multi_bcat(body, keyid, []) ++ txids)
+        else
+          Enum.reverse([bcat_part(body, keyid) | txids])
+        end
+      {:more, body, conn} ->
+        txids = [bcat_part(body, keyid) | txids]
+        read_remain_part(conn, txids, keyid)
+    end
+  end
+
   def write(conn, %{}) do
     base_key = conn.assigns.private_key
     onchain_path = conn.assigns.onchain_path
@@ -127,13 +160,15 @@ defmodule BexWeb.WriteController do
     dir = Path.dirname(onchain_path)
 
     content =
-      case read_body(conn, length: 90_000) do
+      case read_body(conn, @read_option) do
         {:ok, data, _conn} ->
           # if file_size <= 90kb, use b://
           ["19HxigV4QyBv3tHpQVcUEQyq1pzZVdoAut", data, type, "binary", filename]
 
-        other ->
-          other
+
+        {:more, data, conn} ->
+          txids = read_remain_part(conn, [bcat_part(data, base_key.id)], base_key.id) |> Enum.map(&Binary.from_hex/1)
+          ["15DHFxWZJT58f9nhyGnsRBqrgwK4W6h4Up", " ", type, "binary", filename, " "] ++ txids
       end
 
     case CoinManager.create_mnode(base_key.id, dir, onchain_path, content) do

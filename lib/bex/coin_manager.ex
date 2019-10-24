@@ -299,7 +299,7 @@ defmodule Bex.CoinManager do
   @doc """
   use a utxo that equal to coin_sat
   """
-  def send_opreturn(pkid, contents, coin_sat, opts \\ []) do
+  def send_opreturn(pkid, contents, coin_sat \\ @coin_sat, opts \\ []) do
     n =
       case opts[:inputs] do
         nil -> 1
