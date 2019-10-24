@@ -38,8 +38,10 @@ defmodule Bex.Application do
   end
 
   def bootstrap() do
-    spawn(fn ->
-      Bex.ChatEngine.init_chatnode()
-    end)
+    if System.get_env("BexChat") do
+      spawn(fn ->
+        Bex.ChatEngine.init_chatnode()
+      end)
+    end
   end
 end

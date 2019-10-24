@@ -57,14 +57,14 @@ defmodule BexWeb.WriteController do
 
   def create(conn, %{}) do
     base_key = conn.assigns.private_key
-    [onchain_path] = get_req_header(conn, "onchain_path")
+    [onchain_path] = get_req_header(conn, "x-onchain-path")
     filename = Path.basename(onchain_path)
     type = MIME.from_path(filename)
     dir = Path.dirname(onchain_path)
 
     content =
       case read_body(conn, length: 90_000) do
-        {:ok, data, conn} ->
+        {:ok, data, _conn} ->
           # if file_size <= 90kb, use b://
           ["19HxigV4QyBv3tHpQVcUEQyq1pzZVdoAut", data, type, "binary", filename]
 
@@ -83,7 +83,7 @@ defmodule BexWeb.WriteController do
 
   def mkdir(conn, %{}) do
     base_key = conn.assigns.private_key
-    [onchain_path] = get_req_header(conn, "onchain_path")
+    [onchain_path] = get_req_header(conn, "x-onchain-path")
     case CoinManager.create_mnode(base_key.id, false, onchain_path, [Path.basename(onchain_path)]) do
       {:ok, txid, hex_tx} ->
         respond(conn, nil, hex_tx, txid)
@@ -143,17 +143,17 @@ defmodule BexWeb.WriteController do
 
   # {:error, msg} or {:ok, private_key}
   defp find_private_key(conn, _options) do
-    case get_req_header(conn, "app_key") do
+    case get_req_header(conn, "x-app-key") do
       [] ->
         conn
-        |> json(%{error: "no app_key in headers"})
+        |> json(%{error: "no X-app-key in headers"})
         |> halt()
 
       [app_key] ->
         case Wallet.find_private_key_by_app_key(app_key) do
           nil ->
             conn
-            |> json(%{error: "app_key not exists"})
+            |> json(%{error: "X-app-key invalid"})
             |> halt()
 
           pk ->
@@ -163,7 +163,7 @@ defmodule BexWeb.WriteController do
 
       other ->
         conn
-        |> json(%{error: "invalid APP_KEY: #{inspect(other)}"})
+        |> json(%{error: "invalid x-app-key: #{inspect(other)}"})
         |> halt()
     end
   end
@@ -212,7 +212,7 @@ defmodule BexWeb.WriteController do
   # end
 
   # defp continue(conn, base_key, address) do
-  #   onchain_path = get_req_header(conn, "onchain_path")
+  #   onchain_path = get_req_header(conn, "x-onchain-path")
   #   filename = Path.basename(onchain_path)
   #   type = MIME.from_path(filename)
   #   dir = Path.dirname(onchain_path)
