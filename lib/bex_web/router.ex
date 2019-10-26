@@ -46,7 +46,7 @@ defmodule BexWeb.Router do
     post "/write", WriteController, :write
     post "/mkdir", WriteController, :mkdir
     get "/read", ReadController, :read
-    post "/transfer", TransferController, :transfer
+    # post "/transfer", TransferController, :transfer
 
     # post "/webhook/154814876", HookController, :mb_hook
 

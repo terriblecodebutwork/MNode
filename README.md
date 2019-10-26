@@ -20,3 +20,13 @@ curl -X POST  \
   -H 'Content-Type: application/octet-stream' \
   --data-binary @narv.png
 ```
+
+## Read File
+
+```bash
+curl -X GET \
+  'http://localhost:4000/api/read' \
+  -H 'x-app-key: 123' \
+  -H 'x-onchain-path: /joe_armstrong_crypto_tutorial.pdf' \
+  -o joe_armstrong_crypto_tutorial.pdf
+```
