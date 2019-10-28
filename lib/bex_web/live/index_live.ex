@@ -67,6 +67,7 @@ defmodule BexWeb.IndexLive do
         <table border="1">
           <tr>
             <th>地址</th>
+            <th>浏览</th>
             <th>元网</th>
             <th>coin</th>
             <th>perm</th>
@@ -76,7 +77,8 @@ defmodule BexWeb.IndexLive do
           </tr>
         <%= for k <- @private_keys || [] do %>
           <tr>
-            <td><a href="https://whatsonchain.com/address/<%= k.address %>" target="_blank"><pre><%= k.address %></pre></a></td>
+            <td><a href="<%= URI.parse(@url).path %>/keys/<%= k.id %>"><pre><%= k.address %></pre></a></td>
+            <td><a href="https://whatsonchain.com/address/<%= k.address %>" target="_blank">WOC</a></td>
             <td><%= if is_nil(k.base_key_id) do %>
               <button phx-click="meta" phx-value-id="<%= k.id %>" >查看元网结构</button>
             <% end %></td>

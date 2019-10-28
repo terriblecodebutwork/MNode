@@ -6,9 +6,10 @@ defmodule BexWeb.TransferController do
   import BexWeb.Plug, only: [find_private_key: 2]
 
   plug :find_private_key
+  @max_withdraw 500_000_000
 
-  def transfer(conn, %{"amount" => v}) when v > 90_000_000 do
-    json(conn, %{code: 1, error: "amount larger then 0.9bsv is unsupported"})
+  def transfer(conn, %{"amount" => v}) when v > @max_withdraw do
+    json(conn, %{code: 1, error: "amount larger then #{@max_withdraw} is unsupported"})
   end
   def transfer(conn, %{"to" => addr, "amount" => v}) do
     if Key.is_address?(addr, :main) do

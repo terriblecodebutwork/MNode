@@ -3,8 +3,6 @@ alias Bex.Wallet
 alias Bex.Repo
 alias Bex.Wallet.PrivateKey
 alias Bex.Wallet.Utxo
-alias Bex.Wallet.Mission
-alias Bex.Wallet.Document
 alias Bex.CoinManager
 alias Bex.Txrepo
 alias BexLib.Script
