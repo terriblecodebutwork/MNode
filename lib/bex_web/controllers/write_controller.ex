@@ -10,84 +10,12 @@ defmodule BexWeb.WriteController do
   alias BexLib.Key
   alias Bex.KV
   require Logger
+  import BexWeb.Plug
 
   plug :find_private_key
   plug :fetch_onchain_path
 
-  defp find_private_key(conn, _options) do
-    case get_req_header(conn, "x-app-key") do
-      [] ->
-        conn
-        |> json(%{error: "no X-app-key in headers"})
-        |> halt()
 
-      [app_key] ->
-        case Wallet.find_private_key_by_app_key(app_key) do
-          nil ->
-            conn
-            |> json(%{error: "X-app-key invalid"})
-            |> halt()
-
-          pk ->
-            conn
-            |> assign(:private_key, pk)
-        end
-
-      other ->
-        conn
-        |> json(%{error: "invalid x-app-key: #{inspect(other)}"})
-        |> halt()
-    end
-  end
-
-  defp fetch_onchain_path(conn, _) do
-    case get_req_header(conn, "x-onchain-path") do
-      [] ->
-        conn
-        |> json(%{error: "no x-onchain-path in headers"})
-        |> halt()
-
-      [path] ->
-        if Path.type(path) != :absolute do
-          conn
-          |> json(%{error: "x-onchain-path must be absolute path"})
-          |> halt()
-        else
-          case action_name(conn) do
-            :write ->
-              conn
-              |> assign(:onchain_path, path)
-
-            :mkdir ->
-              if Path.extname(path) != "" do
-                conn
-                |> json(%{error: "'#{path}' is invalid dir name"})
-                |> halt()
-              else
-                conn
-                |> assign(:onchain_path, path)
-              end
-          end
-        end
-
-      other ->
-        conn
-        |> json(%{error: "invalid x-onchain-path: #{inspect(other)}"})
-        |> halt()
-    end
-  end
-
-  @doc """
-  Create a metanet directory or file.
-  The private key is association with the APP_KEY in the header.
-
-  params:
-    dir: "a/b/c"
-    file: %Plug.Upload{}
-
-  if only dir, create a dir; if path and file, creat the file.
-  Can not write dir or file under unexisted dir.
-  """
   # def create(conn, %{"parent" => false, "name" => c_dir} = params) do
   #   c_dir = to_string(c_dir)
   #   base_key = conn.assigns.private_key
@@ -201,8 +129,8 @@ defmodule BexWeb.WriteController do
     end
   end
 
-  defp respond(conn, _params, hex_tx, txid) do
-    json(conn, %{code: 0, raw_tx: hex_tx, txid: txid})
+  defp respond(conn, _params, _hex_tx, txid) do
+    json(conn, %{code: 0, txid: txid})
   end
 
   # defp deal_with_content(params) do

@@ -30,3 +30,12 @@ curl -X GET \
   -H 'x-onchain-path: /joe_armstrong_crypto_tutorial.pdf' \
   -o joe_armstrong_crypto_tutorial.pdf
 ```
+
+## Transfer Coins
+
+```bash
+curl -X POST 'http://localhost:4000/api/transfer' \
+  -H 'Content-Type: application/json; charset=utf-8' \
+  -H 'x-app-key: 3yJJyCN3Ykkg8fLRz4tmUUZ0FrlnHiXJWQlkycdzxIg=' \
+  -d '{"to": "15Q1Max442hdV8TXzJHwgSs5aavYqS5kU2", "amount": 5000}'
+```

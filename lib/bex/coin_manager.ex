@@ -33,11 +33,6 @@ defmodule Bex.CoinManager do
     {:ok, txid, hex_tx}
   end
 
-  def sync_utxo(pkid) do
-    p = Repo.get!(PrivateKey, pkid)
-    Wallet.sync_utxos_of_private_key(p)
-  end
-
   def start_link(_) do
     GenServer.start_link(__MODULE__, %{coin_sat: @coin_sat}, name: __MODULE__)
   end
@@ -62,6 +57,10 @@ defmodule Bex.CoinManager do
 
   def recast(pkid, coin_sat) do
     GenServer.call(__MODULE__, {:recast, pkid, coin_sat})
+  end
+
+  def transfer(pkid, args) do
+    GenServer.call(__MODULE__, {:transfer, pkid, args})
   end
 
   @doc """
@@ -185,6 +184,10 @@ defmodule Bex.CoinManager do
     {:reply, do_mint(pkid, coin_sat, opt), state}
   end
 
+  def handle_call({:transfer, pkid, args}, _from, state) do
+    {:reply, do_transfer(pkid, args), state}
+  end
+
   def handle_call({:create_root_mnode, pkid, iname, content, opts}, _from, state) do
     {:reply, do_create_root_mnode(pkid, iname, content, opts[:coin_sat] || state.coin_sat, opts),
      state}
@@ -290,6 +293,38 @@ defmodule Bex.CoinManager do
       {:ok, txid, hex_tx} ->
         Txrepo.add(txid, hex_tx)
         {:ok, txid, hex_tx}
+
+      {:error, msg} ->
+        {:error, msg}
+    end
+  end
+
+  @fee_rate 1
+
+  defp do_transfer(pkid, %{to: addr, amount: v}) do
+    p = Repo.get!(PrivateKey, pkid)
+    n = floor(div(v, 90500)) + 1 # how many inputs needed
+    # size(vin) + n*148 + others
+    size = 24 + n * 148 + 500
+    fee = size * @fee_rate
+
+    m = floor(div(fee + v, 90500)) + 1 # real need inputs
+    case do_get_coins(pkid, m, Decimal.cast(90500)) do
+      {:ok, utxos} ->
+        inputs = utxos
+        outputs = [
+          Utxo.address_utxo(addr, Decimal.cast(v))
+        ]
+        {change_script, change_pkid} = Utxo.change_to_address(p)
+        case Utxo.handle_change(inputs, outputs, change_script, change_pkid) do
+          {:error, msg} ->
+            {:error, msg}
+
+          {:ok, inputs, outputs} ->
+            {:ok, txid, hex_tx} = Utxo.make_tx(inputs, outputs, Decimal.cast(90500))
+            Txrepo.add(txid, hex_tx)
+            {:ok, txid, hex_tx}
+        end
 
       {:error, msg} ->
         {:error, msg}

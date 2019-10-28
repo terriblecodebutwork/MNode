@@ -71,7 +71,7 @@ defmodule Bex.Wallet.Utxo do
   @doc """
   handle the :change_to option, and return the {lockscript, pkid}
   """
-  def change_to_address(p, opts) do
+  def change_to_address(p, opts \\ []) do
     case opts[:change_to] do
       nil ->
         # send change to base key

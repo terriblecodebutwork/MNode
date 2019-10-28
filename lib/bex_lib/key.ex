@@ -13,6 +13,7 @@ defmodule BexLib.Key do
     testnet: 0x6F,
     stn: 0x6F
   ]
+  @prefix_types Keyword.keys(@address_prefix)
 
   def new_private_key() do
     {_, priv} = :crypto.generate_key(:ecdh, :secp256k1)
@@ -113,6 +114,11 @@ defmodule BexLib.Key do
     {:ok, <<_prefix::bytes-size(1), pubkeyhash::binary>>} = Base58Check.decode(addr)
     pubkeyhash
   end
+  def address_to_public_key_hash(addr, net) when net in @prefix_types do
+    prefix = @address_prefix[net]
+    {:ok, <<^prefix::integer, pubkeyhash::binary>>} = Base58Check.decode(addr)
+    pubkeyhash
+  end
 
   def private_key_to_p2pkh_script(p) do
     pkhash = private_key_to_public_key_hash(p)
@@ -128,9 +134,13 @@ defmodule BexLib.Key do
     |> IO.iodata_to_binary()
   end
 
-  def is_address?(str) do
+  def is_address?(str, net \\ false) do
     try do
-      address_to_public_key_hash(str)
+      if net do
+        address_to_public_key_hash(str, net)
+      else
+        address_to_public_key_hash(str)
+      end
       true
     catch
       _, _ ->
