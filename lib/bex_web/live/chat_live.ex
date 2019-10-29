@@ -57,13 +57,9 @@ defmodule BexWeb.ChatLive do
     ~L"""
     <div style="color: white; position: fixed; width: 100%; height: 100%; ">
       <h2 style="margin: 0;background-color: orangered; ">Little LABA ---- <%= @reply_to %></h2>
-      <div class="msgs" style="top: 10px; width: 100%; background-color: #fff; color: black;">
-        <div style="position: absolute; overflow-y: scroll; height: 75%; width: 100%; left: 0; top: 30px;;">
+      <div style="top: 10px; width: 100%; background-color: #fff; color: black;">
+        <div phx-hook="Scroll" style="position: absolute; overflow-y: scroll; height: 75%; width: 100%; left: 0; top: 30px;;">
           <%= for {_k, v} <- Enum.sort_by(@chat_log, fn {_k, v} -> v.time end) do %>
-          <div style="display: block;"><strong><%= String.slice(v.data["user"], 0, 5) %></strong>: <%= v.data["data"] %> <a target="_blank" href="https://whatsonchain.com/tx/<%= v.txid %>"><%= v.time %></a></div>
-          <div style="display: block;"><strong><%= String.slice(v.data["user"], 0, 5) %></strong>: <%= v.data["data"] %> <a target="_blank" href="https://whatsonchain.com/tx/<%= v.txid %>"><%= v.time %></a></div>
-          <div style="display: block;"><strong><%= String.slice(v.data["user"], 0, 5) %></strong>: <%= v.data["data"] %> <a target="_blank" href="https://whatsonchain.com/tx/<%= v.txid %>"><%= v.time %></a></div>
-          <div style="display: block;"><strong><%= String.slice(v.data["user"], 0, 5) %></strong>: <%= v.data["data"] %> <a target="_blank" href="https://whatsonchain.com/tx/<%= v.txid %>"><%= v.time %></a></div>
           <div style="display: block;"><strong><%= String.slice(v.data["user"], 0, 5) %></strong>: <%= v.data["data"] %> <a target="_blank" href="https://whatsonchain.com/tx/<%= v.txid %>"><%= v.time %></a></div>
           <% end %>
         </div>
