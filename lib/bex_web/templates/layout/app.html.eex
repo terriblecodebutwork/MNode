@@ -8,34 +8,14 @@
     <link rel="stylesheet" href="<%= Routes.static_path(@conn, "/css/app.css") %>"/>
   </head>
   <body>
-    <main class="wrapper">
-      <nav role="navigation">
-        <section class="container">
-          <div class="row">
-            <div class="column">
-              <a class="navigation-title" href="/">
-                <h1 class="title">nicedata.space</h1>
-              </a>
-              <p>power by <i>M</i>Node</p>
-            </div>
-            <nav>
-              <a href="/chat">聊天室 ChatRoom/</a>
-              <a href="/ad">广告墙 AD Poster/</a>
-              <a href="/gun">提款机 ATM/</a>
-              <a href="/txrepo">传达室 Pending TX/</a>
-            </nav>
-          </div>
-        </section>
-      </nav>
-      <p class="alert alert-info" role="alert"><%= get_flash(@conn, :info) %></p>
-      <p class="alert alert-danger" role="alert"><%= get_flash(@conn, :error) %></p>
-      <section class="container">
-      <%= render @view_module, @view_template, assigns %>
-      <div>
-        <small>help: metanet@yeah.net</small>
-      </section>
-      </div>
-    </main>
+    <%= render @view_module, @view_template, assigns %>
     <script type="text/javascript" src="<%= Routes.static_path(@conn, "/js/app.js") %>"></script>
   </body>
+  <footer>
+    <div style="position: fixed; bottom: 0; right: 0; z-index: -1; ">
+      <small>help: metanet@yeah.net</small>
+      <p class="alert alert-info" role="alert"><%= get_flash(@conn, :info) %></p>
+      <p class="alert alert-danger" role="alert"><%= get_flash(@conn, :error) %></p>
+    </div>
+  </footer>
 </html>

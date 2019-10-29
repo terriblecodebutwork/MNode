@@ -7,3 +7,11 @@
     border: 1px dotted blue;
 } */
 @import "../node_modules/normalize.css/normalize.css";
+
+button {
+    background-color: white;
+}
+
+input {
+    border-bottom: 1px;
+}

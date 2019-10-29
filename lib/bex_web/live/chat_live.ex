@@ -1,4 +1,16 @@
 defmodule BexWeb.ChatLive do
+  @moduledoc """
+      <dl>
+      <dt>费用</dt>
+      <dd>每条消息花费 2 个小喇叭, 每个小喇叭价值1000聪.建议先充个 1 块钱的, 能聊 70 多条.</dd>
+      <dt>安全</dt>
+      <dd>私钥ID保存在本地, 使用过程中请勿删除浏览器缓存.</dd>
+      <dt>帮助</dt>
+      <dd>请勿充值大量金额. 任何财产损失, 本网站概不负责. 如需帮助, 请联系下方邮件.</dd>
+      <dt>METANET</dt>
+      <dd>在<a href="https://mom.planaria.network/#ewogICJ2IjogMywKICAicSI6IHsKICAgICJmaW5kIjogewogICAgICAiYW5jZXN0b3IudHgiOiAiZDQ0MTdhMTljZDk4ZWFlMDA5NGZhZDFhYWRjYjAwNGIwMDgxMmJlMjU0ODNkODIxMTljZjJhM2I3ZWQ0ODIyZSIKICAgIH0sCiAgICAibGltaXQiOiAxMDAKICB9Cn0=">这里</a>可以查看链上聊天的数据结构</dd>
+    </dl>
+  """
   use Phoenix.LiveView
   require Logger
 
@@ -43,42 +55,33 @@ defmodule BexWeb.ChatLive do
 
   def render(assigns) do
     ~L"""
-    <h1>小喇叭聊天室</h1>
-
-    <section>
-      <p>充值地址: <%= @key.address %></p>
-      <p>我的小喇叭: <%= @balance %> 个<button phx-click="flash" <%= if @loading, do: "disabled" %>>刷新余额</button></p>
-    </section>
-
-    <div style="background-color: floralwhite">
-      <div class="msgs" style="width: 100%;">
-        <%= for {_k, v} <- Enum.sort_by(@chat_log, fn {_k, v} -> v.time end) do %>
-        <p><strong><%= String.slice(v.data["user"], 0, 5) %></strong>: <%= v.data["data"] %> <a target="_blank" href="https://whatsonchain.com/tx/<%= v.txid %>"><%= v.time %></a></p>
-        <% end %>
+    <div style="color: white; position: fixed; width: 100%; height: 100%; ">
+      <h2 style="margin: 0;background-color: orangered; ">Little LABA ---- <%= @reply_to %></h2>
+      <div class="msgs" style="top: 10px; width: 100%; background-color: #fff; color: black;">
+        <div style="position: absolute; overflow-y: scroll; height: 75%; width: 100%; left: 0; top: 30px;;">
+          <%= for {_k, v} <- Enum.sort_by(@chat_log, fn {_k, v} -> v.time end) do %>
+          <div style="display: block;"><strong><%= String.slice(v.data["user"], 0, 5) %></strong>: <%= v.data["data"] %> <a target="_blank" href="https://whatsonchain.com/tx/<%= v.txid %>"><%= v.time %></a></div>
+          <div style="display: block;"><strong><%= String.slice(v.data["user"], 0, 5) %></strong>: <%= v.data["data"] %> <a target="_blank" href="https://whatsonchain.com/tx/<%= v.txid %>"><%= v.time %></a></div>
+          <div style="display: block;"><strong><%= String.slice(v.data["user"], 0, 5) %></strong>: <%= v.data["data"] %> <a target="_blank" href="https://whatsonchain.com/tx/<%= v.txid %>"><%= v.time %></a></div>
+          <div style="display: block;"><strong><%= String.slice(v.data["user"], 0, 5) %></strong>: <%= v.data["data"] %> <a target="_blank" href="https://whatsonchain.com/tx/<%= v.txid %>"><%= v.time %></a></div>
+          <div style="display: block;"><strong><%= String.slice(v.data["user"], 0, 5) %></strong>: <%= v.data["data"] %> <a target="_blank" href="https://whatsonchain.com/tx/<%= v.txid %>"><%= v.time %></a></div>
+          <% end %>
+        </div>
       </div>
-
-      <section>
-        <form phx-change="editing" phx-submit="laba">
-          <label>发送到: <%= @reply_to %></label>
-          <input value="<%= @content %>" name="content" ></input>
-          <label>字数: <%= @size_limit %> bytes</label>
-          <br/>
-          <button type="submit">发送</button>
-        </from>
-      </section>
-
     </div>
 
-    <dl>
-      <dt>费用</dt>
-      <dd>每条消息花费 2 个小喇叭, 每个小喇叭价值1000聪.建议先充个 1 块钱的, 能聊 70 多条.</dd>
-      <dt>安全</dt>
-      <dd>私钥ID保存在本地, 使用过程中请勿删除浏览器缓存.</dd>
-      <dt>帮助</dt>
-      <dd>请勿充值大量金额. 任何财产损失, 本网站概不负责. 如需帮助, 请联系下方邮件.</dd>
-      <dt>METANET</dt>
-      <dd>在<a href="https://mom.planaria.network/#ewogICJ2IjogMywKICAicSI6IHsKICAgICJmaW5kIjogewogICAgICAiYW5jZXN0b3IudHgiOiAiZDQ0MTdhMTljZDk4ZWFlMDA5NGZhZDFhYWRjYjAwNGIwMDgxMmJlMjU0ODNkODIxMTljZjJhM2I3ZWQ0ODIyZSIKICAgIH0sCiAgICAibGltaXQiOiAxMDAKICB9Cn0=">这里</a>可以查看链上聊天的数据结构</dd>
-    </dl>
+    <div style="height: 20%; width: 100%; bottom: 0; position: fixed; color: white; background-color: orangered;">
+      <form phx-change="editing" phx-submit="laba">
+        <input name="content" style="width: 70%;"></input>
+        <button type="submit" style="background: white;">发送/send</button>
+      </from>
+      <div>
+        <p>充值地址: <%= @key.address %></p>
+        <p>小喇叭(LABA): <%= div(@balance, 2) %> 个<button phx-click="flash" <%= if @loading, do: "disabled" %>>刷新/refresh</button>
+          <button><a href="/gun">提现/withdraw</a></button>
+        <p>
+      </div>
+    </div>
     """
   end
 

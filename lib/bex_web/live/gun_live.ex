@@ -46,12 +46,10 @@ defmodule BexWeb.GunLive do
 
     <section>
       <form phx-change="gun">
-        <label>目标地址:</label>
+        <label>目标地址/target address:</label>
         <input value="<%= @target %>" name="target" />
-
-        <p>推荐使用打点钱包收款地址, 并打开消息提示</p>
       </form>
-      <button phx-click="withdraw" <%= if @shooting, do: "disabled" %>>全部转出</button>
+      <button phx-click="withdraw" <%= if @shooting, do: "disabled" %>>全部转出/withdarw all</button>
     </section>
 
     <section style="bottom: 0px; position: fixed">
