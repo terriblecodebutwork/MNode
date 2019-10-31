@@ -10,7 +10,6 @@ defmodule Bex.Application do
     children = [
       # Start the Ecto repository
       Bex.Repo,
-      Bex.Broadcaster,
       Bex.Txrepo,
       Bex.CoinManager,
       # BsvNews,
@@ -20,7 +19,7 @@ defmodule Bex.Application do
       BexWeb.Endpoint
       # Starts a worker by calling: Bex.Worker.start_link(arg)
       # {Bex.Worker, arg},
-    ]
+    ] ++ (if System.get_env("BEX_BROADCASTER"), do: [Bex.Broadcaster,], else: [])
 
     # See https://hexdocs.pm/elixir/Supervisor.html
     # for other strategies and supported options

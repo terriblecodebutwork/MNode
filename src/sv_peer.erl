@@ -11,18 +11,20 @@
 -define(GENESIS, <<111, 226, 140, 10, 182, 241, 179, 114, 193, 166, 162, 70, 174, 99, 247, 79,
   147, 30, 131, 101, 225, 90, 8, 156, 104, 214, 25, 0, 0, 0, 0, 0>>).
 
--record(peer, {state = start, host, port, socket, buffer}).
+-record(peer, {state = start, host, port, socket, buffer, parent}).
 
-connect(Host) ->
-    spawn_link(fun() -> do_connect(Host) end).
+connect(Host) -> connect(Host, false).
 
-do_connect(Host) ->
+connect(Host, Parent) ->
+    spawn_link(fun() -> do_connect(Host, Parent) end).
+
+do_connect(Host, Parent) ->
     case gen_tcp:connect(Host, 8333, [binary, {packet, 0}, {active, false}]) of
         {ok, Socket} ->
-            loop(#peer{socket=Socket, host=Host});
+            loop(#peer{socket=Socket, host=Host, parent=Parent});
         _ ->
             timer:sleep(5000),
-            do_connect(Host)
+            do_connect(Host, Parent)
     end.
 
 loop(#peer{state = start} = P) ->
@@ -36,7 +38,7 @@ loop(#peer{state = version_sent} = P) ->
         _ ->
             gen_tcp:close(P#peer.socket),
             timer:sleep(5000),
-            do_connect(P#peer.host)
+            do_connect(P#peer.host, P#peer.parent)
     end;
 
 loop(#peer{state = loop, socket = Socket} = P) ->
@@ -64,7 +66,12 @@ loop(#peer{state = loop, socket = Socket} = P) ->
     case parse_message(P#peer.buffer) of
         {ok, Command, Payload} ->
             {Data, _Rest} = parse(Command, Payload),
-            % io:format("[remote] ~s\n~p\n", [Command, Data]),
+            case P#peer.parent of
+                false -> ok;
+                Parent when is_pid(Parent) ->
+                    Parent ! {Command, Data}
+                    % io:format("[remote] ~s\n~p\n", [Command, Data]);
+            end,
             handle_command(Command, Data, Socket),
             loop(P#peer{buffer = <<>>});
         {error, incomplete} ->
@@ -75,7 +82,7 @@ loop(#peer{state = loop, socket = Socket} = P) ->
                 {error, _} ->
                     gen_tcp:close(P#peer.socket),
                     timer:sleep(10000),
-                    do_connect(P#peer.host)
+                    do_connect(P#peer.host, P#peer.parent)
             end
     end.
 
@@ -231,7 +238,7 @@ parse("headers", Bin) ->
     {#{headers => [ parse_header(X) || <<X:81/bytes>> <= HL]}, Rest2};
 
 parse("tx", Raw = <<Ver:32/little-signed, B/bytes>>) ->
-    % io:format("transaction: ~s~n", [io_lib:print(Raw)]),
+    % io:format("transaction: ~s~n", [io_lib:parent(Raw)]),
     {TX_in_count, R1} = parse_varint(B),
     {TX_in, R2} = parse_tx_in(R1, [], TX_in_count),
     {TX_out_count, R3} = parse_varint(R2),
@@ -254,7 +261,7 @@ parse("block", Bin) ->
     {parse_header(Bin), <<>>};
 
 parse(Other, Bin) ->
-    % io:format("=====================~s~n", [io_lib:print({Other, Bin})]),
+    % io:format("=====================~s~n", [io_lib:parent({Other, Bin})]),
     {Bin, <<>>}.
 
 % parse("alert", <<Ver:32/little-signed,
