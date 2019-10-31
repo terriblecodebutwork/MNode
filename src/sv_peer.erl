@@ -425,15 +425,24 @@ parse_header(<<Head:80/bytes, Rest/binary>>) ->
                Bits:32/little-integer,
                Nonce:4/bytes>> = Head,
     {Tx_count, Rest2} = parse_varint(Rest),
+    Hash = double_hash256(Head),
+    Target = decode_bits(Bits),
     #{version => Version,
       prev_block => Prev_block,
       merkel_root => Merkle_root,
       timestamp => Timestamp,
-      bits => decode_bits(Bits),
+      bits => Bits,
+      target => Target,
       nonce => Nonce,
       tx_count => Tx_count,
-      hash => double_hash256(Head),
-      txs => parse_txs(Rest2, [], Tx_count)}.
+      hash => Hash,
+      txs => parse_txs(Rest2, [], Tx_count),
+      pow_valid => verify_pow(Hash, Target)}.
+
+verify_pow(Hash, Target) ->
+    <<H:256/little-integer>> = Hash,
+    T = binary:decode_unsigned(Target),
+    H < T.
 
 parse_txs(_Bin, R, 0) ->
     lists:reverse(R);
