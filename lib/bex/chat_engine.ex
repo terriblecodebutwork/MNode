@@ -41,7 +41,7 @@ defmodule Bex.ChatEngine do
   end
 
   def new(key, dir, content) do
-    CoinManager.create_mnode(key.id, @root_node <> "/" <> dir, UUID.uuid1(), content)
+    CoinManager.create_mnode(key.id, @root_node <> "/" <> dir, UUID.uuid1(), content, change_to: @payment_address)
   end
 
   def key_of_dir(base_key, dir) do

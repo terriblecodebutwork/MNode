@@ -27,6 +27,10 @@ defmodule Bex.Txrepo do
     end)
   end
 
+
+  def pending({_tx, _, "the transaction was rejected by network rules.\n\nMissing inputs\n" <> _}) do
+    nil
+  end
   def pending(info) do
     GenServer.cast(__MODULE__, {:pending, info})
   end

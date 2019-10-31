@@ -98,21 +98,18 @@ defmodule BexWeb.ChatLive do
 
   def handle_event("laba", %{"content" => c}, socket) do
     balance = socket.assigns.balance
+    size = byte_size(c)
 
-    if byte_size(c) <= @msg_size_limit and balance >= 2 do
+    if size > 0 and size <= @msg_size_limit and balance >= 2 do
       send(self(), {:do_send, c})
     end
 
-    {:noreply, assign(socket, :sending, true) |> assign(:content, c)}
+    {:noreply, assign(socket, :content, c)}
   end
 
   def handle_event("flash", _, socket) do
     send(self(), :sync)
     {:noreply, assign(socket, :loading, true)}
-  end
-
-  def handle_event("gun", _, socket) do
-    {:noreply, redirect(socket, to: "/")}
   end
 
   def handle_info(:sync, socket) do

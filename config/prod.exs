@@ -13,6 +13,11 @@ config :bex, BexWeb.Endpoint,
   url: [host: "nicedata.space", port: 80],
   cache_static_manifest: "priv/static/cache_manifest.json"
 
+config :bex, BexLib.Bitcoind,
+  port: 8332,
+  username: System.get_env("BITCOIND_USERNAME"),
+  password: System.get_env("BITCOIND_PASSWORD")
+
 # Do not print debug messages in production
 config :logger, level: :info
 
