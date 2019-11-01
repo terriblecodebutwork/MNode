@@ -11,6 +11,7 @@ defmodule BexWeb.TransferController do
   def transfer(conn, %{"amount" => v}) when v > @max_withdraw do
     json(conn, %{code: 1, error: "amount larger then #{@max_withdraw} is unsupported"})
   end
+
   def transfer(conn, %{"to" => addr, "amount" => v}) do
     if Key.is_address?(addr, :main) do
       if is_integer(v) and v > 546 do
@@ -25,9 +26,11 @@ defmodule BexWeb.TransferController do
 
   defp do_transfer(conn, addr, v) do
     pkid = conn.assigns.private_key.id
+
     case CoinManager.transfer(pkid, %{to: addr, amount: v}) do
       {:ok, txid, _} ->
         json(conn, %{code: 0, txid: txid})
+
       {:error, msg} ->
         json(conn, %{code: 1, error: msg})
     end

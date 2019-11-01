@@ -45,11 +45,13 @@ defmodule Bex.Wallet.Utxo do
   end
 
   def meta_utxo(addr, content, p_txid \\ "NULL") do
-    content = if content do
-      ["|" | content]
-    else
-      []
-    end
+    content =
+      if content do
+        ["|" | content]
+      else
+        []
+      end
+
     Logger.debug("meta_utxo: #{inspect({addr, content, p_txid})}")
     lock_script = Script.metanet(addr, content, p_txid)
 

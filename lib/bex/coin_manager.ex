@@ -303,19 +303,25 @@ defmodule Bex.CoinManager do
 
   defp do_transfer(pkid, %{to: addr, amount: v}) do
     p = Repo.get!(PrivateKey, pkid)
-    n = floor(div(v, 90500)) + 1 # how many inputs needed
+    # how many inputs needed
+    n = floor(div(v, 90500)) + 1
     # size(vin) + n*148 + others
     size = 24 + n * 148 + 500
     fee = size * @fee_rate
 
-    m = floor(div(fee + v, 90500)) + 1 # real need inputs
+    # real need inputs
+    m = floor(div(fee + v, 90500)) + 1
+
     case do_get_coins(pkid, m, Decimal.cast(90500)) do
       {:ok, utxos} ->
         inputs = utxos
+
         outputs = [
           Utxo.address_utxo(addr, Decimal.cast(v))
         ]
+
         {change_script, change_pkid} = Utxo.change_to_address(p)
+
         case Utxo.handle_change(inputs, outputs, change_script, change_pkid) do
           {:error, msg} ->
             {:error, msg}

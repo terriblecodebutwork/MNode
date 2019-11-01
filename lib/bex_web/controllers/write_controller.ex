@@ -2,19 +2,12 @@ defmodule BexWeb.WriteController do
   use BexWeb, :controller
 
   alias Bex.Wallet
-  alias Bex.Wallet.Utxo
-  alias BexLib.Bitindex
   alias Bex.CoinManager
-  alias Bex.Util
-  alias Bex.MetaNode
-  alias BexLib.Key
-  alias Bex.KV
   require Logger
   import BexWeb.Plug
 
   plug :find_private_key
   plug :fetch_onchain_path
-
 
   # def create(conn, %{"parent" => false, "name" => c_dir} = params) do
   #   c_dir = to_string(c_dir)
@@ -47,38 +40,8 @@ defmodule BexWeb.WriteController do
   #   create(conn, Map.merge(params, %{"parent" => parent, "name" => name}))
   # end
 
-  @chunk_size 80_000
+  @chunk_size 90_000
   @read_option [read_length: @chunk_size, length: 1_000]
-
-  defp bcat_part(data, keyid) do
-    content = ["1ChDHzdd1H4wSjgGMHyndZm6qxEDGjqpJL", data]
-    {:ok, txid, _} = CoinManager.send_opreturn(keyid, content)
-    txid
-  end
-
-  defp multi_bcat(body, keyid, result) do
-    case Binary.split_at(body, @chunk_size) do
-      {data, <<>>} ->
-        [bcat_part(data, keyid) | result]
-      {data, body} ->
-        multi_bcat(body, keyid, [bcat_part(data, keyid) | result])
-    end
-  end
-
-  defp read_remain_part(conn, txids, keyid) do
-    len = @chunk_size
-    case read_body(conn, @read_option) do
-      {:ok, body, _} ->
-        if byte_size(body) > len do
-          Enum.reverse(multi_bcat(body, keyid, []) ++ txids)
-        else
-          Enum.reverse([bcat_part(body, keyid) | txids])
-        end
-      {:more, body, conn} ->
-        txids = [bcat_part(body, keyid) | txids]
-        read_remain_part(conn, txids, keyid)
-    end
-  end
 
   def write(conn, %{}) do
     base_key = conn.assigns.private_key
@@ -89,13 +52,23 @@ defmodule BexWeb.WriteController do
 
     content =
       case read_body(conn, @read_option) do
-        {:ok, data, _conn} ->
+        {:ok, data, _conn} when byte_size(data) <= @chunk_size ->
           # if file_size <= 90kb, use b://
           ["19HxigV4QyBv3tHpQVcUEQyq1pzZVdoAut", data, type, "binary", filename]
 
+        {:ok, data, _conn} ->
+          # data size larger than @chunk_size
+          txids =
+            Enum.reverse(multi_bcat(data, base_key.id, []))
+            |> Enum.map(&Binary.from_hex/1)
+
+          ["15DHFxWZJT58f9nhyGnsRBqrgwK4W6h4Up", " ", type, "binary", filename, " "] ++ txids
 
         {:more, data, conn} ->
-          txids = read_remain_part(conn, [bcat_part(data, base_key.id)], base_key.id) |> Enum.map(&Binary.from_hex/1)
+          txids =
+            read_remain_part(conn, [bcat_part(data, base_key.id)], base_key.id)
+            |> Enum.map(&Binary.from_hex/1)
+
           ["15DHFxWZJT58f9nhyGnsRBqrgwK4W6h4Up", " ", type, "binary", filename, " "] ++ txids
       end
 
@@ -105,6 +78,39 @@ defmodule BexWeb.WriteController do
 
       {:error, msg} ->
         json(conn, %{code: 1, error: msg})
+    end
+  end
+
+  defp bcat_part(data, keyid) do
+    content = ["1ChDHzdd1H4wSjgGMHyndZm6qxEDGjqpJL", data]
+    {:ok, txid, _} = CoinManager.send_opreturn(keyid, content)
+    txid
+  end
+
+  defp multi_bcat(data, keyid, result) do
+    case Binary.split_at(data, @chunk_size) do
+      {part, <<>>} ->
+        [bcat_part(part, keyid) | result]
+
+      {part, rest} ->
+        multi_bcat(part, keyid, [bcat_part(rest, keyid) | result])
+    end
+  end
+
+  defp read_remain_part(conn, txids, keyid) do
+    len = @chunk_size
+
+    case read_body(conn, @read_option) do
+      {:ok, data, _} ->
+        if byte_size(data) > len do
+          Enum.reverse(multi_bcat(data, keyid, []) ++ txids)
+        else
+          Enum.reverse([bcat_part(data, keyid) | txids])
+        end
+
+      {:more, data, conn} ->
+        txids = [bcat_part(data, keyid) | txids]
+        read_remain_part(conn, txids, keyid)
     end
   end
 

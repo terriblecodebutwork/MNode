@@ -7,19 +7,20 @@ defmodule Bex.Application do
 
   def start(_type, _args) do
     # List all child processes to be supervised
-    children = [
-      # Start the Ecto repository
-      Bex.Repo,
-      Bex.Txrepo,
-      Bex.CoinManager,
-      # BsvNews,
-      Bex.KV,
-      Bex.Store.MerkleSaver,
-      # Start the endpoint when the application starts
-      BexWeb.Endpoint
-      # Starts a worker by calling: Bex.Worker.start_link(arg)
-      # {Bex.Worker, arg},
-    ] ++ (if System.get_env("BEX_BROADCASTER"), do: [Bex.Broadcaster,], else: [])
+    children =
+      [
+        # Start the Ecto repository
+        Bex.Repo,
+        Bex.Txrepo,
+        Bex.CoinManager,
+        # BsvNews,
+        Bex.KV,
+        Bex.Store.MerkleSaver,
+        # Start the endpoint when the application starts
+        BexWeb.Endpoint
+        # Starts a worker by calling: Bex.Worker.start_link(arg)
+        # {Bex.Worker, arg},
+      ] ++ if System.get_env("BEX_BROADCASTER"), do: [Bex.Broadcaster], else: []
 
     # See https://hexdocs.pm/elixir/Supervisor.html
     # for other strategies and supported options

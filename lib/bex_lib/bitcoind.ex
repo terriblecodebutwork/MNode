@@ -7,6 +7,5 @@ defmodule BexLib.Bitcoind do
   end
 
   def broadcast do
-
   end
 end

@@ -15,7 +15,6 @@ defmodule BexWeb.ReadController do
   plug :find_private_key
   plug :fetch_onchain_path
 
-
   def read(conn, %{}) do
     base_key = conn.assigns.private_key
     onchain_path = conn.assigns.onchain_path
@@ -25,15 +24,20 @@ defmodule BexWeb.ReadController do
         conn
         |> put_resp_content_type("application/octet-stream", nil)
         |> send_resp(200, data)
+
       ["15DHFxWZJT58f9nhyGnsRBqrgwK4W6h4Up", _, _type, "binary", _filename, _ | txids] ->
         Stream.resource(
           fn -> txids end,
           fn
             [] ->
               {:halt, :ok}
+
             txids ->
               [txid | txids] = txids
-              ["1ChDHzdd1H4wSjgGMHyndZm6qxEDGjqpJL", data] = MetaNode.get_utxo_data(Binary.to_hex(txid))
+
+              ["1ChDHzdd1H4wSjgGMHyndZm6qxEDGjqpJL", data] =
+                MetaNode.get_utxo_data(Binary.to_hex(txid))
+
               {[data], txids}
           end,
           fn _ -> :ok end
@@ -63,7 +67,6 @@ defmodule BexWeb.ReadController do
     #     {:ok, data, _conn} ->
     #       # if file_size <= 90kb, use b://
     #       ["19HxigV4QyBv3tHpQVcUEQyq1pzZVdoAut", data, type, "binary", filename]
-
 
     #     {:more, data, conn} ->
     #       txids = read_remain_part(conn, [bcat_part(data, base_key.id)], base_key.id) |> Enum.map(&Binary.from_hex/1)
@@ -119,6 +122,4 @@ defmodule BexWeb.ReadController do
   def find(conn, %{"path" => dir} = params) do
     find(conn, Map.put(params, "name", dir))
   end
-
-
 end

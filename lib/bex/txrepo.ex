@@ -16,21 +16,24 @@ defmodule Bex.Txrepo do
     )
   end
 
-  # def add(txid, hex_tx) when is_binary(hex_tx) and is_binary(txid) do
-  #   GenServer.cast(__MODULE__, {:add, txid, hex_tx})
-  # end
 
   # FIXME
-  def add(txid, tx) do
-    spawn_link(fn ->
-      try_broadcast(txid, tx)
-    end)
+  if Mix.env() == :test do
+    def add(txid, hex_tx) when is_binary(hex_tx) and is_binary(txid) do
+      GenServer.cast(__MODULE__, {:pending, {txid, hex_tx, nil}})
+    end
+  else
+    def add(txid, tx) do
+      spawn_link(fn ->
+        try_broadcast(txid, tx)
+      end)
+    end
   end
-
 
   def pending({_tx, _, "the transaction was rejected by network rules.\n\nMissing inputs\n" <> _}) do
     nil
   end
+
   def pending(info) do
     GenServer.cast(__MODULE__, {:pending, info})
   end

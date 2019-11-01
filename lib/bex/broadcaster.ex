@@ -79,7 +79,6 @@ defmodule Bex.Broadcaster do
     Logger.info("check tx:" <> inspect(SvApi.transaction(txid)))
   end
 
-
   def log_node() do
     ip = Enum.random(:sv_peer.get_addrs_ipv4_dns())
     p = :sv_peer.connect(ip, self())
@@ -89,14 +88,16 @@ defmodule Bex.Broadcaster do
   defp loop(p) do
     receive do
       {'version', _} ->
-        send p, :getheaders
+        send(p, :getheaders)
+
       {_, _} = d ->
         File.write("node.log", inspect(d), [:append])
         File.write("node.log", "\n", [:append])
+
       other ->
         Logger.warn("#{__MODULE__} got: " <> inspect(other))
     end
+
     loop(p)
   end
-
 end

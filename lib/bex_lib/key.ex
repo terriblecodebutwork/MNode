@@ -114,6 +114,7 @@ defmodule BexLib.Key do
     {:ok, <<_prefix::bytes-size(1), pubkeyhash::binary>>} = Base58Check.decode(addr)
     pubkeyhash
   end
+
   def address_to_public_key_hash(addr, net) when net in @prefix_types do
     prefix = @address_prefix[net]
     {:ok, <<^prefix::integer, pubkeyhash::binary>>} = Base58Check.decode(addr)
@@ -141,6 +142,7 @@ defmodule BexLib.Key do
       else
         address_to_public_key_hash(str)
       end
+
       true
     catch
       _, _ ->
