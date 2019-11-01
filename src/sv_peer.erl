@@ -10,6 +10,7 @@
 -define(PROTOCOL_VERSION, 31800).
 -define(GENESIS, <<111, 226, 140, 10, 182, 241, 179, 114, 193, 166, 162, 70, 174, 99, 247, 79,
   147, 30, 131, 101, 225, 90, 8, 156, 104, 214, 25, 0, 0, 0, 0, 0>>).
+-define(GENESIS_TARGET, decode_bits(16#1d00ffff)).
 
 -record(peer, {state = start, host, port, socket, buffer, parent}).
 
@@ -433,11 +434,16 @@ parse_header(<<Head:80/bytes, Rest/binary>>) ->
       timestamp => Timestamp,
       bits => Bits,
       target => Target,
+      difficulty => bits_to_difficulty(Bits),
       nonce => Nonce,
       tx_count => Tx_count,
       hash => Hash,
       txs => parse_txs(Rest2, [], Tx_count),
       pow_valid => verify_pow(Hash, Target)}.
+
+bits_to_difficulty(Bits) ->
+    Target = decode_bits(Bits),
+    binary:decode_unsigned(?GENESIS_TARGET) / binary:decode_unsigned(Target).
 
 verify_pow(Hash, Target) ->
     <<H:256/little-integer>> = Hash,
