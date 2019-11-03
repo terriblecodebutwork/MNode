@@ -72,12 +72,18 @@ defmodule BexWeb.WriteController do
           ["15DHFxWZJT58f9nhyGnsRBqrgwK4W6h4Up", " ", type, "binary", filename, " "] ++ txids
       end
 
-    case CoinManager.create_mnode(base_key.id, dir, onchain_path, content) do
-      {:ok, txid, hex_tx} ->
-        respond(conn, nil, hex_tx, txid)
+    case content do
+      ["19HxigV4QyBv3tHpQVcUEQyq1pzZVdoAut", "" | _] ->
+        json(conn, %{code: 1, error: "no file data"})
 
-      {:error, msg} ->
-        json(conn, %{code: 1, error: msg})
+      content ->
+        case CoinManager.create_mnode(base_key.id, dir, onchain_path, content) do
+          {:ok, txid, hex_tx} ->
+            respond(conn, nil, hex_tx, txid)
+
+          {:error, msg} ->
+            json(conn, %{code: 1, error: msg})
+        end
     end
   end
 

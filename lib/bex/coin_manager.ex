@@ -94,7 +94,11 @@ defmodule Bex.CoinManager do
     else
       Logger.info("creating root mnode: #{iname}")
 
-      r = GenServer.call(__MODULE__, {:create_root_mnode, pkid, iname, content, opts})
+      r =
+        Repo.transaction(fn ->
+          do_create_root_mnode(pkid, iname, content, opts[:coin_sat] || @coin_sat, opts)
+        end)
+
       Logger.info(inspect(r))
       r
     end
@@ -106,7 +110,12 @@ defmodule Bex.CoinManager do
       {:error, "#{iname} already exists"}
     else
       Logger.info("creating child mnode: #{pname} >> #{iname}")
-      r = GenServer.call(__MODULE__, {:create_sub_mnode, pkid, pname, iname, content, opts})
+
+      r =
+        Repo.transaction(fn ->
+          do_create_sub_mnode(pkid, pname, iname, content, opts[:coin_sat] || @coin_sat, opts)
+        end)
+
       Logger.info(inspect(r))
       r
     end
@@ -341,27 +350,39 @@ defmodule Bex.CoinManager do
   use a utxo that equal to coin_sat
   """
   def send_opreturn(pkid, contents, coin_sat \\ @coin_sat, opts \\ []) do
-    n =
-      case opts[:inputs] do
-        nil -> 1
-        x when is_integer(x) -> x
+    Repo.transaction(fn ->
+      n =
+        case opts[:inputs] do
+          nil -> 1
+          x when is_integer(x) -> x
+        end
+
+      p = Repo.get!(PrivateKey, pkid)
+      {:ok, inputs} = do_get_coins(pkid, n, coin_sat)
+      IO.inspect(inputs)
+      outputs = [Utxo.return_utxo(contents)]
+
+      {change_script, change_pkid} = Utxo.change_to_address(p, opts)
+
+      case Utxo.handle_change(inputs, outputs, change_script, change_pkid) do
+        {:error, msg} ->
+          {:error, msg}
+
+        {:ok, inputs, outputs} ->
+          {:ok, txid, hex_tx} = Utxo.make_tx(inputs, outputs, coin_sat)
+          Txrepo.add(txid, hex_tx)
+          {:ok, txid, hex_tx}
       end
-
-    p = Repo.get!(PrivateKey, pkid)
-    {:ok, inputs} = do_get_coins(pkid, n, coin_sat)
-    outputs = [Utxo.return_utxo(contents)]
-
-    {change_script, change_pkid} = Utxo.change_to_address(p, opts)
-
-    case Utxo.handle_change(inputs, outputs, change_script, change_pkid) do
-      {:error, msg} ->
-        {:error, msg}
-
-      {:ok, inputs, outputs} ->
-        {:ok, txid, hex_tx} = Utxo.make_tx(inputs, outputs, coin_sat)
-        Txrepo.add(txid, hex_tx)
-        {:ok, txid, hex_tx}
+    end)
+    |> case do
+      {:ok, any} -> any
+      error -> error
     end
+  end
+
+  def test_concurrent(f) do
+    spawn(f)
+    spawn(f)
   end
 
   @doc """

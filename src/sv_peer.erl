@@ -434,21 +434,27 @@ parse_header(<<Head:80/bytes, Rest/binary>>) ->
       timestamp => Timestamp,
       bits => Bits,
       target => Target,
+      work => bits_to_work(Bits),
       difficulty => bits_to_difficulty(Bits),
       nonce => Nonce,
       tx_count => Tx_count,
       hash => Hash,
+      hex_hash => bin_to_hex(rev(Hash)),
+      int_hash => binary:decode_unsigned(Hash, little),
       txs => parse_txs(Rest2, [], Tx_count),
       pow_valid => verify_pow(Hash, Target)}.
 
 bits_to_difficulty(Bits) ->
     Target = decode_bits(Bits),
-    binary:decode_unsigned(?GENESIS_TARGET) / binary:decode_unsigned(Target).
+    ?GENESIS_TARGET / Target.
+
+bits_to_work(Bits) ->
+    Target = decode_bits(Bits),
+    math:pow(256, 32) / Target.
 
 verify_pow(Hash, Target) ->
     <<H:256/little-integer>> = Hash,
-    T = binary:decode_unsigned(Target),
-    H < T.
+    H < Target.
 
 parse_txs(_Bin, R, 0) ->
     lists:reverse(R);
@@ -471,7 +477,8 @@ decode_bits(Bits) when is_integer(Bits) ->
     decode_bits(binary:encode_unsigned(Bits));
 decode_bits(<<N, D/bytes>>) ->
     L = byte_size(D),
-    <<D/bytes, 0:((N-L)*8)>>.
+    B = <<D/bytes, 0:((N-L)*8)>>,
+    binary:decode_unsigned(B).
 
 % helper
 

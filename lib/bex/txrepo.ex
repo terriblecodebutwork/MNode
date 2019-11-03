@@ -16,7 +16,6 @@ defmodule Bex.Txrepo do
     )
   end
 
-
   # FIXME
   if Mix.env() == :test do
     def add(txid, hex_tx) when is_binary(hex_tx) and is_binary(txid) do
