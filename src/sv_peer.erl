@@ -294,6 +294,12 @@ parse(Other, Bin) ->
 %            status_bar => StatusBar,
 %            rpc_error => RPCError}};
 
+get_height_from_coinbase(<<0:8/integer, _/bytes>>) ->
+    0;
+get_height_from_coinbase(<<N:8/integer, Rest/bytes>>) ->
+    L = N*8,
+    <<H:L/integer-little, _/bytes>> = Rest,
+    H.
 
 parse_tx_in(Rest, R, 0) ->
     {lists:reverse(R), Rest};
@@ -301,8 +307,18 @@ parse_tx_in(Rest, R, 0) ->
 parse_tx_in(<<0:(32*8), Index:32/little, P/bytes>>, R, N) when N > 0 ->
     {L, R1} = parse_varint(P),
     <<Script:L/bytes, Seq:32/little, Rest/bytes>> = R1,
-    parse_tx_in(Rest, [#{tx_ref => <<0:(32*8)>>, txid => to_rpc_hex(<<0:(32*8)>>), index => Index, raw_script => Script, hex_script => bin_to_hex(Script) ,coinbase => true,
-                         script => bin_to_chars(Script), sequence => Seq}|R], N - 1);
+    Height = get_height_from_coinbase(Script),
+    parse_tx_in(Rest, [#{
+        tx_ref => <<0:(32*8)>>,
+        txid => to_rpc_hex(<<0:(32*8)>>),
+        index => Index,
+        height => Height,
+        raw_script => Script,
+        hex_script => bin_to_hex(Script),
+        coinbase => true,
+        script => bin_to_chars(Script),
+        sequence => Seq
+    }|R], N - 1);
 
 parse_tx_in(<<TX_ref:32/bytes, Index:32/little, P/bytes>>, R, N) when N > 0 ->
     {L, R1} = parse_varint(P),
