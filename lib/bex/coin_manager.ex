@@ -98,6 +98,7 @@ defmodule Bex.CoinManager do
         Repo.transaction(fn ->
           do_create_root_mnode(pkid, iname, content, opts[:coin_sat] || @coin_sat, opts)
         end)
+        |> extract_transaction()
 
       Logger.info(inspect(r))
       r
@@ -115,6 +116,7 @@ defmodule Bex.CoinManager do
         Repo.transaction(fn ->
           do_create_sub_mnode(pkid, pname, iname, content, opts[:coin_sat] || @coin_sat, opts)
         end)
+        |> extract_transaction()
 
       Logger.info(inspect(r))
       r
@@ -374,11 +376,11 @@ defmodule Bex.CoinManager do
           {:ok, txid, hex_tx}
       end
     end)
-    |> case do
-      {:ok, any} -> any
-      error -> error
-    end
+    |> extract_transaction()
   end
+
+  defp extract_transaction({:ok, any}), do: any
+  defp extract_transaction(other), do: other
 
   def test_concurrent(f) do
     spawn(f)
