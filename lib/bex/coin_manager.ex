@@ -400,25 +400,29 @@ defmodule Bex.CoinManager do
 
   defp do_create_root_mnode(pkid, iname, content, coin_sat, opts) do
     p = Repo.get!(PrivateKey, pkid)
-    {:ok, inputs} = do_get_coins(pkid, 1, coin_sat)
-    {:ok, c_key} = Wallet.derive_and_insert_key(p, p, iname)
+    case do_get_coins(pkid, 1, coin_sat) do
+      {:ok, inputs} ->
+        {:ok, c_key} = Wallet.derive_and_insert_key(p, p, iname)
 
-    c_permission_utxo = Utxo.c_permission_utxo(c_key)
+        c_permission_utxo = Utxo.c_permission_utxo(c_key)
 
-    meta = Utxo.meta_utxo(c_key.address, content)
-    outputs = [meta | List.duplicate(c_permission_utxo, @permission_num)]
+        meta = Utxo.meta_utxo(c_key.address, content)
+        outputs = [meta | List.duplicate(c_permission_utxo, @permission_num)]
 
-    {change_script, change_pkid} = Utxo.change_to_address(p, opts)
+        {change_script, change_pkid} = Utxo.change_to_address(p, opts)
 
-    case Utxo.handle_change(inputs, outputs, change_script, change_pkid) do
+        case Utxo.handle_change(inputs, outputs, change_script, change_pkid) do
+          {:error, msg} ->
+            {:error, msg}
+
+          {:ok, inputs, outputs} ->
+            {:ok, txid, hex_tx} = Utxo.make_tx(inputs, outputs, coin_sat)
+            Wallet.update_private_key(c_key, %{dir_txid: txid})
+            Txrepo.add(txid, hex_tx)
+            {:ok, txid, hex_tx}
+        end
       {:error, msg} ->
         {:error, msg}
-
-      {:ok, inputs, outputs} ->
-        {:ok, txid, hex_tx} = Utxo.make_tx(inputs, outputs, coin_sat)
-        Wallet.update_private_key(c_key, %{dir_txid: txid})
-        Txrepo.add(txid, hex_tx)
-        {:ok, txid, hex_tx}
     end
   end
 

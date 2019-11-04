@@ -12,20 +12,20 @@
     <%= @private_key.address %>
   </li>
 
-  <li>
+  <%# <li>
     <strong>Hex:</strong>
     <%= @private_key.hex %>
-  </li>
+  <%# </li> %>
 
   <li>
     <strong>Net:</strong>
     <%= @private_key.net %>
   </li>
 
-  <li>
+  <%# <li>
     <strong>WIF:</strong>
     <%= @private_key |> BexLib.Key.private_key_to_wif() %>
-  </li>
+  <%# </li> %>
 
   <li>
     <strong>APP_KEY:</strong>
