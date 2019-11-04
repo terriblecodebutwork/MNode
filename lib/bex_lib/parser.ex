@@ -45,17 +45,25 @@ defmodule BexLib.Parser do
       [tx.input, tx.output]
       |> Enum.map(fn x ->
         x
-        |> Enum.map(fn x ->
-          x
-          |> Map.delete(:raw_script)
-          |> Map.delete(:tx_ref)
-          |> Map.update!(:script, fn x ->
-            clean_script(x)
-          end)
-        end)
+        |> Enum.map(&do_clean/1)
       end)
 
     %{tx | input: new_in, output: new_out}
+  end
+
+  defp do_clean(x = %{coinbase: true}) do
+    x
+    |> Map.delete(:raw_script)
+    |> Map.delete(:tx_ref)
+    |> Map.update!(:script, &IO.chardata_to_string/1)
+  end
+  defp do_clean(x) do
+    x
+    |> Map.delete(:raw_script)
+    |> Map.delete(:tx_ref)
+    |> Map.update!(:script, fn x ->
+      clean_script(x)
+    end)
   end
 
   # for BexLib.Script.parse
