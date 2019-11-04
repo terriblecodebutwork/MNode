@@ -19,23 +19,27 @@ defmodule BexWeb.Router do
   scope "/", BexWeb do
     pipe_through :browser
 
-    scope(@admin_scope) do
-      live "/", IndexLive
-      live "/meta", MetaLive
-      resources "/keys", PrivateKeyController
-    end
-
     get "/", PageController, :index
     get "/txrepo", PageController, :show_tx
-
-    # resources "/utxos", UtxoController
-
     live "/parser", ParserLive
     live "/parser/:rawtx", ParserLive
     get "/ad", PageController, :ad
     get "/gun", PageController, :gun
     get "/chat", PageController, :chat
     get "/merkle", PageController, :merkle_page
+  end
+
+  scope "/mnode", BexWeb do
+    pipe_through :browser
+
+    scope(@admin_scope) do
+      live "/", IndexLive
+      get "/txrepo", PageController, :show_tx
+      live "/meta", MetaLive
+      resources "/keys", PrivateKeyController
+    end
+
+    # resources "/utxos", UtxoController
     # get "/m2/:net/deposit/:tx", DepositController, :deposit
   end
 
