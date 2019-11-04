@@ -37,5 +37,5 @@ Hooks.Scroll = {
   }
 }
 
-const liveSocket = new LiveSocket('/live', Socket, { hooks: Hooks })
+const liveSocket = new LiveSocket('/mnode/live', Socket, { hooks: Hooks })
 liveSocket.connect()

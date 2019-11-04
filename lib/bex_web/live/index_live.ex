@@ -5,7 +5,6 @@ defmodule BexWeb.IndexLive do
   use Phoenix.LiveView
   alias Bex.Wallet
   alias Bex.Repo
-  alias Bex.Wallet.Utxo
   alias Bex.Wallet.PrivateKey
   alias BexWeb.Router.Helpers, as: Routes
   alias BexLib.Bitindex

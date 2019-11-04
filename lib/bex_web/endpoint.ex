@@ -1,18 +1,18 @@
 defmodule BexWeb.Endpoint do
   use Phoenix.Endpoint, otp_app: :bex
 
-  socket "/socket", BexWeb.UserSocket,
+  socket "/mnode/socket", BexWeb.UserSocket,
     websocket: true,
     longpoll: false
 
-  socket "/live", Phoenix.LiveView.Socket
+  socket "/mnode/live", Phoenix.LiveView.Socket
 
   # Serve at "/" the static files from "priv/static" directory.
   #
   # You should set gzip to true if you are running phx.digest
   # when deploying your static files in production.
   plug Plug.Static,
-    at: "/",
+    at: "/mnode",
     from: :bex,
     gzip: false,
     only: ~w(css fonts images js favicon.ico robots.txt)

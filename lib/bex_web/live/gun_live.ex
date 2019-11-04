@@ -5,8 +5,6 @@ defmodule BexWeb.GunLive do
   alias BexLib.Key
   alias Bex.Wallet
   alias Bex.CoinManager
-  import Ecto.Query
-  alias Bex.Repo
   alias Bex.Txrepo
 
   @coin_sat Decimal.cast(999)
@@ -68,7 +66,6 @@ defmodule BexWeb.GunLive do
   def handle_event("gun", %{"target" => addr}, socket) do
     key = socket.assigns.key
     key2 = socket.assigns.key2
-    bullet = socket.assigns.bullet
 
     cond do
       Key.is_address?(addr) == false ->
