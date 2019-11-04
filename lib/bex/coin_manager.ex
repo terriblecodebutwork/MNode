@@ -370,7 +370,6 @@ defmodule Bex.CoinManager do
 
       p = Repo.get!(PrivateKey, pkid)
       {:ok, inputs} = do_get_coins(pkid, n, coin_sat)
-      IO.inspect(inputs)
       outputs = [Utxo.return_utxo(contents)]
 
       {change_script, change_pkid} = Utxo.change_to_address(p, opts)

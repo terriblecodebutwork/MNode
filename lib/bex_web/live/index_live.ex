@@ -122,7 +122,7 @@ defmodule BexWeb.IndexLive do
 
   def handle_event("send_utxo", %{"id" => id, "addr" => addr}, socket) do
     id = String.to_integer(id)
-    CoinManager.sweep_utxo(id, addr) |> IO.inspect()
+    CoinManager.sweep_utxo(id, addr)
     {:noreply, socket}
   end
 

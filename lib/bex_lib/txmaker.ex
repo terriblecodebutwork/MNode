@@ -310,22 +310,6 @@ defmodule BexLib.Txmaker do
     Decimal.mult(estimated_size, @sat_per_byte)
   end
 
-  # @doc """
-  # This function just for testing.
-  # send all balance back to sender, just minus fee.
-  # """
-  # def quick_send() do
-  #   priv = "1AEB4829D9E92290EF35A3812B363B0CA87DFDA2B628060648339E9452BC923A" |> Binary.from_hex()
-  #   addr = "1EMHJsiXjZmffBUWevGS5mWdoacmpt8vdH"
-  #   utxos = [Resource.utxos(addr) |> IO.inspect() |> Enum.max_by(fn x -> x.amount end)]
-
-  #   outputs = [
-  #     {addr, hd(utxos).amount - 230}
-  #   ]
-
-  #   create_p2pkh_transaction(priv, utxos, outputs)
-  #   |> broadcast()
-  # end
   def get_txid_from_binary_tx(bn) do
     Crypto.double_sha256(bn) |> Binary.reverse() |> Binary.to_hex()
   end
