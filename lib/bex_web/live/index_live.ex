@@ -98,6 +98,13 @@ defmodule BexWeb.IndexLive do
               <td>type: <%= u.type %></td>
               <td>txid: <%= u.txid %></td>
               <td>value: <%= u.value %></td>
+              <td>
+                <form phx-submit="send_utxo">
+                  <input type="text" name="addr" placeholder="Send to address">
+                  <input hidden name="id" value="<%= u.id %>">
+                  <button submit>Send</button>
+                </form>
+              </td>
             </tr>
             <% end %>
           <% end %>
@@ -111,6 +118,12 @@ defmodule BexWeb.IndexLive do
 
   def handle_event("meta", %{"id" => id}, socket) do
     {:noreply, redirect(socket, to: Routes.live_path(socket, BexWeb.MetaLive, id: id))}
+  end
+
+  def handle_event("send_utxo", %{"id" => id, "addr" => addr}, socket) do
+    id = String.to_integer(id)
+    CoinManager.sweep_utxo(id, addr) |> IO.inspect()
+    {:noreply, socket}
   end
 
   def handle_event("address", %{"address" => addr}, socket) do

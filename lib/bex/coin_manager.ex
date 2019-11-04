@@ -25,6 +25,15 @@ defmodule Bex.CoinManager do
   ## FIXME don't do anything when inputs is empty
   def sweep(key, target) do
     inputs = key |> Repo.preload(:utxos) |> Map.get(:utxos)
+    do_sweep(inputs, target)
+  end
+
+  def sweep_utxo(utxo_id, target) do
+    inputs = [Repo.get(Utxo, utxo_id)]
+    do_sweep(inputs, target)
+  end
+
+  defp do_sweep(inputs, target) do
     inputs_value = Utxo.sum_of_value(inputs)
     fee = Txmaker.estimate_tx_fee(length(inputs), 1, true, false)
     outputs = [Utxo.address_utxo(target, Decimal.sub(inputs_value, fee))]
