@@ -143,21 +143,12 @@ defmodule BexWeb.GunLive do
     target = socket.assigns.target
     Txrepo.turn_on()
 
-    if bullet > @clip do
-      for _ <- 1..@clip do
-        CoinManager.send_to_address(key2.id, target, @coin_sat)
-      end
-
-      bullet = bullet - @clip
-      # :timer.send_after 1000, self, {:shoot, bullet}
-      {:noreply, assign(socket, %{bullet: bullet, shooting: false})}
-    else
-      for _ <- 1..bullet do
-        CoinManager.send_to_address(key2.id, target, @coin_sat)
-      end
-
-      {:noreply, assign(socket, %{bullet: 0, shooting: false})}
+    bullet_use = min(bullet, @clip)
+    for _ <- 1..bullet_use do
+      CoinManager.send_to_address(key2.id, target, @coin_sat)
     end
+
+    {:noreply, assign(socket, %{bullet: bullet - bullet_use, shooting: false})}
   end
 
   defp count_coins(key) do

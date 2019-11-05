@@ -4,9 +4,6 @@ defmodule Bex.Store.MerkleSaver do
   @moduledoc """
   Get and Calc and Save the Merkles, check new block every interval ms.
   """
-  import Ecto.Query
-  alias Bex.Repo
-  alias Bex.Store.Merkle
   alias Bex.Store
   require Logger
 
@@ -170,7 +167,7 @@ defmodule Bex.Store.MerkleSaver do
     |> save_merkle_tree(h)
 
     Logger.info("block #{h} 's merkle path complete")
-    send(self, :download)
+    send(self(), :download)
 
     {:noreply, %{block_height: h + 1}}
   end

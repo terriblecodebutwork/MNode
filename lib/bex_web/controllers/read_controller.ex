@@ -2,13 +2,8 @@ defmodule BexWeb.ReadController do
   use BexWeb, :controller
 
   alias Bex.Wallet
-  alias Bex.Wallet.Utxo
-  alias BexLib.Bitindex
   alias Bex.CoinManager
-  alias Bex.Util
   alias Bex.MetaNode
-  alias BexLib.Key
-  alias Bex.KV
   require Logger
   import BexWeb.Plug
 

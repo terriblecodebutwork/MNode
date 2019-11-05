@@ -14,7 +14,6 @@ defmodule BexWeb.ChatLive do
   use Phoenix.LiveView
   require Logger
 
-  alias BexLib.Key
   alias Bex.Wallet
   alias Bex.CoinManager
   alias Bex.ChatEngine

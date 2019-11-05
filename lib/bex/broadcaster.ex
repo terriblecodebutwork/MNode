@@ -29,8 +29,6 @@ defmodule Bex.Broadcaster do
     GenServer.call(__MODULE__, :list_nodes)
   end
 
-  @interval 1000
-
   def init(state) do
     {:ok, state, {:continue, :get_nodes}}
   end
@@ -71,12 +69,6 @@ defmodule Bex.Broadcaster do
     for host <- nodes do
       :sv_peer.connect(host)
     end
-  end
-
-  defp check_tx(tx) do
-    :timer.sleep(5000)
-    txid = BexLib.Txmaker.get_txid_from_hex_tx(tx)
-    Logger.info("check tx:" <> inspect(SvApi.transaction(txid)))
   end
 
   def log_node() do

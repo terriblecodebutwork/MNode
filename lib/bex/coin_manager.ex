@@ -410,6 +410,7 @@ defmodule Bex.CoinManager do
 
   defp do_create_root_mnode(pkid, iname, content, coin_sat, opts) do
     p = Repo.get!(PrivateKey, pkid)
+
     case do_get_coins(pkid, 1, coin_sat) do
       {:ok, inputs} ->
         {:ok, c_key} = Wallet.derive_and_insert_key(p, p, iname)
@@ -431,6 +432,7 @@ defmodule Bex.CoinManager do
             Txrepo.add(txid, hex_tx)
             {:ok, txid, hex_tx}
         end
+
       {:error, msg} ->
         {:error, msg}
     end

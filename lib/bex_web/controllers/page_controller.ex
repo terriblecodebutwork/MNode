@@ -52,7 +52,7 @@ defmodule BexWeb.PageController do
           Logger.debug("key: #{key}; key2: #{key2}")
           conn
 
-        %{"key" => key} ->
+        %{"key" => _key} ->
           priv = Key.new_private_key() |> Binary.to_hex()
           {:ok, key2} = Wallet.create_private_key(%{"hex" => priv})
 

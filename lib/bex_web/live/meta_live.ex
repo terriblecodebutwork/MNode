@@ -5,11 +5,8 @@ defmodule BexWeb.MetaLive do
   use Phoenix.LiveView
   alias Bex.Wallet
   alias Bex.Repo
-  alias Bex.Wallet.Utxo
   alias Bex.Wallet.PrivateKey
   alias Bex.CoinManager
-  alias Bex.Util
-  # alias BexWeb.Router.Helpers, as: Routes
   require Logger
 
   def mount(_session, socket) do

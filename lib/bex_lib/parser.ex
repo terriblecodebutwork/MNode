@@ -57,6 +57,7 @@ defmodule BexLib.Parser do
     |> Map.delete(:tx_ref)
     |> Map.update!(:script, &IO.chardata_to_string/1)
   end
+
   defp do_clean(x) do
     x
     |> Map.delete(:raw_script)

@@ -1,6 +1,5 @@
 defmodule BexWeb.HookController do
   use BexWeb, :controller
-  alias BexLib.Key
   require Logger
 
   @secret "1b49274f7149c9472be2bb3fdc868c32"

@@ -7,7 +7,6 @@ defmodule Bex.Wallet.Utxo do
 
   use Ecto.Schema
   import Ecto.Changeset
-  import Ecto.Query
   alias Bex.Wallet.PrivateKey
   alias Bex.Wallet
   alias Bex.UtxoType
@@ -145,12 +144,7 @@ defmodule Bex.Wallet.Utxo do
       v = sum_of_value(inputs)
       coin_num = Decimal.div_int(v, coin_sat) |> Decimal.to_integer()
 
-      coin_num =
-        if coin_num > 1000 do
-          1000
-        else
-          coin_num
-        end
+      coin_num = min(coin_num, 1000)
 
       outputs =
         case opt do

@@ -2,11 +2,8 @@ defmodule BexWeb.AdLive do
   use Phoenix.LiveView
   require Logger
 
-  alias BexLib.Key
   alias Bex.Wallet
   alias Bex.CoinManager
-  import Ecto.Query
-  alias Bex.Repo
 
   @coin_sat Decimal.cast(1000)
 
@@ -69,7 +66,7 @@ defmodule BexWeb.AdLive do
       end
 
     if a !== 0 and a <= balance and byte_size(c) <= 800 do
-      send(self, {:do_send, a, c})
+      send(self(), {:do_send, a, c})
     end
 
     {:noreply, assign(socket, :sending, true) |> assign(:content, c)}

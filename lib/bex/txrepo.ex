@@ -10,23 +10,21 @@ defmodule Bex.Txrepo do
       __MODULE__,
       %{
         queue: :queue.new(),
-        status: :on
+        status: :off
       },
       name: __MODULE__
     )
   end
 
-  # FIXME
-  if Mix.env() == :test do
-    def add(txid, hex_tx) when is_binary(hex_tx) and is_binary(txid) do
-      GenServer.cast(__MODULE__, {:pending, {txid, hex_tx, nil}})
-    end
-  else
-    def add(txid, tx) do
-      spawn_link(fn ->
-        try_broadcast(txid, tx)
-      end)
-    end
+  def add(txid, hex_tx) when is_binary(hex_tx) and is_binary(txid) do
+    GenServer.cast(__MODULE__, {:pending, {txid, hex_tx, nil}})
+    turn_on()
+  end
+
+  def broadcast(txid, tx) do
+    spawn_link(fn ->
+      try_broadcast(txid, tx)
+    end)
   end
 
   def pending({_tx, _, "the transaction was rejected by network rules.\n\nMissing inputs\n" <> _}) do
@@ -38,7 +36,9 @@ defmodule Bex.Txrepo do
   end
 
   defp try_broadcast(txid, tx) do
-    case SvApi.broadcast(tx) do
+    r = SvApi.broadcast(tx)
+    Logger.info inspect(r)
+    case r do
       {:ok, _} ->
         :ok
 
@@ -63,10 +63,6 @@ defmodule Bex.Txrepo do
   end
 
   def init(state) do
-    if state.status == :on do
-      send(self(), :broadcast)
-    end
-
     {:ok, state}
   end
 
@@ -78,7 +74,11 @@ defmodule Bex.Txrepo do
     {:noreply, %{state | queue: :queue.in(info, q)}}
   end
 
-  def handle_cast(:turn_on, state) do
+  def handle_cast(:turn_on, state = %{status: :on}) do
+    {:noreply, state}
+  end
+
+  def handle_cast(:turn_on, state = %{status: :off}) do
     send(self(), :broadcast)
     {:noreply, %{state | status: :on}}
   end
@@ -90,13 +90,13 @@ defmodule Bex.Txrepo do
   def handle_info(:broadcast, state = %{queue: q, status: :on}) do
     case :queue.out(q) do
       {{:value, {txid, hex_tx, _msg}}, q1} ->
-        add(txid, hex_tx)
-        :timer.send_after(60_000, :broadcast)
+        broadcast(txid, hex_tx)
+        # IO.inspect :erlang.now()
+        :timer.send_after(1_000, :broadcast)
         {:noreply, %{state | queue: q1}}
 
       _ ->
-        :timer.send_after(60_000, :broadcast)
-        {:noreply, state}
+        {:noreply, %{state | status: :off} }
     end
   end
 
@@ -110,22 +110,4 @@ defmodule Bex.Txrepo do
     {:noreply, state}
   end
 
-  # defp do_broadcast(tx) do
-  #   case SvApi.broadcast(tx) do
-  #     {:error, msg} ->
-  #       Logger.error(tx <> "\n" <> msg)
-  #     _ ->
-  #       nil
-  #   end
-  # end
-
-  # defp do_broadcast(tx) do
-  #   # FIXME there is no way to know is tx been accepted
-  #   # maybe try to get the tx from SvApi?
-  #   Bex.Broadcaster.send_all(tx)
-
-  #   SvApi.broadcast(tx)
-  #   |> inspect()
-  #   |> Logger.debug()
-  # end
 end
