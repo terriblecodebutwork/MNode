@@ -244,8 +244,6 @@ defmodule Bex.Wallet.Utxo do
             {:ok, txid, hex_tx} = make_tx(inputs, outputs, coin_sat)
             Wallet.update_private_key(c_key, %{dir_txid: txid})
 
-            ChatEngine.notify(%{msg_id: c_dir, data: content, txid: txid, time: c_key.inserted_at})
-
             {:ok, txid, hex_tx}
         end
 

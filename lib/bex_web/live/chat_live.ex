@@ -35,6 +35,7 @@ defmodule BexWeb.ChatLive do
     base_key = Wallet.get_private_key!(@base_key_id)
     {:ok, lobby_key} = ChatEngine.key_of_dir(base_key, @lobby)
     chat_log = chat_log_under_key(lobby_key, 500)
+    children = for {k, _} <- chat_log, do: {k, children(k, 100, base_key)}, into: %{}
 
     {
       :ok,
@@ -49,7 +50,14 @@ defmodule BexWeb.ChatLive do
       |> assign(:content, "")
       |> assign(:size_limit, 0)
       |> assign(:chat_log, chat_log)
+      |> assign(:replying, nil)
+      |> assign(:children, children)
     }
+  end
+
+  def children(dir, limit, base_key) when is_integer(limit) do
+    {:ok, key} = ChatEngine.key_of_dir(base_key, dir)
+    chat_log_under_key(key, limit)
   end
 
   def render(assigns) do
@@ -58,12 +66,51 @@ defmodule BexWeb.ChatLive do
       <h2 style="margin: 0;background-color: orangered; ">Little LABA ---- <%= @reply_to %></h2>
       <div style="top: 10px; width: 100%; background-color: #fff; color: black;">
         <div phx-hook="Scroll" style="position: absolute; overflow-y: scroll; height: 75%; width: 100%; left: 0; top: 30px;;">
-          <%= for {_k, v} <- Enum.sort_by(@chat_log, fn {_k, v} ->
+          <%= for {k, v} <- Enum.sort_by(@chat_log, fn {_k, v} ->
                v.time
                |> DateTime.from_naive!("Etc/UTC")
                |> DateTime.to_unix()
              end) do %>
-          <div style="display: block;"><strong><%= String.slice(v.data["user"], 0, 5) %></strong>: <%= v.data["data"] %> <a target="_blank" href="https://whatsonchain.com/tx/<%= v.txid %>"><%= v.time %></a></div>
+          <div style="display: block; margin: 10px 5px;">
+            <div style="display: flex">
+              <div>
+                <strong><%= String.slice(v.data["user"], 0, 5) %></strong>
+              </div>
+              <div>
+                <a target="_blank" href="https://whatsonchain.com/tx/<%= v.txid %>"><%= v.time |> to_string() |> String.slice(0, 19) %></a>
+              </div>
+              <div>
+                <button phx-click="reply" phx-value-to="<%= k %>">回复/reply</button>
+              </div>
+            </div>
+            <div>
+              <%= v.data["data"] %>
+            </div>
+            <%= if @replying == k do %>
+            <form phx-change="editing" phx-submit="laba">
+              <input name="content" style="width: 70%; border-color: orangered; border-width: 1px;"></input>
+              <input hidden name="to" value="<%= k %>">
+              <button type="submit" style="background: white;">发送/send</button>
+            </from>
+            <% end %>
+            <div style="margin-left: 10px;">
+            <%= for {k, v} <- (@children[k] || []) do %>
+              <div style="display: block; margin: 10px 5px;">
+                <div style="display: flex">
+                  <div>
+                    <strong><%= String.slice(v.data["user"], 0, 5) %></strong>
+                  </div>
+                  <div>
+                    <a target="_blank" href="https://whatsonchain.com/tx/<%= v.txid %>"><%= v.time |> to_string() |> String.slice(0, 19) %></a>
+                  </div>
+                </div>
+                <div>
+                  <%= v.data["data"] %>
+                </div>
+              </div>
+            <% end %>
+            </div>
+          </div>
           <% end %>
         </div>
       </div>
@@ -71,7 +118,7 @@ defmodule BexWeb.ChatLive do
 
     <div style="height: 20%; width: 100%; bottom: 0; position: fixed; color: white; background-color: orangered;">
       <form phx-change="editing" phx-submit="laba">
-        <input name="content" style="width: 70%;"></input>
+        <input phx-click="nil_replying" name="content" style="width: 70%;"></input>
         <button type="submit" style="background: white;">发送/send</button>
       </from>
       <div>
@@ -86,6 +133,15 @@ defmodule BexWeb.ChatLive do
 
   @msg_size_limit 800
 
+  def handle_event("reply", %{"to" => to}, socket) do
+    IO.inspect to
+    {:noreply, assign(socket, %{replying: to})}
+  end
+
+  def handle_event("nil_replying", _, socket) do
+    {:noreply, assign(socket, %{replying: nil})}
+  end
+
   def handle_event("editing", %{"content" => c}, socket) do
     s = byte_size(c)
 
@@ -93,18 +149,18 @@ defmodule BexWeb.ChatLive do
       if s <= @msg_size_limit do
         s
       else
-        "过多"
+        "过多/too long"
       end
 
     {:noreply, assign(socket, :size_limit, size_limit)}
   end
 
-  def handle_event("laba", %{"content" => c}, socket) do
+  def handle_event("laba", %{"content" => c} = params, socket) do
     balance = socket.assigns.balance
     size = byte_size(c)
 
-    if size > 0 and size <= @msg_size_limit and balance >= 2 do
-      send(self(), {:do_send, c})
+    if size > 0 and size <= @msg_size_limit and balance >= -100 do
+      send(self(), {:do_send, c, params["to"]})
     end
 
     {:noreply, assign(socket, :content, c)}
@@ -123,34 +179,49 @@ defmodule BexWeb.ChatLive do
     {:noreply, assign(socket, %{loading: false, balance: balance})}
   end
 
-  def handle_info({:do_send, c}, socket) do
+  @lobby (@root_node <> "/" <> "大厅")
+
+  def handle_info({:do_send, c, to}, socket) do
     key = socket.assigns.key
     base_key = socket.assigns.base_key
     balance = socket.assigns.balance
+    pdir = to || @lobby
+    cdir = UUID.uuid1()
+    content = ["小喇叭聊天内容", Jason.encode!(%{data: c, user: key.address})]
 
     # FIXME add more channel
-    {:ok, _txid, _hex_tx} =
+    {:ok, txid, _hex_tx} =
       CoinManager.create_mnode(
         base_key.id,
-        @root_node <> "/" <> "大厅",
-        UUID.uuid1(),
-        ["小喇叭聊天内容", Jason.encode!(%{data: c, user: key.address})],
+        pdir,
+        cdir,
+        content,
         change_to: @payment_address,
         fund: {key.id, 2},
         coin_sat: @coin_sat
       )
+
+    ChatEngine.notify(%{pdir: pdir, msg_id: cdir, data: content, txid: txid, time: DateTime.utc_now() |> DateTime.to_naive()})
 
     :timer.sleep(500)
 
     {:noreply, assign(socket, %{balance: balance - 2, content: ""})}
   end
 
-  def handle_info({:chat, %{msg_id: msg_id, data: data, txid: txid, time: time}}, socket) do
+  def handle_info({:chat, %{pdir: pdir, msg_id: msg_id, data: data, txid: txid, time: time}}, socket) do
     chat_log = socket.assigns.chat_log
+    children = socket.assigns.children
     data = List.last(data) |> Jason.decode!()
+    msg = %{time: time, data: data, txid: txid}
 
-    {:noreply,
-     assign(socket, :chat_log, Map.put(chat_log, msg_id, %{time: time, data: data, txid: txid}))}
+    {
+      :noreply,
+      if pdir == @lobby do
+        assign(socket, :chat_log, Map.put(chat_log, msg_id, msg))
+      else
+        assign(socket, :children, Map.update(children, pdir, %{msg_id => msg}, fn x -> Map.put(x, msg_id, msg) end))
+      end
+    }
   end
 
   def handle_info(other, socket) do
