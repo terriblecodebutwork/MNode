@@ -1,17 +1,3 @@
-/* This file is for your main application css. */
-
-@import "./phoenix.css";
-@import "../../deps/phoenix_live_view/assets/css/live_view.css";
-
-/* .row {
-    border: 1px dotted blue;
-} */
-@import "../node_modules/normalize.css/normalize.css";
-
-button {
-    background-color: white;
-}
-
-input {
-    border-bottom: 1px;
-}
+@tailwind base;
+@tailwind components;
+@tailwind utilities;

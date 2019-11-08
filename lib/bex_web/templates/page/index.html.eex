@@ -1,16 +1,20 @@
-<ul>
-    <nav role="navigation">
-      <section class="container">
-        <div class="row">
-          <nav>
-            <a href="/chat">聊天室 ChatRoom/</a>
-            <a href="/ad">广告墙 AD Poster/</a>
-            <a href="/gun">提款机 ATM/</a>
-            <a href="/txrepo">传达室 Pending TX/</a>
-          </nav>
-        </div>
-      </section>
-    </nav>
-    <li><a href="/merkle">Merkle Path API</a></li>
-    <li><a href="/parser">Parse BSV TX</a></li>
+<ul class="flex">
+  <li class="mr-6">
+    <a class="text-blue-500 hover:text-blue-800" href="/chat">聊天室 ChatRoom/</a>
+   </li>
+  <li class="mr-6">
+    <a class="text-blue-500 hover:text-blue-800" href="/ad">广告墙 AD Poster/</a>
+   </li>
+  <li class="mr-6">
+    <a class="text-blue-500 hover:text-blue-800" href="/gun">提款机 ATM/</a>
+   </li>
+  <li class="mr-6">
+    <a class="text-blue-500 hover:text-blue-800" href="/txrepo">传达室 Pending TX/</a>
+  </li>
+  <li class="mr-6">
+    <a class="text-blue-500 hover:text-blue-800" href="/merkle">Merkle Path API</a>
+  </li>
+  <li class="mr-6">
+    <a class="text-blue-500 hover:text-blue-800" href="/parser">Parse BSV TX</a>
+  </li>
 </ul>
