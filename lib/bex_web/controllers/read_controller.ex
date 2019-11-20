@@ -15,6 +15,8 @@ defmodule BexWeb.ReadController do
     onchain_path = conn.assigns.onchain_path
 
     case MetaNode.get_node(base_key, onchain_path) do
+      nil ->
+        json(conn, %{code: 1, error: "can not find this path"})
       ["19HxigV4QyBv3tHpQVcUEQyq1pzZVdoAut", data, _type, "binary", _filename] ->
         conn
         |> put_resp_content_type("application/octet-stream", nil)
