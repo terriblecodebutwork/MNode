@@ -40,7 +40,7 @@ defmodule BexWeb.WriteController do
   #   create(conn, Map.merge(params, %{"parent" => parent, "name" => name}))
   # end
 
-  @chunk_size 90_000
+  @chunk_size 80_000
   @read_option [read_length: @chunk_size, length: 1_000]
 
   def write(conn, %{}) do
@@ -115,7 +115,12 @@ defmodule BexWeb.WriteController do
         end
 
       {:more, data, conn} ->
-        txids = [bcat_part(data, keyid) | txids]
+        txids =
+          if byte_size(data) > len do
+            multi_bcat(data, keyid, []) ++ txids
+          else
+            [bcat_part(data, keyid) | txids]
+          end
         read_remain_part(conn, txids, keyid)
     end
   end
