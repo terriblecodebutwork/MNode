@@ -29,6 +29,20 @@ defmodule BexWeb.Plug do
     end
   end
 
+  def fetch_onchain_secret(conn, _) do
+    case get_req_header(conn, "x-onchain-secret") do
+      [] -> conn
+      [secret] -> assign(conn, :onchain_secret, secret)
+    end
+  end
+
+  def fetch_onchain_info(conn, _) do
+    case get_req_header(conn, "x-onchain-info") do
+      [] -> conn
+      [info] -> assign(conn, :onchain_info, info)
+    end
+  end
+
   def fetch_onchain_path(conn, _) do
     case get_req_header(conn, "x-onchain-path") do
       [] ->

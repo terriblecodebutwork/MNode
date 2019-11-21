@@ -9,21 +9,39 @@ defmodule BexWeb.ReadController do
 
   plug :find_private_key
   plug :fetch_onchain_path
+  plug :fetch_onchain_secret
+
+  defp remove_prefix(["TimeSV.com" | t]), do: do_remove(t)
+  defp remove_prefix(other), do: other
+
+  defp do_remove(["|", rest]), do: rest
+  defp do_remove([h|t]), do: t
+
+  defp decrypt(data, secret) do
+    if secret != "" do
+      Crypto.aes256_decrypt(data, secret)
+    else
+      data
+    end
+  end
 
   def read(conn, %{}) do
     base_key = conn.assigns.private_key
     onchain_path = conn.assigns.onchain_path
+    onchain_secret = conn.assigns.onchain_secret || ""
 
-    case MetaNode.get_node(base_key, onchain_path) do
+    case MetaNode.get_node(base_key, onchain_path) |> remove_prefix() do
       nil ->
         json(conn, %{code: 1, error: "can not find this path"})
+
       ["19HxigV4QyBv3tHpQVcUEQyq1pzZVdoAut", data, _type, "binary", _filename] ->
+        data = decrypt(data, onchain_secret)
         conn
         |> put_resp_content_type("application/octet-stream", nil)
         |> send_resp(200, data)
 
       ["15DHFxWZJT58f9nhyGnsRBqrgwK4W6h4Up", _, _type, "binary", _filename, _ | txids] ->
-        Stream.resource(
+        data = Stream.resource(
           fn -> txids end,
           fn
             [] ->
@@ -39,11 +57,12 @@ defmodule BexWeb.ReadController do
           end,
           fn _ -> :ok end
         )
-        |> Enum.into(
-          conn
-          |> put_resp_content_type("application/octet-stream", nil)
-          |> send_chunked(200)
-        )
+        |> Enum.into("")
+        |> decrypt(onchain_secret)
+
+        conn
+        |> put_resp_content_type("application/octet-stream", nil)
+        |> send_resp(200, data)
     end
 
     # conn =

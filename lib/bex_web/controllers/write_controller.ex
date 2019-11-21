@@ -5,71 +5,50 @@ defmodule BexWeb.WriteController do
   alias Bex.CoinManager
   require Logger
   import BexWeb.Plug
+  alias BexLib.Crypto
 
   plug :find_private_key
   plug :fetch_onchain_path
-
-  # def create(conn, %{"parent" => false, "name" => c_dir} = params) do
-  #   c_dir = to_string(c_dir)
-  #   base_key = conn.assigns.private_key
-  #   content = deal_with_content(params)
-  #   {:ok, txid, hex_tx} = CoinManager.create_mnode(base_key.id, false, c_dir, content)
-  #   respond(conn, params, hex_tx, txid)
-  # end
-
-  # # It's a bit confusing, cause the different view of nodes.
-  # # In old code, we see the "parent" node as self node, and
-  # # "id" node as child node.
-  # def create(conn, %{"parent" => s_dir, "name" => c_dir} = params) do
-  #   s_dir = to_string(s_dir)
-  #   c_dir = to_string(c_dir)
-  #   base_key = conn.assigns.private_key
-  #   content = deal_with_content(params)
-  #   # use parent id and self id as dir, and need the root dir
-  #   case CoinManager.create_mnode(base_key.id, s_dir, c_dir, content) do
-  #     {:ok, txid, hex_tx} ->
-  #       respond(conn, params, hex_tx, txid)
-
-  #     {:error, _} ->
-  #       json(conn, %{code: 1, error: "mnode: #{s_dir}: No such file or directory"})
-  #   end
-  # end
-
-  # def create(conn, %{"path" => path} = params) do
-  #   {parent, name} = Util.path_to_name(path)
-  #   create(conn, Map.merge(params, %{"parent" => parent, "name" => name}))
-  # end
+  plug :fetch_onchain_info
+  plug :fetch_onchain_secret
 
   @chunk_size 80_000
-  @read_option [read_length: @chunk_size, length: 1_000]
+
+
+  defp encrypt(data, secret) do
+    if secret != "" do
+      Crypto.aes256_encrypt(data, secret)
+    else
+      data
+    end
+  end
 
   def write(conn, %{}) do
     base_key = conn.assigns.private_key
     onchain_path = conn.assigns.onchain_path
+    onchain_secret = conn.assigns.onchain_secret || ""
+    onchain_info = conn.assigns.onchain_info || ""
     filename = Path.basename(onchain_path)
     type = MIME.from_path(filename)
     dir = Path.dirname(onchain_path)
 
     content =
-      case read_body(conn, @read_option) do
+      case read_body(conn) do
         {:ok, data, _conn} when byte_size(data) <= @chunk_size ->
           # if file_size <= 90kb, use b://
-          ["19HxigV4QyBv3tHpQVcUEQyq1pzZVdoAut", data, type, "binary", filename]
+          data = encrypt(data, onchain_secret)
+          hash = Crypto.sha256(data)
+          ["TimeSV.com", onchain_info, hash, "|", "19HxigV4QyBv3tHpQVcUEQyq1pzZVdoAut", data, type, "binary", filename]
 
         {:ok, data, _conn} ->
           # data size larger than @chunk_size
+          data = encrypt(data, onchain_secret)
           txids =
             Enum.reverse(multi_bcat(data, base_key.id, []))
             |> Enum.map(&Binary.from_hex/1)
 
-          ["15DHFxWZJT58f9nhyGnsRBqrgwK4W6h4Up", " ", type, "binary", filename, " "] ++ txids
-
-        {:more, data, conn} ->
-          txids =
-            read_remain_part(conn, [bcat_part(data, base_key.id)], base_key.id)
-            |> Enum.map(&Binary.from_hex/1)
-
-          ["15DHFxWZJT58f9nhyGnsRBqrgwK4W6h4Up", " ", type, "binary", filename, " "] ++ txids
+          hash = Crypto.sha256(data)
+          ["TimeSV.com", onchain_info, hash, "|", "15DHFxWZJT58f9nhyGnsRBqrgwK4W6h4Up", " ", type, "binary", filename, " "] ++ txids
       end
 
     case content do
@@ -88,7 +67,7 @@ defmodule BexWeb.WriteController do
   end
 
   defp bcat_part(data, keyid) do
-    content = ["1ChDHzdd1H4wSjgGMHyndZm6qxEDGjqpJL", data]
+    content = ["TimeSV.com", "|", "1ChDHzdd1H4wSjgGMHyndZm6qxEDGjqpJL", data]
     {:ok, txid, _} = CoinManager.send_opreturn(keyid, content)
     txid
   end
@@ -100,28 +79,6 @@ defmodule BexWeb.WriteController do
 
       {part, rest} ->
         multi_bcat(part, keyid, [bcat_part(rest, keyid) | result])
-    end
-  end
-
-  defp read_remain_part(conn, txids, keyid) do
-    len = @chunk_size
-
-    case read_body(conn, @read_option) do
-      {:ok, data, _} ->
-        if byte_size(data) > len do
-          Enum.reverse(multi_bcat(data, keyid, []) ++ txids)
-        else
-          Enum.reverse([bcat_part(data, keyid) | txids])
-        end
-
-      {:more, data, conn} ->
-        txids =
-          if byte_size(data) > len do
-            multi_bcat(data, keyid, []) ++ txids
-          else
-            [bcat_part(data, keyid) | txids]
-          end
-        read_remain_part(conn, txids, keyid)
     end
   end
 
@@ -150,27 +107,6 @@ defmodule BexWeb.WriteController do
     json(conn, %{code: 0, txid: txid})
   end
 
-  # defp deal_with_content(params) do
-  #   case params["content"] do
-  #     b when is_binary(b) ->
-  #       [b]
-
-  #     m when is_map(m) ->
-  #       m
-  #       |> Enum.map(fn {k, v} ->
-  #         i = String.to_integer(k)
-  #         {i, v}
-  #       end)
-  #       |> Enum.sort()
-  #       |> Enum.map(fn {_, v} -> v end)
-
-  #     l when is_list(l) ->
-  #       l
-
-  #     _ ->
-  #       []
-  #   end
-  # end
 
   def find(conn, %{"name" => dir}) do
     base_key = conn.assigns.private_key
@@ -188,67 +124,5 @@ defmodule BexWeb.WriteController do
     find(conn, Map.put(params, "name", dir))
   end
 
-  # defp dir_type(dir) do
-  #   case String.contains?(dir, "/") do
-  #     true -> :noroot
-  #     false -> :root
-  #   end
-  # end
 
-  # defp right_base_key(b) do
-  #   if b.address == "1A1QQLSnKDm5YnvSdVgxKJsKBJZw4qBKNX" do
-  #     {:ok, b}
-  #   else
-  #     {:error, "wrong app key"}
-  #   end
-  # end
-
-  # defp right_netwrok("mainnet") do
-  #   case network do
-  #     "mainnet" ->
-  #       {:ok, "1A1QQLSnKDm5YnvSdVgxKJsKBJZw4qBKNX"}
-  #     "stn" ->
-  #       {:ok, "mpXMhPXm8FCLKuQ4M4fL9E5e3JAe1X6GnB"}
-  #     _ ->
-  #       {:error, "wrong network"}
-  #   end
-  # end
-
-  # def write(conn, params) do
-  #   base_key = conn.assigns.private_key
-
-  #     case read_body(conn, length: 90_000) do
-  #       {:ok, data, conn} ->
-  #         # if file_size <= 90kb, use b://
-  #         b_content = ["19HxigV4QyBv3tHpQVcUEQyq1pzZVdoAut", data, type, "binary", filename]
-  #         meta_content =
-  #           # use simple metanet style
-  #           # all child address are same
-  #           ["meta", address, dir_txid]
-  #         content = meta_content ++ b_content
-
-  #     end
-  #     text(conn, "ok")
-  #   else
-  #     text(conn, "wrong app_key")
-  #   end
-  # end
-
-  # defp find_dir_txid(net, dir) do
-  #   KV.get({net, dir})
-  # end
-
-  # defp continue(conn, base_key, address) do
-  #   onchain_path = get_req_header(conn, "x-onchain-path")
-  #   filename = Path.basename(onchain_path)
-  #   type = MIME.from_path(filename)
-  #   dir = Path.dirname(onchain_path)
-  #   dir_txid = KV.get({:dir, address, dir})
-
-  #   Logger.debug "onchain_path: #{onchain_path}"
-  #   Logger.debug "filename: #{filename}"
-  #   Logger.debug "type: #{type}"
-  #   Logger.debug "dir: #{dir}"
-  #   Logger.debug "address: #{address}"
-  #   Logger.debug "dir_txid: #{dir_txid}"
 end
