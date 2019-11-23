@@ -11,11 +11,11 @@ defmodule BexWeb.ReadController do
   plug :fetch_onchain_path
   plug :fetch_onchain_secret
 
-  defp remove_prefix(["TimeSV.com" | t]), do: do_remove(t)
-  defp remove_prefix(other), do: other
+  def remove_prefix(["TimeSV.com" | t]), do: do_remove(t)
+  def remove_prefix(other), do: other
 
-  defp do_remove(["|", rest]), do: rest
-  defp do_remove([h|t]), do: t
+  defp do_remove(["|" | rest]), do: rest
+  defp do_remove([h|t]), do: do_remove(t)
 
   defp decrypt(data, secret) do
     if secret != "" do

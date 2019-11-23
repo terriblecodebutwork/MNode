@@ -51,19 +51,14 @@ defmodule BexWeb.WriteController do
           ["TimeSV.com", onchain_info, hash, "|", "15DHFxWZJT58f9nhyGnsRBqrgwK4W6h4Up", " ", type, "binary", filename, " "] ++ txids
       end
 
-    case content do
-      ["19HxigV4QyBv3tHpQVcUEQyq1pzZVdoAut", "" | _] ->
-        json(conn, %{code: 1, error: "no file data"})
+      case CoinManager.create_mnode(base_key.id, dir, onchain_path, content) do
+        {:ok, txid, hex_tx} ->
+          respond(conn, nil, hex_tx, txid)
 
-      content ->
-        case CoinManager.create_mnode(base_key.id, dir, onchain_path, content) do
-          {:ok, txid, hex_tx} ->
-            respond(conn, nil, hex_tx, txid)
+        {:error, msg} ->
+          json(conn, %{code: 1, error: msg})
+      end
 
-          {:error, msg} ->
-            json(conn, %{code: 1, error: msg})
-        end
-    end
   end
 
   defp bcat_part(data, keyid) do
