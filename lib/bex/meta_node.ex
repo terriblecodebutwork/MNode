@@ -35,7 +35,6 @@ defmodule Bex.MetaNode do
         Script.parse(l)
         |> drop_metanet_metadata()
         |> Enum.reject(fn
-          "|" -> true
           x -> is_atom(x)
         end)
 
@@ -44,14 +43,18 @@ defmodule Bex.MetaNode do
     end
   end
 
-  defp drop_metanet_metadata([_, :OP_RETURN, "meta", _, _ | contents]) do
+  defp drop_metanet_metadata([_, :OP_RETURN, "meta", _, _, "|" | contents]) do
     contents
   end
-
-  defp drop_metanet_metadata([:OP_RETURN, "meta", _, _ | contents]) do
+  defp drop_metanet_metadata([:OP_RETURN, "meta", _, _, "|" | contents]) do
     contents
   end
-
+  defp drop_metanet_metadata([_, :OP_RETURN, "meta", _, _ ]) do
+    []
+  end
+  defp drop_metanet_metadata([:OP_RETURN, "meta", _, _ ]) do
+    []
+  end
   defp drop_metanet_metadata(contents) do
     contents
   end
