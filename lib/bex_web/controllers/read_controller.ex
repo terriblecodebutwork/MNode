@@ -6,6 +6,7 @@ defmodule BexWeb.ReadController do
   alias Bex.MetaNode
   require Logger
   import BexWeb.Plug
+  alias BexLib.Crypto
 
   plug :find_private_key
   plug :fetch_onchain_path
