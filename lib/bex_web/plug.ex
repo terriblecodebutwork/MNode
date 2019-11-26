@@ -31,14 +31,14 @@ defmodule BexWeb.Plug do
 
   def fetch_onchain_secret(conn, _) do
     case get_req_header(conn, "x-onchain-secret") do
-      [] -> conn
+      [] -> assign(conn, :onchain_secret, false)
       [secret] -> assign(conn, :onchain_secret, secret)
     end
   end
 
   def fetch_onchain_info(conn, _) do
     case get_req_header(conn, "x-onchain-info") do
-      [] -> conn
+      [] -> assign(conn, :onchain_info, false)
       [info] -> assign(conn, :onchain_info, info)
     end
   end
