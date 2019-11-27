@@ -81,7 +81,7 @@ defmodule BexWeb.WriteController do
 
   defp bcat_part(data, keyid) do
     content = ["TimeSV.com", "|", "1ChDHzdd1H4wSjgGMHyndZm6qxEDGjqpJL", data]
-    {:ok, txid, _} = CoinManager.send_opreturn(keyid, content, inputs: 2)
+    {:ok, txid, _} = CoinManager.send_opreturn(keyid, content, Decimal.cast(90_500), inputs: 2)
     txid
   end
 
