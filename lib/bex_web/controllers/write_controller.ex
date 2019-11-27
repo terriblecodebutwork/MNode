@@ -32,15 +32,15 @@ defmodule BexWeb.WriteController do
     type = MIME.from_path(filename)
     dir = Path.dirname(onchain_path)
 
-    content =
+    {content, conn} =
       case read_body(conn) do
-        {:ok, data, _conn} when byte_size(data) <= @chunk_size ->
+        {:ok, data, conn} when byte_size(data) <= @chunk_size ->
           # if file_size <= 90kb, use b://
           data = encrypt(data, onchain_secret)
           hash = Crypto.sha256(data)
-          ["TimeSV.com", onchain_info, hash, "|", "19HxigV4QyBv3tHpQVcUEQyq1pzZVdoAut", data, type, "binary", filename]
+          {["TimeSV.com", onchain_info, hash, "|", "19HxigV4QyBv3tHpQVcUEQyq1pzZVdoAut", data, type, "binary", filename], conn}
 
-        {:ok, data, _conn} ->
+        {:ok, data, conn} ->
           # data size larger than @chunk_size
           data = encrypt(data, onchain_secret)
           txids =
@@ -48,7 +48,16 @@ defmodule BexWeb.WriteController do
             |> Enum.map(&Binary.from_hex/1)
 
           hash = Crypto.sha256(data)
-          ["TimeSV.com", onchain_info, hash, "|", "15DHFxWZJT58f9nhyGnsRBqrgwK4W6h4Up", " ", type, "binary", filename, " "] ++ txids
+          {["TimeSV.com", onchain_info, hash, "|", "15DHFxWZJT58f9nhyGnsRBqrgwK4W6h4Up", " ", type, "binary", filename, " "] ++ txids, conn}
+        {:more, data, conn} ->
+          {:ok, data, conn} = read_all_data(conn, data)
+          data = encrypt(data, onchain_secret)
+          txids =
+            Enum.reverse(multi_bcat(data, base_key.id, []))
+            |> Enum.map(&Binary.from_hex/1)
+
+          hash = Crypto.sha256(data)
+          {["TimeSV.com", onchain_info, hash, "|", "15DHFxWZJT58f9nhyGnsRBqrgwK4W6h4Up", " ", type, "binary", filename, " "] ++ txids, conn}
       end
 
       case CoinManager.create_mnode(base_key.id, dir, onchain_path, content) do
@@ -59,6 +68,15 @@ defmodule BexWeb.WriteController do
           json(conn, %{code: 1, error: msg})
       end
 
+  end
+
+  defp read_all_data(conn, result) do
+    case read_body(conn) do
+      {:ok, data, conn} ->
+        {:ok, result <> data, conn}
+      {:more, data, conn} ->
+        read_all_data(conn, result <> data)
+    end
   end
 
   defp bcat_part(data, keyid) do

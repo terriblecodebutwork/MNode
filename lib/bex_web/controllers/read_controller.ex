@@ -36,10 +36,17 @@ defmodule BexWeb.ReadController do
         json(conn, %{code: 1, error: "can not find this path"})
 
       ["19HxigV4QyBv3tHpQVcUEQyq1pzZVdoAut", data, _type, "binary", _filename] ->
-        data = decrypt(data, onchain_secret)
-        conn
-        |> put_resp_content_type("application/octet-stream", nil)
-        |> send_resp(200, data)
+        case decrypt(data, onchain_secret) do
+          :error ->
+            json(conn, %{code: 1, error: "decrypt fail"})
+          data when is_binary(data) ->
+            conn
+            |> put_resp_content_type("application/octet-stream", nil)
+            |> send_resp(200, data)
+          _ ->
+            json(conn, %{code: 1, error: "unknown error in #{inspect __MODULE__}"})
+        end
+
 
       ["15DHFxWZJT58f9nhyGnsRBqrgwK4W6h4Up", _, _type, "binary", _filename, _ | txids] ->
         data = Stream.resource(
