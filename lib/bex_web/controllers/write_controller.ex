@@ -80,8 +80,9 @@ defmodule BexWeb.WriteController do
   end
 
   defp bcat_part(data, keyid) do
+    Logger.info("#{byte_size(data)} data is been sending as bcat")
     content = ["TimeSV.com", "|", "1ChDHzdd1H4wSjgGMHyndZm6qxEDGjqpJL", data]
-    {:ok, txid, _} = CoinManager.send_opreturn(keyid, content, Decimal.cast(90_500), inputs: 2)
+    {:ok, txid, _} = CoinManager.send_opreturn(keyid, content)
     txid
   end
 
@@ -91,7 +92,7 @@ defmodule BexWeb.WriteController do
         [bcat_part(part, keyid) | result]
 
       {part, rest} ->
-        multi_bcat(part, keyid, [bcat_part(rest, keyid) | result])
+        multi_bcat(rest, keyid, [bcat_part(part, keyid) | result])
     end
   end
 
