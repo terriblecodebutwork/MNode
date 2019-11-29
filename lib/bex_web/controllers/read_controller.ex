@@ -59,7 +59,7 @@ defmodule BexWeb.ReadController do
               [txid | txids] = txids
 
               ["1ChDHzdd1H4wSjgGMHyndZm6qxEDGjqpJL", data] =
-                MetaNode.get_utxo_data(Binary.to_hex(txid))
+                MetaNode.get_utxo_data(Binary.to_hex(txid)) |> remove_prefix()
 
               {[data], txids}
           end,
