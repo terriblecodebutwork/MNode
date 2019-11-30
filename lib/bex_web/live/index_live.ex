@@ -45,6 +45,9 @@ defmodule BexWeb.IndexLive do
 
   def render(assigns) do
     ~L"""
+    <%= if @loading do %>
+    <h4>Loading...</h4>
+    <% end %>
     <%= if @private_keys == [nil] do %>
       <a href="<%= @url %>/keys/new" >导入私钥</a><span></span>
       <a href="<%= @url %>/keys">全部地址</a>
@@ -58,11 +61,8 @@ defmodule BexWeb.IndexLive do
       </div>
 
       <button phx-click="resync_all" >重新同步全部 UTXO</button>
-      <% else %>
 
-      <%= if @loading do %>
-      <h4>Loading...</h4>
-      <% end %>
+      <% else %>
 
       <div>
         <table border="1">
