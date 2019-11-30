@@ -56,6 +56,8 @@ defmodule BexWeb.IndexLive do
           <button type="submit">查询</button>
         </form>
       </div>
+
+      <button phx-click="resync_utxo" >重新同步全部 UTXO</button>
       <% else %>
 
       <%= if @loading do %>
@@ -148,7 +150,7 @@ defmodule BexWeb.IndexLive do
   end
 
   def handle_info("resync_all", socket) do
-    list = socket.assigns.private_keys
+    list = Repo.all(PrivateKey)
 
     for x <- list do
       Wallet.sync_utxos_of_private_key(x)

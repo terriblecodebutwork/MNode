@@ -97,7 +97,7 @@ defmodule BexWeb.WriteController do
            ] ++ txids, conn}
       end
 
-    case CoinManager.create_mnode(base_key.id, dir, onchain_path, content, without_permission: true) do
+    case CoinManager.create_mnode(base_key.id, dir, onchain_path, content, without_permission: false) do
       {:ok, txid, hex_tx} ->
         respond(conn, nil, hex_tx, txid)
 
@@ -145,7 +145,7 @@ defmodule BexWeb.WriteController do
         Path.dirname(onchain_path)
       end
 
-    case CoinManager.create_mnode(base_key.id, dir, onchain_path, [Path.basename(onchain_path)], without_permission: true) do
+    case CoinManager.create_mnode(base_key.id, dir, onchain_path, [Path.basename(onchain_path)], without_permission: false) do
       {:ok, txid, hex_tx} ->
         respond(conn, nil, hex_tx, txid)
 
