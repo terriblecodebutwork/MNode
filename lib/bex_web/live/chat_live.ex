@@ -94,7 +94,7 @@ defmodule BexWeb.ChatLive do
             </from>
             <% end %>
             <div style="margin-left: 10px;">
-            <%= for {k, v} <- (@children[k] || []) do %>
+            <%= for {_k, v} <- (@children[k] || []) do %>
               <div style="display: block; margin: 10px 5px;">
                 <div style="display: flex">
                   <div>

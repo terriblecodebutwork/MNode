@@ -16,7 +16,7 @@ defmodule BexWeb.ReadController do
   def remove_prefix(other), do: other
 
   defp do_remove(["|" | rest]), do: rest
-  defp do_remove([h | t]), do: do_remove(t)
+  defp do_remove([_h | t]), do: do_remove(t)
 
   defp decrypt(data, secret) do
     if secret != "" do

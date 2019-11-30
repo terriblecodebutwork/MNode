@@ -16,7 +16,6 @@ defmodule Bex.Wallet.Utxo do
   alias BexLib.Script
   alias __MODULE__
   alias Bex.CoinManager
-  alias Bex.ChatEngine
   require Logger
   # alias Bex.Wallet.Mission
 
@@ -207,7 +206,12 @@ defmodule Bex.Wallet.Utxo do
   # s_ self
   def create_sub_dir(s_key, c_dir, content, coin_sat, opts) do
     base_key = Repo.preload(s_key, :base_key).base_key
-    s_permission = Wallet.get_a_permission(s_key)
+    s_permissions =
+      if opts[:without_permission] do
+        []
+      else
+        [Wallet.get_a_permission(s_key)]
+      end
 
     funds =
       case opts[:fund] do
@@ -220,18 +224,26 @@ defmodule Bex.Wallet.Utxo do
 
     case funds do
       {:ok, funds} ->
-        inputs = [s_permission | funds]
+        inputs = s_permissions ++ funds
         {:ok, c_key} = Wallet.derive_and_insert_key(base_key, s_key, c_dir)
 
-        c_permission_utxo = c_permission_utxo(c_key)
+        c_permissions =
+          if opts[:without_permission] do
+            []
+          else
+            c_permission_utxo(c_key)
+            |> List.duplicate(@permission_num)
+          end
+
+        permissions = s_permissions ++ c_permissions
 
         # is seems first param should be derived key's address
         meta = meta_utxo(c_key.address, content, s_key.dir_txid)
 
         outputs = [
-          meta,
+          meta
           # reuse self permission
-          s_permission | List.duplicate(c_permission_utxo, @permission_num)
+          | permissions
         ]
 
         {change_script, change_pkid} = change_to_address(base_key, opts)

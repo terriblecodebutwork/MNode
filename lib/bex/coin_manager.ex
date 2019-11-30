@@ -415,10 +415,16 @@ defmodule Bex.CoinManager do
       {:ok, inputs} ->
         {:ok, c_key} = Wallet.derive_and_insert_key(p, p, iname)
 
-        c_permission_utxo = Utxo.c_permission_utxo(c_key)
+        c_permission_utxos =
+          if opts[:without_permission] do
+            []
+          else
+            Utxo.c_permission_utxo(c_key)
+            |> List.duplicate(@permission_num)
+          end
 
         meta = Utxo.meta_utxo(c_key.address, content)
-        outputs = [meta | List.duplicate(c_permission_utxo, @permission_num)]
+        outputs = [meta | c_permission_utxos]
 
         {change_script, change_pkid} = Utxo.change_to_address(p, opts)
 
