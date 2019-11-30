@@ -12,12 +12,21 @@
   147, 30, 131, 101, 225, 90, 8, 156, 104, 214, 25, 0, 0, 0, 0, 0>>).
 -define(GENESIS_TARGET, decode_bits(16#1d00ffff)).
 
--record(peer, {state = start, host, port, socket, buffer, parent}).
+-record(peer, {state = start, host, port, socket, buffer, parent, handshake = false}).
 
 connect(Host) -> connect(Host, false).
 
 connect(Host, Parent) ->
     spawn_link(fun() -> do_connect(Host, Parent) end).
+
+handshake(Host) ->
+    case gen_tcp:connect(Host, 8333, [binary, {packet, 0}, {active, false}]) of
+        {ok, Socket} ->
+            loop(#peer{socket=Socket, host=Host, handshake=true, parent=false});
+        _ ->
+            timer:sleep(10000),
+            error
+    end.
 
 do_connect(Host, Parent) ->
     case gen_tcp:connect(Host, 8333, [binary, {packet, 0}, {active, false}]) of
@@ -42,10 +51,16 @@ loop(#peer{state = version_sent} = P) ->
             do_connect(P#peer.host, P#peer.parent)
     end;
 
-loop(#peer{state = loop, socket = Socket} = P) ->
+loop(#peer{state = loop, socket = Socket, handshake = Handshake} = P) ->
     receive
         version ->
-            send_message(Socket, version_msg());
+            case Handshake of
+                true ->
+                    gen_tcp:close(Socket),
+                    exit(normal);
+                _ ->
+                    send_message(Socket, version_msg())
+            end;
         ping ->
             send_message(Socket, ping_msg());
         getheaders ->

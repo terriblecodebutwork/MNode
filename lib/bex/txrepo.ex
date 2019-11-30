@@ -35,15 +35,26 @@ defmodule Bex.Txrepo do
     GenServer.cast(__MODULE__, {:pending, info})
   end
 
-  defp try_broadcast(txid, tx) do
-    r = SvApi.broadcast(tx)
-    Logger.info inspect(r)
-    case r do
-      {:ok, _} ->
-        :ok
+  def send_via_quickapi(tx) do
+    HTTPoison.post("http://localhost:8000", tx)
+  end
 
-      {:error, msg} ->
-        pending({txid, tx, msg})
+  defp try_broadcast(txid, tx) do
+    case send_via_quickapi(tx) do
+      {:ok, resp} ->
+        Logger.info(inspect(resp.body))
+
+      _ ->
+        r = SvApi.broadcast(tx)
+        Logger.info(inspect(r))
+
+        case r do
+          {:ok, _} ->
+            :ok
+
+          {:error, msg} ->
+            pending({txid, tx, msg})
+        end
     end
   end
 
@@ -96,7 +107,7 @@ defmodule Bex.Txrepo do
         {:noreply, %{state | queue: q1}}
 
       _ ->
-        {:noreply, %{state | status: :off} }
+        {:noreply, %{state | status: :off}}
     end
   end
 
@@ -109,5 +120,4 @@ defmodule Bex.Txrepo do
     Logger.error(inspect(other))
     {:noreply, state}
   end
-
 end

@@ -134,7 +134,7 @@ defmodule BexWeb.ChatLive do
   @msg_size_limit 800
 
   def handle_event("reply", %{"to" => to}, socket) do
-    IO.inspect to
+    IO.inspect(to)
     {:noreply, assign(socket, %{replying: to})}
   end
 
@@ -179,7 +179,7 @@ defmodule BexWeb.ChatLive do
     {:noreply, assign(socket, %{loading: false, balance: balance})}
   end
 
-  @lobby (@root_node <> "/" <> "大厅")
+  @lobby @root_node <> "/" <> "大厅"
 
   def handle_info({:do_send, c, to}, socket) do
     key = socket.assigns.key
@@ -201,14 +201,23 @@ defmodule BexWeb.ChatLive do
         coin_sat: @coin_sat
       )
 
-    ChatEngine.notify(%{pdir: pdir, msg_id: cdir, data: content, txid: txid, time: DateTime.utc_now() |> DateTime.to_naive()})
+    ChatEngine.notify(%{
+      pdir: pdir,
+      msg_id: cdir,
+      data: content,
+      txid: txid,
+      time: DateTime.utc_now() |> DateTime.to_naive()
+    })
 
     :timer.sleep(500)
 
     {:noreply, assign(socket, %{balance: balance - 2, content: ""})}
   end
 
-  def handle_info({:chat, %{pdir: pdir, msg_id: msg_id, data: data, txid: txid, time: time}}, socket) do
+  def handle_info(
+        {:chat, %{pdir: pdir, msg_id: msg_id, data: data, txid: txid, time: time}},
+        socket
+      ) do
     chat_log = socket.assigns.chat_log
     children = socket.assigns.children
     data = List.last(data) |> Jason.decode!()
@@ -219,7 +228,11 @@ defmodule BexWeb.ChatLive do
       if pdir == @lobby do
         assign(socket, :chat_log, Map.put(chat_log, msg_id, msg))
       else
-        assign(socket, :children, Map.update(children, pdir, %{msg_id => msg}, fn x -> Map.put(x, msg_id, msg) end))
+        assign(
+          socket,
+          :children,
+          Map.update(children, pdir, %{msg_id => msg}, fn x -> Map.put(x, msg_id, msg) end)
+        )
       end
     }
   end

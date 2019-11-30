@@ -144,6 +144,7 @@ defmodule BexWeb.GunLive do
     Txrepo.turn_on()
 
     bullet_use = min(bullet, @clip)
+
     for _ <- 1..bullet_use do
       CoinManager.send_to_address(key2.id, target, @coin_sat)
     end

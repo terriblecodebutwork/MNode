@@ -37,15 +37,16 @@ defmodule BexLib.Crypto do
     |> Base.encode16(case: :lower)
   end
 
-
-  @aad "AES256GCM" # Use AES 256 Bit Keys for Encryption.
+  # Use AES 256 Bit Keys for Encryption.
+  @aad "AES256GCM"
 
   def aes256_encrypt(plaintext, key) do
     key = Binary.pad_trailing(key, 32)
-    iv = :crypto.strong_rand_bytes(16) # create random Initialisation Vector
-    {ciphertext, tag} =
-      :crypto.block_encrypt(:aes_gcm, key, iv, {@aad, to_string(plaintext), 16})
-    iv <> tag <> ciphertext # "return" iv with the cipher tag & ciphertext
+    # create random Initialisation Vector
+    iv = :crypto.strong_rand_bytes(16)
+    {ciphertext, tag} = :crypto.block_encrypt(:aes_gcm, key, iv, {@aad, to_string(plaintext), 16})
+    # "return" iv with the cipher tag & ciphertext
+    iv <> tag <> ciphertext
   end
 
   def aes256_decrypt(ciphertext, key) do

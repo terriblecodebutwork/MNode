@@ -14,7 +14,6 @@ defmodule BexWeb.WriteController do
 
   @chunk_size 80_000
 
-
   defp encrypt(data, secret) do
     if secret != "" do
       Crypto.aes256_encrypt(data, secret)
@@ -38,42 +37,80 @@ defmodule BexWeb.WriteController do
           # if file_size <= 90kb, use b://
           data = encrypt(data, onchain_secret)
           hash = Crypto.sha256(data)
-          {["TimeSV.com", onchain_info, hash, "|", "19HxigV4QyBv3tHpQVcUEQyq1pzZVdoAut", data, type, "binary", filename], conn}
+
+          {[
+             "TimeSV.com",
+             onchain_info,
+             hash,
+             "|",
+             "19HxigV4QyBv3tHpQVcUEQyq1pzZVdoAut",
+             data,
+             type,
+             "binary",
+             filename
+           ], conn}
 
         {:ok, data, conn} ->
           # data size larger than @chunk_size
           data = encrypt(data, onchain_secret)
+
           txids =
             Enum.reverse(multi_bcat(data, base_key.id, []))
             |> Enum.map(&Binary.from_hex/1)
 
           hash = Crypto.sha256(data)
-          {["TimeSV.com", onchain_info, hash, "|", "15DHFxWZJT58f9nhyGnsRBqrgwK4W6h4Up", " ", type, "binary", filename, " "] ++ txids, conn}
+
+          {[
+             "TimeSV.com",
+             onchain_info,
+             hash,
+             "|",
+             "15DHFxWZJT58f9nhyGnsRBqrgwK4W6h4Up",
+             " ",
+             type,
+             "binary",
+             filename,
+             " "
+           ] ++ txids, conn}
+
         {:more, data, conn} ->
           {:ok, data, conn} = read_all_data(conn, data)
           data = encrypt(data, onchain_secret)
+
           txids =
             Enum.reverse(multi_bcat(data, base_key.id, []))
             |> Enum.map(&Binary.from_hex/1)
 
           hash = Crypto.sha256(data)
-          {["TimeSV.com", onchain_info, hash, "|", "15DHFxWZJT58f9nhyGnsRBqrgwK4W6h4Up", " ", type, "binary", filename, " "] ++ txids, conn}
+
+          {[
+             "TimeSV.com",
+             onchain_info,
+             hash,
+             "|",
+             "15DHFxWZJT58f9nhyGnsRBqrgwK4W6h4Up",
+             " ",
+             type,
+             "binary",
+             filename,
+             " "
+           ] ++ txids, conn}
       end
 
-      case CoinManager.create_mnode(base_key.id, dir, onchain_path, content) do
-        {:ok, txid, hex_tx} ->
-          respond(conn, nil, hex_tx, txid)
+    case CoinManager.create_mnode(base_key.id, dir, onchain_path, content) do
+      {:ok, txid, hex_tx} ->
+        respond(conn, nil, hex_tx, txid)
 
-        {:error, msg} ->
-          json(conn, %{code: 1, error: msg})
-      end
-
+      {:error, msg} ->
+        json(conn, %{code: 1, error: msg})
+    end
   end
 
   defp read_all_data(conn, result) do
     case read_body(conn) do
       {:ok, data, conn} ->
         {:ok, result <> data, conn}
+
       {:more, data, conn} ->
         read_all_data(conn, result <> data)
     end
@@ -121,7 +158,6 @@ defmodule BexWeb.WriteController do
     json(conn, %{code: 0, txid: txid})
   end
 
-
   def find(conn, %{"name" => dir}) do
     base_key = conn.assigns.private_key
 
@@ -137,6 +173,4 @@ defmodule BexWeb.WriteController do
   def find(conn, %{"path" => dir} = params) do
     find(conn, Map.put(params, "name", dir))
   end
-
-
 end

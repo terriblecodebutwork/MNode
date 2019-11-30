@@ -46,15 +46,19 @@ defmodule Bex.MetaNode do
   defp drop_metanet_metadata([_, :OP_RETURN, "meta", _, _, "|" | contents]) do
     contents
   end
+
   defp drop_metanet_metadata([:OP_RETURN, "meta", _, _, "|" | contents]) do
     contents
   end
-  defp drop_metanet_metadata([_, :OP_RETURN, "meta", _, _ ]) do
+
+  defp drop_metanet_metadata([_, :OP_RETURN, "meta", _, _]) do
     []
   end
-  defp drop_metanet_metadata([:OP_RETURN, "meta", _, _ ]) do
+
+  defp drop_metanet_metadata([:OP_RETURN, "meta", _, _]) do
     []
   end
+
   defp drop_metanet_metadata(contents) do
     contents
   end

@@ -16,7 +16,7 @@ defmodule BexWeb.ReadController do
   def remove_prefix(other), do: other
 
   defp do_remove(["|" | rest]), do: rest
-  defp do_remove([h|t]), do: do_remove(t)
+  defp do_remove([h | t]), do: do_remove(t)
 
   defp decrypt(data, secret) do
     if secret != "" do
@@ -39,34 +39,36 @@ defmodule BexWeb.ReadController do
         case decrypt(data, onchain_secret) do
           :error ->
             json(conn, %{code: 1, error: "decrypt fail"})
+
           data when is_binary(data) ->
             conn
             |> put_resp_content_type("application/octet-stream", nil)
             |> send_resp(200, data)
+
           _ ->
-            json(conn, %{code: 1, error: "unknown error in #{inspect __MODULE__}"})
+            json(conn, %{code: 1, error: "unknown error in #{inspect(__MODULE__)}"})
         end
 
-
       ["15DHFxWZJT58f9nhyGnsRBqrgwK4W6h4Up", _, _type, "binary", _filename, _ | txids] ->
-        data = Stream.resource(
-          fn -> txids end,
-          fn
-            [] ->
-              {:halt, :ok}
+        data =
+          Stream.resource(
+            fn -> txids end,
+            fn
+              [] ->
+                {:halt, :ok}
 
-            txids ->
-              [txid | txids] = txids
+              txids ->
+                [txid | txids] = txids
 
-              ["1ChDHzdd1H4wSjgGMHyndZm6qxEDGjqpJL", data] =
-                MetaNode.get_utxo_data(Binary.to_hex(txid)) |> remove_prefix()
+                ["1ChDHzdd1H4wSjgGMHyndZm6qxEDGjqpJL", data] =
+                  MetaNode.get_utxo_data(Binary.to_hex(txid)) |> remove_prefix()
 
-              {[data], txids}
-          end,
-          fn _ -> :ok end
-        )
-        |> Enum.into("")
-        |> decrypt(onchain_secret)
+                {[data], txids}
+            end,
+            fn _ -> :ok end
+          )
+          |> Enum.into("")
+          |> decrypt(onchain_secret)
 
         conn
         |> put_resp_content_type("application/octet-stream", nil)
