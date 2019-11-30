@@ -40,21 +40,17 @@ defmodule Bex.Txrepo do
   end
 
   defp try_broadcast(txid, tx) do
-    case send_via_quickapi(tx) do
-      {:ok, resp} ->
-        Logger.info(inspect(resp.body))
+    Logger.info "#{__MODULE__} broadcasting #{txid}"
+    send_via_quickapi(tx)
+    r = SvApi.broadcast(tx)
+    Logger.info(inspect(r))
 
-      _ ->
-        r = SvApi.broadcast(tx)
-        Logger.info(inspect(r))
+    case r do
+      {:ok, _} ->
+        :ok
 
-        case r do
-          {:ok, _} ->
-            :ok
-
-          {:error, msg} ->
-            pending({txid, tx, msg})
-        end
+      {:error, msg} ->
+        pending({txid, tx, msg})
     end
   end
 
