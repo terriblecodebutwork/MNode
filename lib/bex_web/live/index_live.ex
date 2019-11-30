@@ -57,7 +57,7 @@ defmodule BexWeb.IndexLive do
         </form>
       </div>
 
-      <button phx-click="resync_utxo" >重新同步全部 UTXO</button>
+      <button phx-click="resync_all" >重新同步全部 UTXO</button>
       <% else %>
 
       <%= if @loading do %>
