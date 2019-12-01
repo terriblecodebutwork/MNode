@@ -17,6 +17,7 @@ defmodule Bex.Txrepo do
   end
 
   def add(txid, hex_tx) when is_binary(hex_tx) and is_binary(txid) do
+    Bex.KV.save_tx(hex_tx)
     GenServer.cast(__MODULE__, {:pending, {txid, hex_tx, nil}})
     turn_on()
   end
@@ -40,7 +41,7 @@ defmodule Bex.Txrepo do
   end
 
   defp try_broadcast(txid, tx) do
-    Logger.info "#{__MODULE__} broadcasting #{txid}: #{tx}"
+    Logger.debug "#{__MODULE__} broadcasting #{txid}: #{tx}"
     send_via_quickapi(tx)
     r = SvApi.broadcast(tx)
     Logger.debug(inspect(r))

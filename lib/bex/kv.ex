@@ -5,6 +5,11 @@ defmodule Bex.KV do
     GenServer.start_link(__MODULE__, :ok, name: __MODULE__)
   end
 
+  def save_tx(hex_tx) do
+    key = {:tx, DateTime.utc_now()}
+    put(key , hex_tx)
+  end
+
   def get(key) do
     GenServer.call(__MODULE__, {:get, key})
   end
