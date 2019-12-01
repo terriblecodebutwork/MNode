@@ -50,7 +50,7 @@ defmodule BexLib.Crypto do
   end
 
   def aes256_decrypt(ciphertext, key) do
-    key = Binary.pad_trailing(key, 32)
+    {key, _} = Binary.pad_trailing(key, 32) |> Binary.split_at(32)
     <<iv::binary-16, tag::binary-16, ciphertext::binary>> = ciphertext
     :crypto.block_decrypt(:aes_gcm, key, iv, {@aad, ciphertext, tag})
   end
