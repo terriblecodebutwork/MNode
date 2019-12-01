@@ -27,7 +27,7 @@ defmodule Bex.Txrepo do
     end)
   end
 
-  def pending({_tx, _, "the transaction was rejected by network rules.\n\nMissing inputs\n" <> _}) do
+  def pending({_tx, _, "the transaction was rejected by network rules." <> _}) do
     nil
   end
 
@@ -40,10 +40,10 @@ defmodule Bex.Txrepo do
   end
 
   defp try_broadcast(txid, tx) do
-    Logger.info "#{__MODULE__} broadcasting #{txid}"
+    Logger.info "#{__MODULE__} broadcasting #{txid}: #{tx}"
     send_via_quickapi(tx)
     r = SvApi.broadcast(tx)
-    Logger.info(inspect(r))
+    Logger.debug(inspect(r))
 
     case r do
       {:ok, _} ->

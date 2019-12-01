@@ -41,7 +41,7 @@ defmodule BexLib.Crypto do
   @aad "AES256GCM"
 
   def aes256_encrypt(plaintext, key) do
-    key = Binary.pad_trailing(key, 32)
+    {key, _} = Binary.pad_trailing(key, 32) |> Binary.split_at(32)
     # create random Initialisation Vector
     iv = :crypto.strong_rand_bytes(16)
     {ciphertext, tag} = :crypto.block_encrypt(:aes_gcm, key, iv, {@aad, to_string(plaintext), 16})
