@@ -22,23 +22,27 @@ defmodule Bex.QuickApi do
     state |> open_and_monitor_quickapi()
   end
 
-  def handle_info({port, {:data, 'connection closed\n'}}, %{ip: ip, port: port, ref: ref, rejected: rejected} = state) do
+  def handle_info(
+        {port, {:data, 'connection closed\n'}},
+        %{ip: ip, port: port, ref: ref, rejected: rejected} = state
+      ) do
     Port.demonitor(ref)
     Port.close(port)
+
     state
     |> Map.put(:rejected, [ip | rejected])
     |> open_and_monitor_quickapi()
   end
 
   def handle_info({_port, {:data, data}}, state) do
-    Logger.debug "QuickApi: #{inspect data}"
+    Logger.debug("QuickApi: #{inspect(data)}")
     {:noreply, state}
   end
 
   def open_and_monitor_quickapi(state) do
     {port, ip} = start_quickapi(state.rejected)
     ref = Port.monitor(port)
-    Logger.info "QuickApi started at port: #{inspect port}"
+    Logger.info("QuickApi started at port: #{inspect(port)}")
     {:noreply, %{state | ref: ref, port: port, ip: ip}}
   end
 
@@ -46,9 +50,9 @@ defmodule Bex.QuickApi do
     ip = find_fastest_ip(rejected)
 
     {Port.open(
-      {:spawn_executable, "./run.sh"},
-      args: ["quickapi", "-p", ip]
-    ), ip}
+       {:spawn_executable, "./run.sh"},
+       args: ["quickapi", "-p", ip]
+     ), ip}
   end
 
   def ping(host) do
@@ -61,10 +65,11 @@ defmodule Bex.QuickApi do
       :sv_peer.get_addrs_ipv4_dns()
       |> Enum.map(fn x -> ip_to_string(x) end)
 
-    ips = case ips -- rejected do
-      [] -> ips
-      other -> other
-    end
+    ips =
+      case ips -- rejected do
+        [] -> ips
+        other -> other
+      end
 
     pid = self()
 

@@ -206,6 +206,7 @@ defmodule Bex.Wallet.Utxo do
   # s_ self
   def create_sub_dir(s_key, c_dir, content, coin_sat, opts) do
     base_key = Repo.preload(s_key, :base_key).base_key
+
     s_permissions =
       if opts[:without_permission] do
         []

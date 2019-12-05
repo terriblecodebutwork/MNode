@@ -41,7 +41,7 @@ defmodule Bex.Txrepo do
   end
 
   defp try_broadcast(txid, tx) do
-    Logger.debug "#{__MODULE__} broadcasting #{txid}: #{tx}"
+    Logger.debug("#{__MODULE__} broadcasting #{txid}: #{tx}")
     send_via_quickapi(tx)
     r = SvApi.broadcast(tx)
     Logger.debug(inspect(r))

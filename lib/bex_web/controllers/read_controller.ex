@@ -42,8 +42,7 @@ defmodule BexWeb.ReadController do
 
           data when is_binary(data) ->
             conn
-            |> put_resp_content_type("application/octet-stream", nil)
-            |> send_resp(200, data)
+            |> json(%{file: Base.encode64(data)})
 
           _ ->
             json(conn, %{code: 1, error: "unknown error in #{inspect(__MODULE__)}"})
@@ -71,41 +70,8 @@ defmodule BexWeb.ReadController do
           |> decrypt(onchain_secret)
 
         conn
-        |> put_resp_content_type("application/octet-stream", nil)
-        |> send_resp(200, data)
+        |> json(Base.encode64(data))
     end
-
-    # conn =
-    #   conn
-    #   |> send_chunked(200)
-
-    # Enum.reduce_while(contents, conn, fn (chunk, conn) ->
-    #   case Plug.Conn.chunk(conn, chunk) do
-    #     {:ok, conn} ->
-    #       {:cont, conn}
-    #     {:error, :closed} ->
-    #       {:halt, conn}
-    #   end
-    # end)
-
-    # content =
-    #   case read_body(conn, @read_option) do
-    #     {:ok, data, _conn} ->
-    #       # if file_size <= 90kb, use b://
-    #       ["19HxigV4QyBv3tHpQVcUEQyq1pzZVdoAut", data, type, "binary", filename]
-
-    #     {:more, data, conn} ->
-    #       txids = read_remain_part(conn, [bcat_part(data, base_key.id)], base_key.id) |> Enum.map(&Binary.from_hex/1)
-    #       ["15DHFxWZJT58f9nhyGnsRBqrgwK4W6h4Up", " ", type, "binary", filename, " "] ++ txids
-    #   end
-
-    # case CoinManager.create_mnode(base_key.id, dir, onchain_path, content) do
-    #   {:ok, txid, hex_tx} ->
-    #     respond(conn, nil, hex_tx, txid)
-
-    #   {:error, msg} ->
-    #     json(conn, %{code: 1, error: msg})
-    # end
   end
 
   ## root node: "/"
