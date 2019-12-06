@@ -37,7 +37,6 @@ defmodule BexWeb.WriteController do
           case Base.decode64(data) do
             {:ok, data} when byte_size(data) <= @chunk_size ->
               # if file_size <= 90kb, use b://
-              data = Base.decode64(data)
               data = encrypt(data, onchain_secret)
               hash = Crypto.sha256(data)
 
