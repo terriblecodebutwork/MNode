@@ -70,7 +70,7 @@ defmodule BexWeb.ReadController do
           |> decrypt(onchain_secret)
 
         conn
-        |> json(Base.encode64(data))
+        |> json(%{file: Base.encode64(data)})
     end
   end
 

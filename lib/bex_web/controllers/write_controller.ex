@@ -22,7 +22,7 @@ defmodule BexWeb.WriteController do
     end
   end
 
-  def write(conn, %{}) do
+  def write(conn, %{"file" => data}) do
     base_key = conn.assigns.private_key
     onchain_path = conn.assigns.onchain_path
     onchain_secret = conn.assigns.onchain_secret || ""
@@ -32,7 +32,7 @@ defmodule BexWeb.WriteController do
     dir = Path.dirname(onchain_path)
 
     body_return =
-      case read_body(conn) do
+      case {:ok, data, conn} do
         {:ok, data, conn} ->
           case Base.decode64(data) do
             {:ok, data} when byte_size(data) <= @chunk_size ->
