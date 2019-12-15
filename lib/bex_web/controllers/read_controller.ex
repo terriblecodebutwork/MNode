@@ -22,11 +22,13 @@ defmodule BexWeb.ReadController do
     if secret != "" do
       Crypto.aes256_decrypt(data, secret)
     else
+	Logger.info "no secret"
       data
     end
   end
 
   def read(conn, %{}) do
+	Logger.info inspect conn
     base_key = conn.assigns.private_key
     onchain_path = conn.assigns.onchain_path
     onchain_secret = conn.assigns.onchain_secret || ""
