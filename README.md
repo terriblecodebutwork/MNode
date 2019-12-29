@@ -1,5 +1,22 @@
 # M2
 
+(WARNING) this repo is under developping and lack of testing.
+
+## How to use?
+
+### requirements
+
+erlang  > 21
+elixir > 1.5
+postgreSQL > 9.5
+nodejs
+
+### run
+
+```
+iex -S mix phx.server
+```
+
 ## Make Directory
 
 ```bash

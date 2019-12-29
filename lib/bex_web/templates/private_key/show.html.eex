@@ -22,10 +22,10 @@
     <%= @private_key.net %>
   </li>
 
-  <%# <li>
+  <li>
     <strong>WIF:</strong>
     <%= @private_key |> BexLib.Key.private_key_to_wif() %>
-  <%# </li> %>
+  </li>
 
   <li>
     <strong>APP_KEY:</strong>
