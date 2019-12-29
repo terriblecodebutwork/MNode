@@ -7,7 +7,7 @@ defmodule Bex.KV do
 
   def save_tx(hex_tx) do
     key = {:tx, DateTime.utc_now()}
-    put(key , hex_tx)
+    put(key, hex_tx)
   end
 
   def get(key) do
