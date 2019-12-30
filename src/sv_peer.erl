@@ -475,6 +475,49 @@ parse_header(<<Head:80/bytes, Rest/binary>>) ->
       txs => parse_txs(Rest2, [], Tx_count),
       pow_valid => verify_pow(Hash, Target)}.
 
+
+parse_merkle_block(<<Head:80/bytes, Rest/binary>>) ->
+    <<Version:32/signed-little-integer,
+               Prev_block:32/bytes,
+               Merkle_root:32/bytes,
+               Timestamp:32/little-integer,
+               Bits:32/little-integer,
+               Nonce:4/bytes>> = Head,
+    Hash = double_hash256(Head),
+    Target = decode_bits(Bits),
+    {PartialMerkleTree, Rest1} = parse_partial_merkle_tree(Rest),
+    {#{version => Version,
+      prev_block => Prev_block,
+      merkel_root => Merkle_root,
+      timestamp => Timestamp,
+      bits => Bits,
+      target => Target,
+      work => bits_to_work(Bits),
+      difficulty => bits_to_difficulty(Bits),
+      nonce => Nonce,
+      hash => Hash,
+      hex_hash => bin_to_hex(rev(Hash)),
+      int_hash => binary:decode_unsigned(Hash, little),
+      pow_valid => verify_pow(Hash, Target),
+      partial_merkle_tree => PartialMerkleTree}, Rest1}.
+
+
+parse_partial_merkle_tree(<<NumTransactions:32/little-integer, Rest/bytes>>) ->
+    {Hashes, Rest1} = parse_n_bytes_list(Rest, 32),
+    {Bits, Rest2} = parse_n_bytes_list(Rest1, 1),
+    {#{
+        num_transactions => NumTransactions,
+        hashes => Hashes,
+        bits => Bits
+    }, Rest2}.
+
+parse_n_bytes_list(Bin, N) ->
+    {L, Rest} = parse_varint(Bin),
+    Size = N*L,
+    <<Data:Size/bytes, Rest2/bytes>> = Rest,
+    {[ X || <<X:N/bytes>> <= Data], Rest2}.
+
+
 bits_to_difficulty(Bits) ->
     Target = decode_bits(Bits),
     ?GENESIS_TARGET / Target.
