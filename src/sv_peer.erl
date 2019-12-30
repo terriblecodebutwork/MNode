@@ -504,7 +504,7 @@ parse_merkle_block(<<Head:80/bytes, Rest/binary>>) ->
 
 parse_partial_merkle_tree(<<NumTransactions:32/little-integer, Rest/bytes>>) ->
     {Hashes, Rest1} = parse_n_bytes_list(Rest, 32),
-    {Bits, Rest2} = parse_n_bytes_list(Rest1, 1),
+    {Bits, Rest2} = parse_n_bits_list(Rest1, 8),
     {#{
         num_transactions => NumTransactions,
         hashes => Hashes,
@@ -516,6 +516,12 @@ parse_n_bytes_list(Bin, N) ->
     Size = N*L,
     <<Data:Size/bytes, Rest2/bytes>> = Rest,
     {[ X || <<X:N/bytes>> <= Data], Rest2}.
+
+parse_n_bits_list(Bin, N) ->
+    {L, Rest} = parse_varint(Bin),
+    Size = N*L,
+    <<Data:Size/bits, Rest2/bytes>> = Rest,
+    {[ X == <<1:1>> || <<X:1/bits>> <= Data ], Rest2}.
 
 
 bits_to_difficulty(Bits) ->
