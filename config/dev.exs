@@ -1,5 +1,9 @@
 use Mix.Config
 
+config :bex,
+  no_database: true,
+  no_quickapi: true
+
 # Configure your database
 config :bex, Bex.Repo,
   username: "postgres",

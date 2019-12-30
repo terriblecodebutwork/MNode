@@ -9,20 +9,18 @@ defmodule Bex.Application do
     # List all child processes to be supervised
     children =
       [
-        # Start the Ecto repository
-        Bex.Repo,
         Bex.Txrepo,
-        Bex.CoinManager,
         # BsvNews,
         Bex.KV,
-        Bex.QuickApi,
         # Start the endpoint when the application starts
         BexWeb.Endpoint
         # Starts a worker by calling: Bex.Worker.start_link(arg)
         # {Bex.Worker, arg},
       ] ++
         if(System.get_env("BEX_BROADCASTER"), do: [Bex.Broadcaster], else: []) ++
-        if System.get_env("BEX_MERKLESAVER"), do: [Bex.Store.MerkleSaver], else: []
+        if(System.get_env("BEX_MERKLESAVER"), do: [Bex.Store.MerkleSaver], else: []) ++
+        if(Application.get_env(:bex, :no_database, false), do: [], else: [Bex.Repo, Bex.CoinManager]) ++
+        if(Application.get_env(:bex, :no_quickapi, false), do: [], else: [Bex.QuickApi])
 
     # See https://hexdocs.pm/elixir/Supervisor.html
     # for other strategies and supported options
