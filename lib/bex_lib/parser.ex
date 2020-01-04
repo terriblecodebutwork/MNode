@@ -18,6 +18,42 @@ defmodule BexLib.Parser do
     end
   end
 
+  def parse_merkleblock(raw, opts) do
+    cond do
+      :human in opts ->
+        case parse_merkleblock(raw) do
+          {:ok, tx} ->
+            {
+              :ok,
+              inspect(tx)
+            }
+
+          any ->
+            any
+        end
+
+      true ->
+        parse_merkleblock(raw)
+    end
+  end
+
+  def parse_merkleblock(raw) do
+    try do
+      bn = Binary.from_hex(raw)
+
+      case :sv_peer.parse_merkle_block(bn) do
+        {mb, ""} ->
+          {:ok, mb}
+
+        any ->
+          {:error, any}
+      end
+    catch
+      :error, e ->
+        {:error, e}
+    end
+  end
+
   def parse_rawtx(rawtx) do
     try do
       tx_bn = Binary.from_hex(rawtx)

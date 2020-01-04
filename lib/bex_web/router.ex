@@ -23,6 +23,7 @@ defmodule BexWeb.Router do
     get "/txrepo", PageController, :show_tx
     live "/parser", ParserLive
     live "/parser/:rawtx", ParserLive
+    live "/parser/txoutproof/:rawtxoutproof", ParserLive
     get "/ad", PageController, :ad
     get "/gun", PageController, :gun
     get "/chat", PageController, :chat
