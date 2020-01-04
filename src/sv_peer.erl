@@ -461,7 +461,7 @@ parse_header(<<Head:80/bytes, Rest/binary>>) ->
     Target = decode_bits(Bits),
     #{version => Version,
       prev_block => Prev_block,
-      merkel_root => Merkle_root,
+      merkle_root => Merkle_root,
       timestamp => Timestamp,
       bits => Bits,
       target => Target,
@@ -508,7 +508,7 @@ parse_partial_merkle_tree(<<NumTransactions:32/little-integer, Rest/bytes>>) ->
     {#{
         num_transactions => NumTransactions,
         hashes => Hashes,
-        bits => Bits
+        bits => lists:reverse(Bits)
     }, Rest2}.
 
 parse_n_bytes_list(Bin, N) ->

@@ -22,10 +22,10 @@ defmodule BexLib.Parser do
     cond do
       :human in opts ->
         case parse_merkleblock(raw) do
-          {:ok, tx} ->
+          {:ok, mb} ->
             {
               :ok,
-              inspect(tx)
+              clean_merkleblock(mb)
             }
 
           any ->
@@ -85,6 +85,29 @@ defmodule BexLib.Parser do
       end)
 
     %{tx | input: new_in, output: new_out}
+  end
+
+  defp clean_merkleblock(mb = %{partial_merkle_tree: pmt}) do
+    %{
+      block_header: %{
+        bits: mb.bits,
+        difficulty: mb.difficulty,
+        hash: mb.hex_hash,
+        merkle_root: Binary.to_hex(mb.merkle_root),
+        nonce: Binary.to_hex(mb.nonce),
+        pow_valid: mb.pow_valid,
+        previous_block: Binary.to_hex(mb.prev_block),
+        target: mb.target,
+        timestamp: mb.timestamp,
+        version: mb.version,
+        work: mb.work
+      },
+      partial_merkle_tree: %{
+        bits: pmt.bits,
+        tx_count: pmt.num_transactions,
+        hashes: pmt.hashes |> Enum.map(&Binary.to_hex/1)
+      }
+    }
   end
 
   defp do_clean(x = %{coinbase: true}) do
