@@ -27,6 +27,7 @@ defmodule BexWeb.Router do
     get "/gun", PageController, :gun
     get "/chat", PageController, :chat
     get "/merkle", PageController, :merkle_page
+    live "/genesis", GenesisLive
 
     scope(@admin_scope) do
       live "/", IndexLive

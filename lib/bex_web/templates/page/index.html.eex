@@ -1,20 +1,24 @@
 <ul class="flex">
   <li class="mr-6">
-    <a class="text-blue-500 hover:text-blue-800" href="/chat">聊天室 ChatRoom/</a>
+    <a class="text-blue-500 hover:text-blue-800" href="/mnode/genesis">创世纪 Genesis/</a>
    </li>
   <li class="mr-6">
-    <a class="text-blue-500 hover:text-blue-800" href="/ad">广告墙 AD Poster/</a>
+    <a class="text-blue-500 hover:text-blue-800" href="/mnode/chat">聊天室 ChatRoom/</a>
    </li>
   <li class="mr-6">
-    <a class="text-blue-500 hover:text-blue-800" href="/gun">提款机 ATM/</a>
+    <a class="text-blue-500 hover:text-blue-800" href="/mnode/ad">广告墙 AD Poster/</a>
    </li>
   <li class="mr-6">
-    <a class="text-blue-500 hover:text-blue-800" href="/txrepo">传达室 Pending TX/</a>
+    <a class="text-blue-500 hover:text-blue-800" href="/mnode/gun">提款机 ATM/</a>
+   </li>
+  <li class="mr-6">
+    <a class="text-blue-500 hover:text-blue-800" href="/mnode/txrepo">传达室 Pending TX/</a>
   </li>
   <li class="mr-6">
-    <a class="text-blue-500 hover:text-blue-800" href="/merkle">Merkle Path API</a>
+    <a class="text-blue-500 hover:text-blue-800" href="/mnode/merkle">Merkle Path API</a>
   </li>
   <li class="mr-6">
-    <a class="text-blue-500 hover:text-blue-800" href="/parser">Parse BSV TX</a>
+    <a class="text-blue-500 hover:text-blue-800" href="/mnode/parser">Parse BSV TX</a>
   </li>
+
 </ul>
