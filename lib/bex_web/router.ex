@@ -16,7 +16,7 @@ defmodule BexWeb.Router do
 
   @admin_scope System.get_env("BexAdmin", "/admin")
 
-  scope "/", BexWeb do
+  scope "/mnode", BexWeb do
     pipe_through :browser
 
     get "/", PageController, :index
@@ -27,10 +27,6 @@ defmodule BexWeb.Router do
     get "/gun", PageController, :gun
     get "/chat", PageController, :chat
     get "/merkle", PageController, :merkle_page
-  end
-
-  scope "/mnode", BexWeb do
-    pipe_through :browser
 
     scope(@admin_scope) do
       live "/", IndexLive
