@@ -488,7 +488,7 @@ parse_merkle_block(<<Head:80/bytes, Rest/binary>>) ->
     {PartialMerkleTree, Rest1} = parse_partial_merkle_tree(Rest),
     {#{version => Version,
       prev_block => Prev_block,
-      merkel_root => Merkle_root,
+      merkle_root => Merkle_root,
       timestamp => Timestamp,
       bits => Bits,
       target => Target,
