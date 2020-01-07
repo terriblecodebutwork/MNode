@@ -144,8 +144,10 @@ defmodule BexWeb.IndexLive do
     id = String.to_integer(id)
     {[key], keys} = Enum.split_while(keys, fn k -> k.id == id end)
     utxos = key |> Map.get(:utxos)
+    Logger.info "[Batch] utxos: #{inspect utxos}"
     {u1, u2} = Enum.split(utxos, n)
     for %{id: id} <- u1 do
+      Logger.info "[Batch] sweeping... utxo_id: #{inspect id}, address: #{addr}"
       CoinManager.sweep_utxo(id, addr)
     end
     key = %{key | utxos: u2}
