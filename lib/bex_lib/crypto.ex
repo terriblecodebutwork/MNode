@@ -3,7 +3,7 @@ defmodule BexLib.Crypto do
   Currently just wrappers around erlang's :crypto for easy piping.
   """
   alias BexLib.DERSig
-	require Logger
+  require Logger
 
   def ripemd160(bin), do: :crypto.hash(:ripemd160, bin)
   def sha1(bin), do: :crypto.hash(:sha, bin)
@@ -42,7 +42,7 @@ defmodule BexLib.Crypto do
   @aad "AES256GCM"
 
   def aes256_encrypt(plaintext, key) do
-	Logger.info "encrypt with #{inspect key}"
+    Logger.info("encrypt with #{inspect(key)}")
     {key, _} = Binary.pad_trailing(key, 32) |> Binary.split_at(32)
     # create random Initialisation Vector
     iv = :crypto.strong_rand_bytes(16)
@@ -52,7 +52,7 @@ defmodule BexLib.Crypto do
   end
 
   def aes256_decrypt(ciphertext, key) do
-	Logger.info "decrypt with #{inspect key}"
+    Logger.info("decrypt with #{inspect(key)}")
     {key, _} = Binary.pad_trailing(key, 32) |> Binary.split_at(32)
     <<iv::binary-16, tag::binary-16, ciphertext::binary>> = ciphertext
     :crypto.block_decrypt(:aes_gcm, key, iv, {@aad, ciphertext, tag})
