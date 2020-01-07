@@ -114,12 +114,16 @@ defmodule BexWeb.IndexLive do
           <% end %>
 
           <%= if k.id in @batch_showing do %>
-            <form phx-submit="batch_send_utxo">
-              <input type="text" name="addr" placeholder="Send to address">
-              <input type="number" name="num" placeholder="Num of utoxs">
-              <input hidden name="id" value="<%= k.id %>">
-              <button submit>Send</button>
-            </form>
+            <tr>
+              <td>
+                <form phx-submit="batch_send_utxo">
+                  <input type="text" name="addr" placeholder="Send to address">
+                  <input type="number" name="num" placeholder="Num of utoxs">
+                  <input hidden name="id" value="<%= k.id %>">
+                  <button submit>Send</button>
+                </form>
+              </td>
+            </tr>
           <% end %>
 
         <% end %>
