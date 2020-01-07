@@ -171,6 +171,7 @@ defmodule BexWeb.IndexLive do
   end
 
   def handle_event(cmd, %{"id" => id}, socket) do
+    Logger.info "cmd: #{inspect cmd} -> info"
     id = String.to_integer(id)
     send(self(), {cmd, id})
     {:noreply, assign(socket, :loading, true)}
