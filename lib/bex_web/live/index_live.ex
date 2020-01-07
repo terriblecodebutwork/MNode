@@ -177,7 +177,7 @@ defmodule BexWeb.IndexLive do
   end
 
   def handle_event("recast_to_submit", %{"id" => id, "satoshis" => n}, socket) do
-    n = String.to_integer(n)
+    n = Decimal.cast(n)
     id = String.to_integer(id)
     case CoinManager.recast(id, n) do
       {:ok, _, hex_tx} ->
