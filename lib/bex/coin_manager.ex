@@ -267,7 +267,7 @@ defmodule Bex.CoinManager do
 
     dusts =
       from(u in Utxo,
-        where: u.private_key_id == ^p.id and u.type == "dust",
+        where: u.private_key_id == ^p.id and u.value < ^coin_sat,
         limit: 100
       )
       |> Repo.all()
