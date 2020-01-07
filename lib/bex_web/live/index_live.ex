@@ -41,6 +41,7 @@ defmodule BexWeb.IndexLive do
     |> assign(private_keys: [key])
     |> assign(loading: false)
     |> assign(showing: [])
+    |> assign(batch_showing: [])
   end
 
   def render(assigns) do
@@ -91,6 +92,7 @@ defmodule BexWeb.IndexLive do
               <button phx-click="recast" phx-value-id="<%= k.id %>">合并零钱</button>
               <button phx-click="mint_all" phx-value-id="<%= k.id %>">拆分大额</button>
               <button phx-click="show_utxos" phx-value-id="<%= k.id %>">UTXO 详情</button>
+              <button phx-click="batch_send" phx-value-id="<%= k.id %>">批量发送</button>
             </td>
 
           </tr>
@@ -111,6 +113,15 @@ defmodule BexWeb.IndexLive do
             <% end %>
           <% end %>
 
+          <%= if k.id in @batch_showing do %>
+            <form phx-submit="batch_send_utxo">
+              <input type="text" name="addr" placeholder="Send to address">
+              <input type="number" name="num" placeholder="Num of utoxs">
+              <input hidden name="id" value="<%= k.id %>">
+              <button submit>Send</button>
+            </form>
+          <% end %>
+
         <% end %>
         </table>
       </div>
@@ -126,6 +137,20 @@ defmodule BexWeb.IndexLive do
     id = String.to_integer(id)
     CoinManager.sweep_utxo(id, addr)
     {:noreply, socket}
+  end
+
+  def handle_event("batch_send_utxo", %{"id" => id, "addr" => addr, "num" => n}, socket) do
+    keys = socket.assigns.private_keys
+    id = String.to_integer(id)
+    {key, keys} = Enum.split_while(keys, fn k -> k.id == id end)
+    utxos = key |> Map.get(:utxos)
+    {u1, u2} = Enum.split(utxos, n)
+    for %{id: id} <- u1 do
+      CoinManager.sweep_utxo(id, addr)
+    end
+    key = %{key | utxos: u2}
+    keys = [key | keys]
+    {:noreply, socket |> assign(:private_keys, keys)}
   end
 
   def handle_event("address", %{"address" => addr}, socket) do
@@ -182,6 +207,19 @@ defmodule BexWeb.IndexLive do
       end
 
     {:noreply, socket |> assign(:showing, showing) |> assign(:loading, false)}
+  end
+
+  def handle_info({"batch_send", id}, socket) do
+    batch_showing = socket.assigns.batch_showing
+
+    batch_showing =
+      if id in batch_showing do
+        batch_showing -- [id]
+      else
+        [id | batch_showing]
+      end
+
+    {:noreply, socket |> assign(:batch_showing, batch_showing) |> assign(:loading, false)}
   end
 
   def handle_info({"resync_utxo", id}, socket) do
