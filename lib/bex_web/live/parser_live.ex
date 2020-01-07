@@ -8,10 +8,10 @@ defmodule BexWeb.ParserLive do
 
   def mount(_session, socket) do
     {:ok,
-    assign(socket, :tx, "")
-    |> assign(:merkleblock, "")
-    |> assign(:loading, false)
-    |> assign(:loading1, false)}
+     assign(socket, :tx, "")
+     |> assign(:merkleblock, "")
+     |> assign(:loading, false)
+     |> assign(:loading1, false)}
   end
 
   def handle_params(%{"rawtx" => rawtx}, _url, socket) do
@@ -71,7 +71,7 @@ defmodule BexWeb.ParserLive do
   end
 
   def handle_event("submit1", %{"rawtxoutproof" => r}, socket) do
-    send self(), {:parse_merkleblock, r}
+    send(self(), {:parse_merkleblock, r})
     {:noreply, assign(socket, :loading1, true)}
   end
 

@@ -84,6 +84,23 @@ defmodule BexLib.Key do
     |> Base58Check.encode()
   end
 
+  def wif_to_hex(wif) do
+    bn = wif |> Base58Check.decode!()
+
+    key =
+      case bn do
+        <<_::bytes-size(1), key::binary>> ->
+          key
+      end
+
+    key =
+      if Binary.last(key) == 1 do
+        Binary.trim_trailing(key, 1)
+      end
+
+    key |> Binary.to_hex()
+  end
+
   def compressed_priv?(priv) do
     pub = priv |> private_key_to_public_key()
     byte_size(pub) == 33

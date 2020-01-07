@@ -9,11 +9,9 @@ defmodule BexWeb.GenesisLive do
     {:ok, assign(socket, :tx, "") |> assign(:loading, false)}
   end
 
-
   def render(assigns) do
     ~L"""
     <h1>Comming Soon</h1>
     """
   end
-
 end

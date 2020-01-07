@@ -7,6 +7,8 @@
 
   <%= label f, :hex %>
   <%= text_input f, :hex %>
+  <%= label f, :wif %>
+  <%= text_input f, :wif %>
   <%= error_tag f, :hex %>
   <%= label f, :net %>
   <%= text_input f, :net %>

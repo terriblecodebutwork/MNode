@@ -149,12 +149,14 @@ defmodule BexWeb.IndexLive do
     id = String.to_integer(id)
     {[key], keys} = Enum.split_while(keys, fn k -> k.id == id end)
     utxos = key |> Map.get(:utxos)
-    Logger.info "[Batch] utxos: #{inspect utxos}"
+    Logger.info("[Batch] utxos: #{inspect(utxos)}")
     {u1, u2} = Enum.split(utxos, n)
+
     for %{id: id} <- u1 do
-      Logger.info "[Batch] sweeping... utxo_id: #{inspect id}, address: #{addr}"
+      Logger.info("[Batch] sweeping... utxo_id: #{inspect(id)}, address: #{addr}")
       CoinManager.sweep_utxo(id, addr)
     end
+
     key = %{key | utxos: u2}
     keys = [key | keys]
     {:noreply, socket |> assign(:private_keys, keys)}
@@ -176,7 +178,7 @@ defmodule BexWeb.IndexLive do
   end
 
   def handle_event(cmd, %{"id" => id}, socket) do
-    Logger.info "cmd: #{inspect cmd} -> info"
+    Logger.info("cmd: #{inspect(cmd)} -> info")
     id = String.to_integer(id)
     send(self(), {cmd, id})
     {:noreply, assign(socket, :loading, true)}
