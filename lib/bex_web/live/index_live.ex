@@ -144,6 +144,7 @@ defmodule BexWeb.IndexLive do
   end
 
   def handle_event("batch_send_utxo", %{"id" => id, "addr" => addr, "num" => n}, socket) do
+    n = String.to_integer(n)
     keys = socket.assigns.private_keys
     id = String.to_integer(id)
     {[key], keys} = Enum.split_while(keys, fn k -> k.id == id end)
