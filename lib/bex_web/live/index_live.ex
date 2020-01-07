@@ -42,6 +42,7 @@ defmodule BexWeb.IndexLive do
     |> assign(loading: false)
     |> assign(showing: [])
     |> assign(batch_showing: [])
+    |> assign(recast_to_showing: [])
   end
 
   def render(assigns) do
@@ -90,6 +91,7 @@ defmodule BexWeb.IndexLive do
             <td>
               <button phx-click="resync_utxo" phx-value-id="<%= k.id %>" >重新同步 UTXO</button>
               <button phx-click="recast" phx-value-id="<%= k.id %>">合并零钱</button>
+              <button phx-click="recast_to" phx-value-id="<%= k.id %>">合并到大额</button>
               <button phx-click="mint_all" phx-value-id="<%= k.id %>">拆分大额</button>
               <button phx-click="show_utxos" phx-value-id="<%= k.id %>">UTXO 详情</button>
               <button phx-click="batch_send" phx-value-id="<%= k.id %>">批量发送</button>
@@ -121,6 +123,18 @@ defmodule BexWeb.IndexLive do
                   <input type="number" name="num" placeholder="Num of utoxs">
                   <input hidden name="id" value="<%= k.id %>">
                   <button submit>Send</button>
+                </form>
+              </td>
+            </tr>
+          <% end %>
+
+          <%= if k.id in @recast_to_showing do %>
+            <tr>
+              <td>
+                <form phx-submit="recast_to_submit">
+                  <input type="number" name="satoshis" placeholder="satoshis">
+                  <input hidden name="id" value="<%= k.id %>">
+                  <button submit>Recast</button>
                 </form>
               </td>
             </tr>
@@ -160,6 +174,20 @@ defmodule BexWeb.IndexLive do
     key = %{key | utxos: u2}
     keys = [key | keys]
     {:noreply, socket |> assign(:private_keys, keys)}
+  end
+
+  def handle_event("recast_to_submit", %{"id" => id, "satoshis" => n}, socket) do
+    n = String.to_integer(n)
+    id = String.to_integer(id)
+    case CoinManager.recast(id, n) do
+      {:ok, _, hex_tx} ->
+        Bitindex.broadcast_hex_tx(hex_tx)
+        {:noreply, reload(socket)}
+
+      {:error, msg} ->
+        {:noreply,
+         put_flash(socket, :error, msg) |> redirect(to: Routes.live_path(socket, __MODULE__))}
+    end
   end
 
   def handle_event("address", %{"address" => addr}, socket) do
@@ -230,6 +258,19 @@ defmodule BexWeb.IndexLive do
       end
 
     {:noreply, socket |> assign(:batch_showing, batch_showing) |> assign(:loading, false)}
+  end
+
+  def handle_info({"recast_to", id}, socket) do
+    recast_to_showing = socket.assigns.recast_to_showing
+
+    recast_to_showing =
+      if id in recast_to_showing do
+        recast_to_showing -- [id]
+      else
+        [id | recast_to_showing]
+      end
+
+    {:noreply, socket |> assign(:recast_to_showing, recast_to_showing) |> assign(:loading, false)}
   end
 
   def handle_info({"resync_utxo", id}, socket) do
