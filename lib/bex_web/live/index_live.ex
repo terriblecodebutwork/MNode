@@ -142,7 +142,7 @@ defmodule BexWeb.IndexLive do
   def handle_event("batch_send_utxo", %{"id" => id, "addr" => addr, "num" => n}, socket) do
     keys = socket.assigns.private_keys
     id = String.to_integer(id)
-    {key, keys} = Enum.split_while(keys, fn k -> k.id == id end)
+    {[key], keys} = Enum.split_while(keys, fn k -> k.id == id end)
     utxos = key |> Map.get(:utxos)
     {u1, u2} = Enum.split(utxos, n)
     for %{id: id} <- u1 do
