@@ -19,7 +19,10 @@ defmodule Bex.Application do
       ] ++
         if(System.get_env("BEX_BROADCASTER"), do: [Bex.Broadcaster], else: []) ++
         if(System.get_env("BEX_MERKLESAVER"), do: [Bex.Store.MerkleSaver], else: []) ++
-        if(Application.get_env(:bex, :no_database, false), do: [], else: [Bex.Repo, Bex.CoinManager]) ++
+        if(Application.get_env(:bex, :no_database, false),
+          do: [],
+          else: [Bex.Repo, Bex.CoinManager]
+        ) ++
         if(Application.get_env(:bex, :no_quickapi, false), do: [], else: [Bex.QuickApi])
 
     # See https://hexdocs.pm/elixir/Supervisor.html
