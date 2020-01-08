@@ -501,6 +501,54 @@ parse_merkle_block(<<Head:80/bytes, Rest/binary>>) ->
       pow_valid => verify_pow(Hash, Target),
       partial_merkle_tree => PartialMerkleTree}, Rest1}.
 
+% %% Constructing a partial merkle tree object
+% 
+% - Traverse the merkle tree from the root down, and for each eencountered
+%   node:
+%   - Check whether this node corresponds to a leaf node (transaction)
+%     that is to be included OR any parent thereof:
+%     - If so, append a '1' bit to the flag bits
+%     - Otherwise, append a '0' bit
+%   - Check whether this node is a internal node (non-leaf) AND is the parent
+%     of an included leaf node:
+%     - If so:
+%       - Descend into its left child node, and process the subtree beneath
+%         it entirely (depth-first).
+%       - If this node has a right child node too, descend into it as well
+%     - Otherwise: append this node's hash to the hash list
+% 
+% %% Parsing a partial merkle tree object
+% 
+% As the partial block message contains the number of transactions
+% in the entire block, the shape of the merkle tree is known before
+% hand. Again, traverse this tree, computing traversed node's hashes
+% along the way:
+%
+% - read a bit from the flag bit list
+%   - if it's '0'
+%     - read a hash from the hashes list, and return it as this node's
+%       hash
+%   - if it's '1' and this is a leaf node
+%     - read a hash from the hashes list, store it as a matched txid,
+%       and return it as this node's hash
+%   - if it's '1' and this is an internal node
+%     - descend into its left child tree, and store its computed hash
+%       as L
+%     - if this node has a right child as well
+%       - descend into its right child, and store its computed hash a R
+%       - if L == R, the partial merkle tree object is invalid
+%       - return hash(L||R)
+%     - if this node has no right child, return hash(L||L)
+%
+%
+%
+%  Example:
+%  txid = "220ebc64e21abece964927322cba69180ed853bb187fbc6923bac7d010b9d87a"
+%  block = "0000000000013b8ab2cd513b0261a14096412195a72a0c4827d229dcc7e0f7af"
+%  txoutproof = "0100000090f0a9f110702f808219ebea1173056042a714bad51b916cb6800000000000005275289558f51c9966699404ae2294730c3c9f9bda53523ce50e9b95e558da2fdb261b4d4c86041b1ab1bf930900000005fac7708a6e81b2a986dea60db2663840ed141130848162eb1bd1dee54f309a1b2ee1e12587e497ada70d9bd10d31e83f0a924825b96cb8d04e8936d793fb60db7ad8b910d0c7ba2369bc7f18bb53d80e1869ba2c32274996cebe1ae264bc0e2289189ff0316cdc10511da71da757e553cada9f3b5b1434f3923673adb57d83caac392c38af156d6fc30b55fad4112df2b95531e68114e9ad10011e72f7b7cfdb025700"
+%
+%
+%
 
 parse_partial_merkle_tree(<<NumTransactions:32/little-integer, Rest/bytes>>) ->
     {Hashes, Rest1} = parse_n_bytes_list(Rest, 32),
@@ -508,7 +556,7 @@ parse_partial_merkle_tree(<<NumTransactions:32/little-integer, Rest/bytes>>) ->
     {#{
         num_transactions => NumTransactions,
         hashes => Hashes,
-        bits => lists:reverse(Bits)
+        flags => lists:reverse(Bits)
     }, Rest2}.
 
 parse_n_bytes_list(Bin, N) ->

@@ -3,7 +3,10 @@
 
 start(H) ->
   R = merkle_root(H),
-  io:fwrite("~p~n", [bin_to_hex(reverse_binary(R))]).
+  print_hash(R).
+
+print_hash(H) ->
+  io:fwrite("~p~n", [bin_to_hex(reverse_binary(H))]).
 
 transactions(225943) ->
   [<<16#fcd5ef8002e2f8197486da9198364179094b7183dd11940c6176ee1cda4f2ee3:256/little>>];
@@ -17,6 +20,18 @@ transactions(97624) ->
     [
         <<16#9531e98ead20973296ad1d23169dfa25c50fd6c5a9741771346b55233410e614:256/little>>,
         <<16#d831c29eb5d9158df4496ad467fe8dce717f4cda049ee89edde29a98002bb4ff:256/little>>
+    ];
+transactions(100002) ->
+    [
+        <<16#ef1d870d24c85b89d92ad50f4631026f585d6a34e972eaf427475e5d60acf3a3:256/little>>,
+        <<16#f9fc751cb7dc372406a9f8d738d5e6f8f63bab71986a39cf36ee70ee17036d07:256/little>>,
+        <<16#db60fb93d736894ed0b86cb92548920a3fe8310dd19b0da7ad97e48725e1e12e:256/little>>,
+        <<16#220ebc64e21abece964927322cba69180ed853bb187fbc6923bac7d010b9d87a:256/little>>,
+        <<16#71b3dbaca67e9f9189dad3617138c19725ab541ef0b49c05a94913e9f28e3f4e:256/little>>,
+        <<16#fe305e1ed08212d76161d853222048eea1f34af42ea0e197896a269fbf8dc2e0:256/little>>,
+        <<16#21d2eb195736af2a40d42107e6abd59c97eb6cffd4a5a7a7709e86590ae61987:256/little>>,
+        <<16#dd1fd2a6fc16404faf339881a90adbde7f4f728691ac62e8f168809cdfae1053:256/little>>,
+        <<16#74d681e0e03bafa802c8aa084379aa98d9fcd632ddc2ed9782b586ec87451f20:256/little>>
     ].
 
 merkle_root(H) ->
@@ -36,7 +51,9 @@ pairs([]) ->
   [].
 
 upper_hashes(L) ->
-  [concat_hash(H) || H <- L].
+  Hashes = [concat_hash(H) || H <- L],
+  [print_hash(X) || X <- Hashes],
+  Hashes.
 
 concat_hash([H1, H2]) ->
   double256(<<H1/binary, H2/binary>>).

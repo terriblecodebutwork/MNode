@@ -103,7 +103,7 @@ defmodule BexLib.Parser do
         work: mb.work
       },
       partial_merkle_tree: %{
-        bits: pmt.bits |> clean_pmt_bits(),
+        flags: pmt.flags |> clean_pmt_bits(),
         tx_count: pmt.num_transactions,
         hashes: pmt.hashes |> Enum.map(fn x -> x |> Binary.reverse() |> Binary.to_hex() end)
       }
@@ -111,11 +111,12 @@ defmodule BexLib.Parser do
   end
 
   defp clean_pmt_bits(list) do
-    if List.last(list) == false do
-      List.delete_at(list, -1) |> clean_pmt_bits()
-    else
-      list
-    end
+    Enum.chunk_every(list, 8)
+    # if List.last(list) == false do
+    #   List.delete_at(list, -1) |> clean_pmt_bits()
+    # else
+    #   list
+    # end
   end
 
   defp do_clean(x = %{coinbase: true}) do
