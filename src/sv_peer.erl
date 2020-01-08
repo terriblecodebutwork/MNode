@@ -569,7 +569,7 @@ parse_n_bits_list(Bin, N) ->
     {L, Rest} = parse_varint(Bin),
     Size = N*L,
     <<Data:Size/bits, Rest2/bytes>> = Rest,
-    {[ X == <<1:1>> || <<X:1/bits>> <= Data ], Rest2}.
+    {[ X == <<1:1>> || <<X:1/bits>> <= rev(Data) ], Rest2}.
 
 
 bits_to_difficulty(Bits) ->
