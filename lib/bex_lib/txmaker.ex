@@ -307,7 +307,7 @@ defmodule BexLib.Txmaker do
         4
 
     # 体积乘以费率得到估计的手续费
-    Decimal.mult(estimated_size, @sat_per_byte)
+    Decimal.mult(estimated_size, @sat_per_byte) |> Decimal.round(0, :up)
   end
 
   def get_txid_from_binary_tx(bn) do
