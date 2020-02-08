@@ -16,6 +16,8 @@ defmodule BexLib.Secp256k1 do
   """
 
   alias BexLib.DERSig
+  # alias BexLib.Crypto
+  # import Decimal, only: [mult: 2, sub: 2, div_int: 2, add: 2]
 
   require Logger
 
@@ -33,6 +35,16 @@ defmodule BexLib.Secp256k1 do
     do_verify(msg, DERSig.normalize(sig), pk)
   end
 
+  @params %{
+    p: 0xFFFFFFFF_FFFFFFFF_FFFFFFFF_FFFFFFFF_FFFFFFFF_FFFFFFFF_FFFFFFFE_FFFFFC2F,
+    a: 0x00000000_00000000_00000000_00000000_00000000_00000000_00000000_00000000,
+    b: 0x00000000_00000000_00000000_00000000_00000000_00000000_00000000_00000007,
+    G:
+      0x04_79BE667E_F9DCBBAC_55A06295_CE870B07_029BFCDB_2DCE28D9_59F2815B_16F81798_483ADA77_26A3C465_5DA4FBFC_0E1108A8_FD17B448_A6855419_9C47D08F_FB10D4B8,
+    n: 0xFFFFFFFF_FFFFFFFF_FFFFFFFF_FFFFFFFE_BAAEDCE6_AF48A03B_BFD25E8C_D0364141,
+    h: 0x01
+  }
+
   @doc """
   Secp256k1 parameters.
 
@@ -40,15 +52,7 @@ defmodule BexLib.Secp256k1 do
   """
   @spec params :: map
   def params do
-    %{
-      p: 0xFFFFFFFF_FFFFFFFF_FFFFFFFF_FFFFFFFF_FFFFFFFF_FFFFFFFF_FFFFFFFE_FFFFFC2F,
-      a: 0x00000000_00000000_00000000_00000000_00000000_00000000_00000000_00000000,
-      b: 0x00000000_00000000_00000000_00000000_00000000_00000000_00000000_00000007,
-      G:
-        0x04_79BE667E_F9DCBBAC_55A06295_CE870B07_029BFCDB_2DCE28D9_59F2815B_16F81798_483ADA77_26A3C465_5DA4FBFC_0E1108A8_FD17B448_A6855419_9C47D08F_FB10D4B8,
-      n: 0xFFFFFFFF_FFFFFFFF_FFFFFFFF_FFFFFFFE_BAAEDCE6_AF48A03B_BFD25E8C_D0364141,
-      h: 0x01
-    }
+    @params
   end
 
   if @using_nif do
@@ -63,4 +67,44 @@ defmodule BexLib.Secp256k1 do
     defp do_verify(msg, sig, pk),
       do: :crypto.verify(:ecdsa, :sha256, {:digest, msg}, sig, [pk, :secp256k1])
   end
+
+  # def sign(msg, priv) do
+  #   #1 hash
+  #   e = Crypto.sha256(msg)
+  #   # 2 z maybe greater than n, but not longer
+  #   ln = params().n |> bit_size()
+  #   <<z::size(ln), _>> = e
+  #   # 3
+  #   k = 1
+  #   # 4
+
+  # end
+
+  # def point_add({xp, yp} = p, {xq, yq} = q) do
+  #   lambda = div_int(sub(yq, yp), sub(xq, xp))
+  #   get_r(lambda, p, q)
+  # end
+
+  # defp get_r(lambda, {xp, yp}, {xq, yq}) do
+  #   xr = mult(lambda, lambda) |> sub(xp) |> sub(xq)
+  #   yr = lambda |> mult(sub(xp, xr)) |> sub(yp)
+  #   {xr, yr}
+  # end
+
+  # def point_double({xp, yp} = p) do
+  #   a = @params.a |> Decimal.cast()
+  #   lambda = mult(3, mult(xp, xp)) |> add(a) |> div_int(mult(2, yp))
+  #   get_r(lambda, p, p)
+  # end
+
+  # def point_mul(p, 0), do: 0
+  # def point_mul(p, 1), do: p
+  # def point_mul(p, d) do
+  #   if Decimal.rem(d, 2) == Decimal.cast(0) do
+  #     point_add(p, point_mul(p, d |> sub(1)))
+  #   else
+  #     point_mul(point_double(p), d |> div_int(2))
+  #   end
+  # end
+
 end

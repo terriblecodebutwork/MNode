@@ -8,7 +8,7 @@ defmodule BexLib.Txmaker do
   alias Bex.Repo
   require Logger
 
-  @sat_per_byte Decimal.cast(1)
+  @sat_per_byte Decimal.cast(0.25)
 
   @doc """
   hex raw tx -> txid(hex string)

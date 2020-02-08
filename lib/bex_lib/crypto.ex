@@ -57,4 +57,11 @@ defmodule BexLib.Crypto do
     <<iv::binary-16, tag::binary-16, ciphertext::binary>> = ciphertext
     :crypto.block_decrypt(:aes_gcm, key, iv, {@aad, ciphertext, tag})
   end
+
+  def hash160(str) do
+    str
+    |> sha256()
+    |> ripemd160()
+    |> Binary.to_hex()
+  end
 end

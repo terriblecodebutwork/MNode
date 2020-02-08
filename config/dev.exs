@@ -1,7 +1,7 @@
 use Mix.Config
 
 config :bex,
-  no_database: true,
+  no_database: false,
   no_quickapi: true
 
 # Configure your database
