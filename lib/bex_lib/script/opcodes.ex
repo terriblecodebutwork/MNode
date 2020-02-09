@@ -81,7 +81,7 @@ defmodule BexLib.Script.Opcodes do
 
         # splice ops
         OP_CAT: 0x7E,
-        OP_SUBSTR: 0x7F,
+        OP_SPLIT: 0x7F,
         OP_LEFT: 0x80,
         OP_RIGHT: 0x81,
         OP_SIZE: 0x82,

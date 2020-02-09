@@ -44,6 +44,7 @@ defmodule Bex.MixProject do
       {:httpoison, "~> 1.5", override: true},
       {:jason, "~> 1.0"},
       {:logger_file_backend, "~> 0.0.10"},
+      {:nodejs, "~> 1.0"},
       {:phoenix, "~> 1.4.9"},
       {:phoenix_pubsub, "~> 1.1"},
       {:phoenix_ecto, "~> 4.0"},

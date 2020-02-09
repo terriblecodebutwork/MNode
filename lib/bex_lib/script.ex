@@ -17,6 +17,8 @@
 #   limitations under the License.
 defmodule BexLib.Script do
   use BexLib.Script.Opcodes
+  alias BexLib.Crypto
+  alias BexLib.Secp256k1
 
   # Value returned when the script is invalid
   # TODO replace @invalid with more specific errors
@@ -112,6 +114,30 @@ defmodule BexLib.Script do
        parent_tx
      ] ++ contents)
     |> to_binary()
+  end
+
+  @doc """
+  we use the secret to generate k and r
+  """
+  def rpuzzle(secret) do
+    r =
+      Secp256k1.sign_with_secret_for_r(<<0::256>>, "", secret)
+      |> Secp256k1.get_r()
+    [
+      :OP_OVER,
+      :OP_3,
+      :OP_SPLIT,
+      :OP_NIP,
+      :OP_1,
+      :OP_SPLIT,
+      :OP_SWAP,
+      :OP_SPLIT,
+      :OP_DROP,
+      :OP_HASH160,
+      Crypto.hash160(r),
+      :OP_EQUALVERIFY,
+      :OP_CHECKSIG
+    ] |> to_binary()
   end
 
   def return(contents) when is_list(contents) do

@@ -23,12 +23,12 @@ defmodule BexLib.Crypto do
     |> DERSig.normalize()
   end
 
-  # @doc """
-  # auto do sha256 hash before verify.
-  # """
-  # def verify(sig, data, pubkey) do
-  #   :crypto.verify(:ecdsa, :sha256, data, sig, [pubkey, :secp256k1])
-  # end
+  @doc """
+  auto do sha256 hash before verify.
+  """
+  def verify(sig, data, pubkey) do
+    :crypto.verify(:ecdsa, :sha256, data, sig, [pubkey, :secp256k1])
+  end
 
   @spec sha256_file(Path.t()) :: binary
   def sha256_file(path) when is_binary(path) do
@@ -62,6 +62,5 @@ defmodule BexLib.Crypto do
     str
     |> sha256()
     |> ripemd160()
-    |> Binary.to_hex()
   end
 end
