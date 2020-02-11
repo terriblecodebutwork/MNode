@@ -265,37 +265,40 @@ defmodule Bex.Wallet.Utxo do
     end
   end
 
-  def make_tx(inputs, outputs, coin_sat) do
-    binary_tx = Txmaker.create_p2pkh_transaction(inputs, outputs)
+  def make_tx(inputs, outputs, coin_sat, not_save \\ false, opts \\ []) do
+    binary_tx = Txmaker.create_p2pkh_transaction(inputs, outputs, opts)
 
     hex_tx = Binary.to_hex(binary_tx)
     Logger.debug(hex_tx)
 
     txid = Txmaker.get_txid_from_binary_tx(binary_tx)
-    ## TODO save the tx for broadcasting
-    {:ok, _} =
-      Repo.transaction(fn ->
-        # delete inputs
-        for u <- inputs, do: Repo.delete!(u)
-        # insert outputs
-        outs =
-          outputs
-          |> Stream.map(&set_utxo_type(&1, coin_sat))
-          |> Stream.with_index()
-          |> Stream.map(fn {x, i} -> Map.put(x, :index, i) |> Map.put(:txid, txid) end)
-          |> Enum.map(fn x ->
-            %{
-              txid: x.txid,
-              index: x.index,
-              type: x.type,
-              value: x.value,
-              lock_script: x.lock_script,
-              private_key_id: x.private_key_id
-            }
-          end)
 
-        Repo.insert_all(Utxo, outs)
-      end)
+    if !not_save do
+      ## TODO save the tx for broadcasting
+      {:ok, _} =
+        Repo.transaction(fn ->
+          # delete inputs
+          for u <- inputs, do: Repo.delete!(u)
+          # insert outputs
+          outs =
+            outputs
+            |> Stream.map(&set_utxo_type(&1, coin_sat))
+            |> Stream.with_index()
+            |> Stream.map(fn {x, i} -> Map.put(x, :index, i) |> Map.put(:txid, txid) end)
+            |> Enum.map(fn x ->
+              %{
+                txid: x.txid,
+                index: x.index,
+                type: x.type,
+                value: x.value,
+                lock_script: x.lock_script,
+                private_key_id: x.private_key_id
+              }
+            end)
+
+          Repo.insert_all(Utxo, outs)
+        end)
+    end
 
     {:ok, txid, hex_tx}
   end

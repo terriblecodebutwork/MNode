@@ -199,7 +199,7 @@ defmodule BexLib.Txmaker do
       - %{type: "safe", data: binary or list of binary}
       - %{type: "script", script: binary script}
   """
-  def create_p2pkh_transaction(inputs, outputs)
+  def create_p2pkh_transaction(inputs, outputs, opts \\ [])
       when is_list(inputs) and is_list(outputs) do
     version = 0x01 |> to_bytes(4, :little)
     sequence = sequence()
@@ -251,7 +251,12 @@ defmodule BexLib.Txmaker do
 
         hashed = sha256(to_be_hashed)
 
-        signature = Crypto.sign(private_key, hashed) <> <<0x41>>
+        option_secret = opts[:secret_for_k]
+        signature = (if option_secret do
+            BexLib.Secp256k1.sign_with_secret_for_r(private_key, hashed, option_secret)
+          else
+            Crypto.sign(private_key, hashed)
+          end) <> <<0x41>>
 
         script_sig =
           join([
@@ -306,8 +311,13 @@ defmodule BexLib.Txmaker do
         len(int_to_varint(n_out)) +
         4
 
+    get_fee_from_size(estimated_size)
+  end
+
+  def get_fee_from_size(size) do
+    size = Decimal.from_float(size)
     # 体积乘以费率得到估计的手续费
-    Decimal.mult(estimated_size, @sat_per_byte) |> Decimal.round(0, :up)
+    Decimal.mult(size, @sat_per_byte) |> Decimal.round(0, :up)
   end
 
   def get_txid_from_binary_tx(bn) do

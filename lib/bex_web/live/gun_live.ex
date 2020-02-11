@@ -32,7 +32,7 @@ defmodule BexWeb.GunLive do
 
   def render(assigns) do
     ~L"""
-    <h1>提款机</h1>
+    <h1>提款枪</h1>
 
     <h1><%= @error %></h1>
 

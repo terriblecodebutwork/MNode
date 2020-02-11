@@ -22,6 +22,12 @@ defmodule BexWeb.PageController do
     |> render_live(BexWeb.AdLive)
   end
 
+  def genesis(conn, _params) do
+    conn
+    |> load_key_id_from_cookie()
+    |> render_live(BexWeb.GenesisLive)
+  end
+
   def chat(conn, _params) do
     conn
     |> load_key_id_from_cookie()

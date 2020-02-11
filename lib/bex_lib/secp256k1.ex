@@ -46,6 +46,7 @@ defmodule BexLib.Secp256k1 do
   }
 
   def sign_with_secret_for_r(priv, msg, secret) when is_binary(secret) do
+    hashed = :crypto.hash(:sha256, msg)
     hex_priv = Binary.to_hex(priv)
     k = :crypto.hash(:sha256, secret) |> :binary.decode_unsigned()
     k = if k < @params.n do
@@ -54,7 +55,7 @@ defmodule BexLib.Secp256k1 do
       k - @params.n
     end
 
-    NodeJS.call!("secp256k1", [hex_priv, msg, Integer.to_string(k)])
+    NodeJS.call!("secp256k1", [hex_priv, Binary.to_hex(hashed), Integer.to_string(k)])
     |> Binary.from_hex()
     |> DERSig.normalize()
   end
