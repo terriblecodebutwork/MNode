@@ -315,7 +315,11 @@ defmodule BexLib.Txmaker do
   end
 
   def get_fee_from_size(size) do
-    size = Decimal.from_float(size)
+    size = if is_float(size) do
+      Decimal.from_float(size)
+    else
+      Decimal.cast(size)
+    end
     # 体积乘以费率得到估计的手续费
     Decimal.mult(size, @sat_per_byte) |> Decimal.round(0, :up)
   end
