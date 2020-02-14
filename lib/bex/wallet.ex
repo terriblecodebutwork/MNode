@@ -62,6 +62,11 @@ defmodule Bex.Wallet do
       {:error, %Ecto.Changeset{}}
 
   """
+  def create_private_key(%{"wif" => wif, "net" => net}) when wif != "" do
+    hex = BexLib.Key.wif_to_hex(wif)
+    create_private_key(%{"hex" => hex, "net" => net})
+  end
+
   def create_private_key(%{"hex" => hex, "net" => net}) do
     case from(p in PrivateKey, where: p.hex == ^hex and p.net == ^net) |> Repo.one() do
       nil ->
