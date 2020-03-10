@@ -40,7 +40,7 @@ defmodule Bex.MixProject do
       {:ecto_enum, "~> 1.3"},
       {:elixir_uuid, "~> 1.2"},
       {:gettext, "~> 0.11"},
-      {:hackney, "~> 1.14.0"},
+      {:hackney, ">= 1.15.2", override: true},
       {:httpoison, "~> 1.5", override: true},
       {:jason, "~> 1.0"},
       {:logger_file_backend, "~> 0.0.10"},

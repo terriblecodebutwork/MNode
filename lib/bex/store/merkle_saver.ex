@@ -149,13 +149,18 @@ defmodule Bex.Store.MerkleSaver do
   ## CALLBACKS
 
   def init(_) do
+    :timer.send_after(3000, :init)
+    {:ok, %{}}
+  end
+
+  def handle_info(:init, _) do
     h = Store.last_block_height()
 
     if !System.get_env("NO_MERKLE") do
       send(self(), :download)
     end
 
-    {:ok, %{block_height: h + 1}}
+    {:noreply, %{block_height: h + 1}}
   end
 
   def handle_info(:download, state = %{block_height: h}) when h >= @block_limit do
